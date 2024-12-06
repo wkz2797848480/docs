@@ -1,8 +1,8 @@
 ---
-标题：为您的AI应用提供动力  
-摘要：Timescale Vector和向量的一般描述  
-产品：[云]  
-关键字：[ai, 向量, pgvector, pgvectorscale, pgai]  
+标题: 为您的AI应用提供动力  
+摘要: Timescale Vector和向量的一般描述  
+产品: [云]  
+关键字: [ai, 向量, pgvector, pgvectorscale, pgai]  
 标签: [ai, 向量]
 ---
 
@@ -67,6 +67,6 @@ pgai on Timescale 与输出向量为2,000维或更少的最受欢迎的嵌入模
 
 - [OpenAI CLIP](https://github.com/openai/CLIP): 适用于涉及文本和图像的应用
 - [VGG](https://pytorch.org/vision/stable/models/vgg.html)
-- 视觉变换器（ViT）(https://github.com/lukemelas/PyTorch-Pretrained-ViT)
+- [视觉变换器（ViT）](https://github.com/lukemelas/PyTorch-Pretrained-ViT)
 
 [向量搜索索引]: /ai/:currentVersion:/key-vector-database-concepts-for-understanding-pgvector/#vector-search-indexing-approximate-nearest-neighbor-search
