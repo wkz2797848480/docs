@@ -1,109 +1,76 @@
 ---
-title: Install TimescaleDB from cloud image
-excerpt: Install self-hosted TimescaleDB from a pre-built cloud image
-products: [self_hosted]
-keywords: [installation, self-hosted]
-tags: [cloud image]
+标题: 从云镜像安装 TimescaleDB
+摘要: 从预先构建的云镜像安装自托管的 TimescaleDB
+产品: [自托管]
+关键词: [安装，自托管]
+标签: [云镜像]
 ---
 
 import WhereTo from "versionContent/_partials/_where-to-next.mdx";
 import Skip from "versionContent/_partials/_selfhosted_cta.mdx";
 
-# Install TimescaleDB from a pre-built cloud image
 
-You can install TimescaleDB on a cloud hosting provider,
-from a pre-built, publicly available machine image. These instructions show you
-how to use a pre-built Amazon machine image (AMI), on Amazon Web Services (AWS).
+## 安装TimescaleDB的预构建云映像
 
-< Skip />
+您可以在云托管服务提供商上安装TimescaleDB，使用预构建的公开可用的机器映像。这些说明向您展示如何在Amazon Web Services (AWS)上使用预构建的Amazon机器映像（AMI）。
 
-The currently available pre-built cloud image is:
-
+### 跳过
+当前可用的预构建云映像是：
 *   Ubuntu 20.04 Amazon EBS-backed AMI
 
-The TimescaleDB AMI uses Elastic Block Store (EBS) attached volumes. This allows
-you to store image snapshots, dynamic IOPS configuration, and provides some
-protection of your data if the EC2 instance goes down. Choose an EC2 instance
-type that is optimized for EBS attached volumes. For information on choosing the
-right EBS optimized EC2 instance type, see the AWS
-[instance configuration documentation][aws-instance-config].
+TimescaleDB AMI使用弹性块存储（EBS）附加卷。这允许您存储映像快照、动态IOPS配置，并在EC2实例停止运行时为您提供一定程度的数据保护。选择一个针对EBS附加卷优化的EC2实例类型。有关如何选择正确的EBS优化EC2实例类型的信息，请参阅AWS[实例配置文档][aws-instance-config]。
 
-<Highlight type="note">
-This section shows how to use the AMI from within the AWS EC2 dashboard.
-However, you can also use the AMI to build an instance using tools like
-Cloudformation, Terraform, the AWS CLI, or any other AWS deployment tool that
-supports public AMIs.
-</Highlight>
+**注意：**
+此部分展示了如何在AWS EC2仪表板内使用AMI。但是，您也可以使用AMI通过Cloudformation、Terraform、AWS CLI或任何其他支持公共AMI的AWS部署工具来构建实例。
 
-<Procedure>
+### 步骤
 
-## Installing TimescaleDB from a pre-build cloud image
+### 从预构建的云映像安装TimescaleDB
 
-1.  Make sure you have an [Amazon Web Services account][aws-signup], and are
-    signed in to [your EC2 dashboard][aws-dashboard].
-1.  Navigate to `Images → AMIs`.
-1.  In the search bar, change the search to `Public images` and type _Timescale_
-    search term to find all available TimescaleDB images.
-1.  Select the image you want to use, and click `Launch instance from image`.
-    <img class="main-content__illustration"
-    width={1375} height={944}
-    src="https://assets.timescale.com/docs/images/aws_launch_ami.webp"
-    alt="Launch an AMI in AWS EC2"/>
+1.  确保您有一个[Amazon Web Services账户][aws-signup]，并且已登录到[您的EC2仪表板][aws-dashboard]。
+2.  导航到`Images → AMIs`。
+3.  在搜索栏中，将搜索更改为`Public images`并输入_Timescale_搜索词，以找到所有可用的TimescaleDB映像。
+4.  选择您想要使用的映像，并点击`Launch instance from image`。
+    ![在AWS EC2中启动AMI](https://assets.timescale.com/docs/images/aws_launch_ami.webp)
 
-</Procedure>
+完成安装后，连接到您的实例并配置数据库。有关连接到实例的信息，请参阅AWS[访问实例文档][aws-connect]。配置数据库的最简单方法是运行`timescaledb-tune`脚本，该脚本包含在`timescaledb-tools`包中。有关更多信息，请参见[配置][config]部分。
 
-After you have completed the installation, connect to your instance and
-configure your database. For information about connecting to the instance, see
-the AWS [accessing instance documentation][aws-connect]. The easiest way to
-configure your database is to run the `timescaledb-tune` script, which is included
-with the `timescaledb-tools` package. For more information, see the
-[configuration][config] section.
+**注意：**
+运行`timescaledb-tune`脚本后，您需要重新启动PostgreSQL服务以使配置更改生效。要重启服务，请运行`sudo systemctl restart postgresql.service`。
 
-<Highlight type="note">
-After running the `timescaledb-tune` script, you need to restart the PostgreSQL
-service for the configuration changes to take effect. To restart the service,
-run `sudo systemctl restart postgresql.service`.
-</Highlight>
+## 设置TimescaleDB扩展
 
-## Set up the TimescaleDB extension
+当您安装了PostgreSQL和TimescaleDB后，连接到您的实例并设置TimescaleDB扩展。
 
-When you have PostgreSQL and TimescaleDB installed, connect to your instance and
-set up the TimescaleDB extension.
+### 步骤
 
-<Procedure>
+#### 设置TimescaleDB扩展
 
-### Setting up the TimescaleDB extension
-
-1.  On your instance, at the command prompt, connect to the PostgreSQL
-    instance as the `postgres` superuser:
+1.  在您的实例上，在命令提示符下，以`postgres`超级用户身份连接到PostgreSQL实例：
 
     ```bash
     sudo -u postgres psql
     ```
 
-1.  At the prompt, create an empty database. For example, to create a database
-    called `tsdb`:
+2.  在提示符下，创建一个空数据库。例如，创建一个名为`tsdb`的数据库：
 
     ```sql
     CREATE database tsdb;
     ```
 
-1.  Connect to the database you created:
+3.  连接到您创建的数据库：
 
     ```sql
     \c tsdb
     ```
 
-1.  Add the TimescaleDB extension:
+4.  添加TimescaleDB扩展：
 
     ```sql
     CREATE EXTENSION IF NOT EXISTS timescaledb;
     ```
 
-</Procedure>
-
-You can check that the TimescaleDB extension is installed by using the `\dx`
-command at the command prompt. It looks like this:
+您可以通过在命令提示符下使用`\dx`命令来检查是否已安装TimescaleDB扩展。它看起来像这样：
 
 ```sql
 tsdb=# \dx
@@ -118,9 +85,16 @@ tsdb=# \dx
 (END)
 ```
 
-## Where to next
+## 接下来做什么
 
-<WhereTo />
+[去哪里][WhereTo]
+
+[aws-signup]: https://portal.aws.amazon.com/billing/signup  
+[aws-dashboard]: https://console.aws.amazon.com/ec2/  
+[aws-instance-config]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html  
+[aws-connect]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstances.html  
+[install-psql]: /use-timescale/:currentVersion:/connecting/psql/  
+[config]: /self-hosted/:currentVersion:/configuration/
 
 [aws-signup]: https://portal.aws.amazon.com/billing/signup
 [aws-dashboard]: https://console.aws.amazon.com/ec2/
