@@ -1,53 +1,38 @@
 ---
-title: Ongoing physical backups with Docker & WAL-E
-excerpt: Back up your Docker instance of TimescaleDB
-products: [self_hosted]
-keywords: [backups, Docker]
-tags: [restore, recovery, physical backup]
+标题: 使用 Docker 和 WAL-E 进行持续物理备份
+摘要: 备份你的 TimescaleDB 的 Docker 实例
+产品: [自托管]
+关键词: [备份，Docker]
+标签: [恢复，复原，物理备份]
 ---
 
-import Deprecation from "versionContent/_partials/_deprecated.mdx";
-import ConsiderCloud from "versionContent/_partials/_consider-cloud.mdx";
+import 弃用警告 from "versionContent/_partials/_deprecated.mdx";
+import 考虑使用云服务 from "versionContent/_partials/_consider-cloud.mdx";
 
-# Ongoing physical backups with Docker & WAL-E
 
-When you run TimescaleDB in a containerized environment, you can use
-[continuous archiving][pg archiving] with a [WAL-E][wale official] container.
-These containers are sometimes referred to as sidecars, because they run
-alongside the main container. A [WAL-E sidecar image][wale image]
-works with TimescaleDB as well as regular PostgreSQL. In this section, you
-can set up archiving to your local filesystem with a main TimescaleDB
-container called `timescaledb`, and a WAL-E sidecar called `wale`. When you are
-ready to implement this in your production deployment, you can adapt the
-instructions here to do archiving against cloud providers such as AWS S3, and
-run it in an orchestration framework such as Kubernetes.
+# 使用Docker和WAL-E进行持续物理备份
+
+当您在容器化环境中运行TimescaleDB时，可以使用[持续归档][pg archiving]功能，配合[WAL-E][wale official]容器。这些容器有时被称为边车（sidecars），因为它们与主容器一起运行。[WAL-E边车镜像][wale image]可以与TimescaleDB以及常规的PostgreSQL一起工作。在本节中，您可以将归档设置到本地文件系统，使用名为`timescaledb`的主TimescaleDB容器和名为`wale`的WAL-E边车。当您准备在生产部署中实施此方案时，可以按照这里的说明适应云服务提供商（如AWS S3）的归档，并在Kubernetes等编排框架中运行。
 
 <ConsiderCloud />
 
-## Run the TimescaleDB container in Docker
+## 在Docker中运行TimescaleDB容器
 
-To make TimescaleDB use the WAL-E sidecar for archiving, the two containers need
-to share a network. To do this, you need to create a Docker  network and then
-launch TimescaleDB with archiving turned on, using the newly created network.
-When you launch TimescaleDB, you need to explicitly set the location of the
-write-ahead log (`POSTGRES_INITDB_WALDIR`) and data directory (`PGDATA`) so that
-you can share them with the WAL-E sidecar. Both must reside in a Docker volume,
-by default a volume is created for `/var/lib/postgresql/data`. When you have
-started TimescaleDB, you can log in and create tables and data.
+要使TimescaleDB使用WAL-E边车进行归档，两个容器需要共享网络。为此，您需要创建一个Docker网络，然后使用新创建的网络启动已开启归档功能的TimescaleDB。启动TimescaleDB时，您需要明确设置预写日志（write-ahead log，`POSTGRES_INITDB_WALDIR`）和数据目录（`PGDATA`）的位置，以便与WAL-E边车共享。两者都必须位于Docker卷中，默认情况下，会为`/var/lib/postgresql/data`创建一个卷。启动TimescaleDB后，您可以登录并创建表和数据。
 
 <Deprecation />
 
 <Procedure>
 
-### Running the TimescaleDB container in Docker
+### 在Docker中运行TimescaleDB容器
 
-1.  Create the docker container:
+1.  创建docker容器：
 
     ```bash
     docker network create timescaledb-net
     ```
 
-1.  Launch TimescaleDB, with archiving turned on:
+1.  启动TimescaleDB，开启归档功能：
 
     ```bash
     docker run \
@@ -65,7 +50,7 @@ started TimescaleDB, you can log in and create tables and data.
       -cmax_wal_senders=1
     ```
 
-1.  Run TimescaleDB within Docker:
+1.  在Docker中运行TimescaleDB：
 
     ```bash
     docker exec -it timescaledb psql -U postgres
@@ -73,29 +58,18 @@ started TimescaleDB, you can log in and create tables and data.
 
 </Procedure>
 
-## Perform the backup using the WAL-E sidecar
+## 使用WAL-E边车执行备份
 
-The [WAL-E Docker image][wale image] runs a web endpoint that accepts WAL-E
-commands across an HTTP API. This allows PostgreSQL to communicate with the
-WAL-E sidecar over the internal network to trigger archiving. You can also use
-the container to invoke WAL-E directly. The Docker image accepts standard WAL-E
-environment variables to configure the archiving backend, so you can issue
-commands from services such as AWS S3. For information about configuring, see
-the official [WAL-E documentation][wale official].
+[WAL-E Docker镜像][wale image]运行一个Web端点，接受通过HTTP API发送的WAL-E命令。这允许PostgreSQL通过内部网络与WAL-E边车通信以触发归档。您也可以直接使用容器调用WAL-E。Docker镜像接受标准的WAL-E环境变量来配置归档后端，因此您可以从AWS S3等服务发出命令。有关配置信息，请参见官方[WAL-E文档][wale official]。
 
-To enable the WAL-E docker image to perform archiving, it needs to use the same
-network and data volumes as the TimescaleDB container. It also needs to know the
-location of the write-ahead log and data directories. You can pass all this
-information to WAL-E when you start it. In this example, the WAL-E image listens
-for commands on the `timescaledb-net` internal network at port 80, and writes
-backups to `~/backups` on the Docker host.
+要使WAL-E Docker镜像执行归档，它需要使用与TimescaleDB容器相同的网络和数据卷。它还需要知道预写日志和数据目录的位置。当您启动WAL-E时，可以将所有这些信息传递给它。在此示例中，WAL-E镜像在`timescaledb-net`内部网络上的端口80上侦听命令，并将备份写入Docker主机上的`~/backups`。
 
 <Procedure>
 
-### Performing the backup using the WAL-E sidecar
+### 使用WAL-E边车执行备份
 
-1.  Start the WAL-E container with the required information about the container.
-    In this example, the container is called `timescaledb-wale`:
+1.  使用有关容器的所需信息启动WAL-E容器。
+    在此示例中，容器名为`timescaledb-wale`：
 
     ```bash
     docker run \
@@ -113,15 +87,15 @@ backups to `~/backups` on the Docker host.
       timescale/timescaledb-wale:latest
     ```
 
-1.  Start the backup:
+1.  启动备份：
 
     ```bash
     docker exec wale wal-e backup-push /var/lib/postgresql/data/pg_data
     ```
 
-    Alternatively, you can start the backup using the sidecar's HTTP endpoint.
-    This requires exposing the sidecar's port 80 on the Docker host by mapping
-    it to an open port. In this example, it is mapped to port 8080:
+    或者，您可以使用边车的HTTP端点启动备份。
+    这需要将边车的端口80暴露在Docker主机上，并将其映射到一个开放的端口。
+    在此示例中，它被映射到端口8080：
 
     ```bash
     curl http://localhost:8080/backup-push
@@ -129,24 +103,20 @@ backups to `~/backups` on the Docker host.
 
 </Procedure>
 
-You should do base backups at regular intervals daily, to minimize
-the amount of WAL-E replay, and to make recoveries faster. To make new base
-backups, re-trigger a base backup as shown here, either manually or on a
-schedule. If you run TimescaleDB on Kubernetes, there is built-in support for
-scheduling cron jobs that can invoke base backups using the WAL-E container's
-HTTP API.
+您应该定期每日进行基础备份，以最小化WAL-E重播的数量，并加快恢复速度。
+要制作新的基底备份，请如上所示手动或按计划重新触发基底备份。
+如果您在Kubernetes上运行TimescaleDB，有内置的支持用于调度cron作业，这些作业可以调用WAL-E容器的HTTP API来执行基底备份。
 
-## Recovery
+## 恢复
 
-To recover the database instance from the backup archive, create a new TimescaleDB
-container, and restore the database and configuration files from the base
-backup. Then you can relaunch the sidecar and the database.
+要从备份存档中恢复数据库实例，请创建一个新的TimescaleDB容器，并从基底备份中恢复数据库和配置文件。
+然后您可以重新启动边车和数据库。
 
 <Procedure>
 
-### Restoring database files from backup
+### 从备份恢复数据库文件
 
-1.  Create the docker container:
+1.  创建docker容器：
 
     ```bash
     docker create \
@@ -158,7 +128,7 @@ backup. Then you can relaunch the sidecar and the database.
       timescale/timescaledb:latest-pg10 postgres
     ```
 
-1.  Restore the database files from the base backup:
+1.  从基底备份恢复数据库文件：
 
     ```bash
     docker run -it --rm \
@@ -170,8 +140,7 @@ backup. Then you can relaunch the sidecar and the database.
       backup-fetch /var/lib/postgresql/data/pg_data LATEST
     ```
 
-1.  Recreate the configuration files. These are backed up from the original
-    database instance:
+1.  重新创建配置文件。这些文件是从原始数据库实例中备份的：
 
     ```bash
     docker run -it --rm  \
@@ -192,7 +161,7 @@ backup. Then you can relaunch the sidecar and the database.
     sh -c 'echo "local all postgres trust" > /var/lib/postgresql/data/pg_data/pg_hba.conf'
     ```
 
-1.  Create a `recovery.conf` file that tells PostgreSQL how to recover:
+1.  创建一个`recovery.conf`文件，告诉PostgreSQL如何恢复：
 
     ```bash
     docker run -it --rm  \
@@ -204,17 +173,16 @@ backup. Then you can relaunch the sidecar and the database.
 
 </Procedure>
 
-When you have recovered the data and the configuration files, and have created a
-recovery configuration file, you can relaunch the sidecar. You might need to
-remove the old one first. When you relaunch the sidecar, it replays the last WAL
-segments that might be missing from the base backup. The you can relaunch the
-database, and check that recovery was successful.
+当您恢复了数据和配置文件，并创建了恢复配置文件后，可以重新启动边车。
+您可能需要先删除旧的边车。
+当您重新启动边车时，它会重播可能不在基底备份中的最后WAL段。
+然后您可以重新启动数据库，并检查恢复是否成功。
 
 <Procedure>
 
-### Relaunch the recovered database
+### 重新启动已恢复的数据库
 
-1.  Relaunch the WAL-E sidecar:
+1. 重新启动WAL-E辅助容器：
 
     ```bash
     docker run \
@@ -232,25 +200,22 @@ database, and check that recovery was successful.
       timescale/timescaledb-wale:latest
     ```
 
-1.  Relaunch the TimescaleDB docker container:
+2. 重新启动TimescaleDB docker容器：
 
     ```bash
     docker start timescaledb-recovered
     ```
 
-1.  Verify that the database started up and recovered successfully:
+3. 验证数据库是否成功启动和恢复：
 
     ```bash
     docker logs timescaledb-recovered
     ```
 
-    Don't worry if you see some archive recovery errors in the log at this
-    stage. This happens because the recovery is not completely finalized until
-    no more files can be found in the archive. See the PostgreSQL documentation
-    on [continuous archiving][pg archiving] for more information.
+    如果在日志中看到一些归档恢复错误，请不要担心。这是因为直到在归档中找不到更多文件之前，恢复操作并未完全结束。有关更多信息，请参见PostgreSQL文档中的[持续归档][pg archiving]。
 
 </Procedure>
 
-[pg archiving]: https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-PITR-RECOVERY
-[wale image]: https://hub.docker.com/r/timescale/timescaledb-wale
+[pg archiving]: https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-PITR-RECOVERY 
+[wale image]: https://hub.docker.com/r/timescale/timescaledb-wale 
 [wale official]: https://github.com/wal-e/wal-e
