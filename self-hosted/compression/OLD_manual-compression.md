@@ -1,37 +1,34 @@
 ---
-title: Manual compression
-excerpt: Manually compress a hypertable
-products: [self_hosted]
-keywords: [compression, hypertables]
+标题: 手动压缩
+摘要: 手动压缩超表
+产品: [自托管]
+关键词: [压缩，超表]
 ---
 
-# Manually compress chunks
 
-In most cases, an automated compression policy is sufficient. However, if you
-want more control over compression, you can also manually compress specific
-chunks.
+# 手动压缩块
 
-## Compress chunks manually
+在大多数情况下，自动压缩策略就足够了。但是，如果您想要更多地控制压缩，您也可以手动压缩特定的块。
 
-Before you start, you need a list of chunks to compress. In this example, you
-use a hypertable called `example`, and compress chunks older than three days.
+## 手动压缩块
+
+开始之前，您需要一个要压缩的块列表。在这个例子中，您使用一个名为`example`的超表，并压缩三天以前的块。
 
 <Highlight type="warning">
-Compression alters data on your disk, so always back up before you start.
+压缩会改变您磁盘上的数据，因此在开始之前请务必备份。
 </Highlight>
 
 <Procedure>
 
-### Selecting chunks to compress
+### 选择要压缩的块
 
-1.  At the psql prompt, select all chunks in the table `example` that are older
-    than three days:
+1. 在psql提示符下，选择表`example`中所有三天以前的块：
 
     ```sql
     SELECT show_chunks('example', older_than => INTERVAL '3 days');
     ```
 
-1.  This returns a list of chunks. Take a note of the chunk names:
+1. 这会返回一个块列表。记下块的名称：
 
     ```sql
     ||show_chunks|
@@ -42,46 +39,41 @@ Compression alters data on your disk, so always back up before you start.
 
 </Procedure>
 
-When you are happy with the list of chunks, you can use the chunk names to
-manually compress each one.
+当您对块列表满意后，您可以使用块名称手动压缩每个块。
 
 <Procedure>
 
-### Compressing chunks manually
+### 手动压缩块
 
-1.  At the psql prompt, compress the chunk:
+1. 在psql提示符下，压缩块：
 
     ```sql
     SELECT compress_chunk( '<chunk_name>');
     ```
 
-1.  Check the results of the compression with this command:
+1. 使用此命令检查压缩结果：
 
     ```sql
     SELECT *
     FROM chunk_compression_stats('example');
     ```
 
-    The results show the chunks for the given hypertable, their compression
-    status, and some other statistics:
+    结果显示给定超表的块、它们的压缩状态和其他一些统计信息：
 
     ```sql
     |chunk_schema|chunk_name|compression_status|before_compression_table_bytes|before_compression_index_bytes|before_compression_toast_bytes|before_compression_total_bytes|after_compression_table_bytes|after_compression_index_bytes|after_compression_toast_bytes|after_compression_total_bytes|node_name|
-    |---|---|---|---|---|---|---|---|---|---|---|---|
+    |---|---|---|---|---|---|---|---|---|---|---|
     |_timescaledb_internal|_hyper_1_1_chunk|Compressed|8192 bytes|16 kB|8192 bytes|32 kB|8192 bytes|16 kB|8192 bytes|32 kB||
     |_timescaledb_internal|_hyper_1_20_chunk|Uncompressed||||||||||
     ```
 
-1.  Repeat for all chunks you want to compress.
+1. 重复此过程以压缩所有您想要压缩的块。
 
 </Procedure>
 
-## Manually compress chunks in a single command
+## 单条命令手动压缩块
 
-Alternatively, you can select the chunks and compress them in a single command
-by using the output of the `show_chunks` command to compress each one. For
-example, use this command to compress chunks between one and three weeks old
-if they are not already compressed:
+或者，您可以选择块并使用单条命令压缩它们，方法是使用`show_chunks`命令的输出来压缩每个块。例如，使用此命令压缩一周到三周之间的块（如果它们尚未被压缩）：
 
 ```sql
 SELECT compress_chunk(i, if_not_compressed => true)
@@ -93,24 +85,14 @@ SELECT compress_chunk(i, if_not_compressed => true)
 ```
 
 <Highlight type="note">
-If you have already set a compression policy using
-`compress_chunk_time_interval`, and you then use `compress_chunk` without
-specific parameters to perform a manual compression, the manual compression
-honors the time interval previously set in the policy.
+如果您已经使用`compress_chunk_time_interval`设置了压缩策略，然后您在不指定特定参数的情况下使用`compress_chunk`进行手动压缩，手动压缩将遵循之前在策略中设置的时间间隔。
 </Highlight>
 
-## Roll up uncompressed chunks when compressing
+## 压缩时归档未压缩的块
 
-In Timescale&nbsp;2.9 and later, you can roll up multiple uncompressed chunks into
-a previously compressed chunk as part of your compression procedure. This allows
-you to have much smaller uncompressed chunk intervals, which reduces the disk
-space used for uncompressed data. For example, if you have multiple smaller
-uncompressed chunks in your data, you can roll them up into a single compressed
-chunk.
+在Timescale 2.9及更高版本中，您可以在压缩过程中将多个未压缩的块归档到之前压缩过的块中。这允许您拥有更小的未压缩块间隔，从而减少未压缩数据使用的磁盘空间。例如，如果您的数据中有多个较小的未压缩块，您可以将它们归档到一个单一的压缩块中。
 
-To roll up your uncompressed chunks into a compressed chunk, alter the compression
-settings to set the compress chunk time interval, and run compression operations
-to roll up the chunks while compressing.
+要将未压缩的块归档到压缩块中，请修改压缩设置以设置压缩块时间间隔，并运行压缩操作以在压缩时归档块。
 
 ```sql
 ALTER TABLE example SET (timescaledb.compress_chunk_time_interval = '<time_interval>');
@@ -121,7 +103,5 @@ SELECT compress_chunk(c, if_not_compressed => true)
     ) c;
 ```
 
-The time interval you choose must be a multiple of the uncompressed chunk
-interval. For example, if your uncompressed chunk interval is one week, your
-`<time_interval>` of the compressed chunk could be two weeks, or six weeks, but
-not one month.
+您选择的时间间隔必须是未压缩块间隔的倍数。例如，如果您的未压缩块间隔是一周，您的压缩块的`<time_interval>`可以是两周或六周，但不是一个月。
+
