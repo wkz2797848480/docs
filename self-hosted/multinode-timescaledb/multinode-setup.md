@@ -1,78 +1,61 @@
 ---
-title: Set up multi-node on self-hosted TimescaleDB
-excerpt: How to set up a self-hosted multi-node instance
-products: [self_hosted]
-keywords: [multi-node, self-hosted]
+标题: 在自托管的 TimescaleDB 上搭建多节点
+摘要: 如何搭建自托管的多节点实例
+产品: [自托管]
+关键词: [多节点，自托管]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Set up multi-node on self-hosted TimescaleDB
+# 在自托管的TimescaleDB上设置多节点
 
-To set up multi-node on a self-hosted TimescaleDB instance, you need:
+要在自托管的TimescaleDB实例上设置多节点，您需要：
 
-*   A PostgreSQL instance to act as an access node (AN)
-*   One or more PostgreSQL instances to act as data nodes (DN)
-*   TimescaleDB [installed][install] and [set up][setup] on all nodes
-*   Access to a superuser role, such as `postgres`, on all nodes
+*   一个作为访问节点（AN）的PostgreSQL实例
+*   一个或多个作为数据节点（DN）的PostgreSQL实例
+*   所有节点上[安装][install]并[设置][setup]了TimescaleDB
+*   所有节点上的超级用户角色访问权限，例如`postgres`
 
-The access and data nodes must begin as individual TimescaleDB instances.
-They should be hosts with a running PostgreSQL server and a loaded TimescaleDB
-extension. For more information about installing self-hosted TimescaleDB
-instances, see the [installation instructions][install]. Additionally, you
-can configure [high availability with multi-node][multi-node-ha] to
-increase redundancy and resilience.
+访问节点和数据节点必须作为单独的TimescaleDB实例开始。它们应该是具有运行中的PostgreSQL服务器和加载的TimescaleDB扩展的主机。有关安装自托管TimescaleDB实例的更多信息，请参见[安装说明][install]。此外，您还可以配置[多节点的高可用性][multi-node-ha]以增加冗余和弹性。
 
-The multi-node TimescaleDB architecture consists of an access node (AN) which
-stores metadata for the distributed hypertable and performs query planning
-across the cluster, and a set of data nodes (DNs) which store subsets of the
-distributed hypertable dataset and execute queries locally. For more information
-about the multi-node architecture, see [about multi-node][about-multi-node].
+多节点TimescaleDB架构由存储分布式超表元数据并执行集群内查询规划的访问节点（AN）和存储分布式超表数据子集并本地执行查询的数据节点（DN）组成。有关多节点架构的更多信息，请参见[关于多节点][about-multi-node]。
 
-If you intend to use continuous aggregates in your multi-node environment, check
-the additional considerations in the [continuous aggregates][caggs] section.
+如果您打算在多节点环境中使用连续聚合，请查看[连续聚合][caggs]部分的额外考虑事项。
 
-## Set up multi-node on self-hosted TimescaleDB
+## 在自托管的TimescaleDB上设置多节点
 
-When you have installed TimescaleDB on the access node and as many data nodes as
-you require, you can set up multi-node and create a distributed hypertable.
+当您在访问节点上安装了TimescaleDB，并根据您的需要设置了多个数据节点后，您可以设置多节点并创建分布式超表。
 
 <Highlight type="note">
-Before you begin, make sure you have considered what partitioning method you
-want to use for your multi-node cluster. For more information about multi-node
-and architecture, see the
-[About multi-node section](/self-hosted/latest/multinode-timescaledb/about-multinode/).
+在开始之前，请确保您已经考虑了要为您的多节点集群使用哪种分区方法。有关多节点和架构的更多信息，请参见[关于多节点部分](/self-hosted/latest/multinode-timescaledb/about-multinode/)。
 </Highlight>
 
 <Procedure>
 
-### Setting up multi-node on self-hosted TimescaleDB
+### 在自托管的TimescaleDB上设置多节点
 
-1.  On the access node (AN), run this command and provide the hostname of the
-    first data node (DN1) you want to add:
+1.  在访问节点（AN）上，运行此命令并提供您想要添加的第一个数据节点（DN1）的主机名：
 
     ```sql
     SELECT add_data_node('dn1', 'dn1.example.com')
     ```
 
-1.  Repeat for all other data nodes:
+1.  对所有其他数据节点重复此操作：
 
     ```sql
     SELECT add_data_node('dn2', 'dn2.example.com')
     SELECT add_data_node('dn3', 'dn3.example.com')
     ```
 
-1.  On the access node, create the distributed hypertable with your chosen
-    partitioning. In this example, the distributed hypertable is called
-    `example`, and it is partitioned on `time` and `location`:
+1.  在访问节点上，使用您选择的分区方法创建分布式超表。在这个例子中，分布式超表称为`example`，它根据`time`和`location`进行分区：
 
     ```sql
     SELECT create_distributed_hypertable('example', 'time', 'location');
     ```
 
-1.  Insert some data into the hypertable. For example:
+1.  向超表中插入一些数据。例如：
 
     ```sql
     INSERT INTO example VALUES ('2020-12-14 13:45', 1, '1.2.3.4');
@@ -80,8 +63,7 @@ and architecture, see the
 
 </Procedure>
 
-When you have set up your multi-node installation, you can configure your
-cluster. For more information, see the [configuration section][configuration].
+当您设置好多节点安装后，您可以配置您的集群。有关更多信息，请参见[配置部分][configuration]。
 
 [about-multi-node]: /self-hosted/:currentVersion:/multinode-timescaledb/about-multinode/
 [caggs]: /use-timescale/:currentVersion:/continuous-aggregates/about-continuous-aggregates/#using-continuous-aggregates-in-a-multi-node-environment
@@ -89,3 +71,4 @@ cluster. For more information, see the [configuration section][configuration].
 [install]: /self-hosted/latest/install/
 [multi-node-ha]: /self-hosted/:currentVersion:/multinode-timescaledb/multinode-ha/
 [setup]: /self-hosted/:currentVersion:/install/
+
