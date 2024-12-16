@@ -1,25 +1,15 @@
 ---
-title: Embed your PostgreSQL data with PgVectorizer
-excerpt: Create and sync vector embeddings from data in PostgreSQL with PgVectorizer
-products: [cloud]
-keywords: [ai, vector, pgvector, timescale vector, pgvectorizer]
-tags: [ai, vector, pgvectorizer]
+标题: 使用 PgVectorizer 嵌入你的 PostgreSQL 数据
+摘要: 使用 PgVectorizer 从 PostgreSQL 中的数据创建并同步向量嵌入
+产品: [云服务]
+关键词: [人工智能, 向量, pgvector, 时间序列向量, pgvectorizer]
+标签: [人工智能, 向量, pgvectorizer]
 ---
+## 使用 PgVectorizer 嵌入 PostgreSQL 数据
 
-## Embed PostgreSQL data with PgVectorizer
+PgVectorizer 使您能够从已经存储在 PostgreSQL 中的任何数据创建向量嵌入。您可以在[博客文章](https://www.timescale.com/blog/a-complete-guide-to-creating-and-storing-embeddings-for-postgresql-data/)中获得更多背景信息，该文章宣布了这一特性，以及[“我们如何构建它”](https://www.timescale.com/blog/how-we-designed-a-resilient-vector-embedding-creation-system-for-postgresql-data/)的文章，深入介绍了设计细节。
 
-PgVectorizer enables you to create vector embeddings from any data that
-you already have stored in PostgreSQL. You can get more background
-information in the [blog
-post](https://www.timescale.com/blog/a-complete-guide-to-creating-and-storing-embeddings-for-postgresql-data/)
-announcing this feature, as well as the ["how we built
-it"](https://www.timescale.com/blog/how-we-designed-a-resilient-vector-embedding-creation-system-for-postgresql-data/)
-post going into the details of the design.
-
-To create vector embeddings, simply attach PgVectorizer to any PostgreSQL
-table to automatically sync that table's data with a set of
-embeddings stored in PostgreSQL. For example, say you have a
-blog table defined in the following way:
+要创建向量嵌入，只需将 PgVectorizer 附加到任何 PostgreSQL 表上，即可自动同步该表的数据与存储在 PostgreSQL 中的一组嵌入。例如，假设您有一个如下定义的博客表：
 
 ``` python
 import psycopg2
@@ -46,7 +36,7 @@ with psycopg2.connect(service_url) as conn:
         ''')
 ```
 
-You can insert some data as follows:
+你可以如下插入一些数据：
 
 ``` python
 with psycopg2.connect(service_url) as conn:
@@ -56,10 +46,7 @@ with psycopg2.connect(service_url) as conn:
         ''')
 ```
 
-Now, say you want to embed these blogs and store the embeddings in PostgreSQL. First, you
-need to define an `embed_and_write` function that takes a set of blog
-posts, creates the embeddings, and writes them into TimescaleVector. For
-example, if using LangChain, it could look something like the following.
+现在，假设你想嵌入这些博客并将嵌入存储在 PostgreSQL 中。首先，你需要定义一个 embed_and_write 函数，该函数接受一组博客文章，创建嵌入，并将它们写入 TimescaleVector。例如，如果使用 LangChain，它可能看起来像下面这样。
 
 ``` python
 def get_document(blog):
@@ -89,14 +76,14 @@ def embed_and_write(blog_instances, vectorizer):
         time_partition_interval=timedelta(days=30),
     )
 
-    # delete old embeddings for all ids in the work queue. locked_id is a special column that is set to the primary key of the table being
-    # embedded. For items that are deleted, it is the only key that is set.
+    # 删除工作队列中所有 id 的旧嵌入。locked_id 是一个特殊列，设置为被嵌入表的主键。
+    # 对于被删除的项目，它是唯一设置的键。
     metadata_for_delete = [{"blog_id": blog['locked_id']} for blog in blog_instances]
     vector_store.delete_by_metadata(metadata_for_delete)
 
     documents = []
     for blog in blog_instances:
-        # skip blogs that are not published yet, or are deleted (in which case the column is NULL)
+        # 跳过尚未发布的博客，或者已删除的博客（在这种情况下，列是 NULL）
         if blog['published_time'] != None:
             documents.extend(get_document(blog))
 
@@ -109,22 +96,17 @@ def embed_and_write(blog_instances, vectorizer):
     vector_store.add_texts(texts, metadatas, ids)
 ```
 
-Then, all you have to do is run the following code in a scheduled job
-(cron job, Lambda job, etc):
+然后，你只需要在计划任务中运行以下代码（cron 任务、Lambda 任务等）：
 
 ``` python
-# this job should be run on a schedule
+# 这个任务应该按计划运行
 vectorizer = pgvectorizer.Vectorize(service_url, 'blog')
 while vectorizer.process(embed_and_write) > 0:
     pass
 ```
 
-Every time that job runs, it syncs the table with your embeddings. It
-syncs all inserts, updates, and deletes to an embeddings table called
-`blog_embedding`.
-
-Now, you can simply search the embeddings as follows (again, using
-LangChain in the example):
+每次运行该任务时，它都会将表与你的嵌入同步。它将所有插入、更新和删除同步到一个名为 blog_embedding 的嵌入表中。
+现在，你可以简单地按照以下方式搜索嵌入（再次使用 LangChain 作为示例）：
 
 ``` python
 embedding = OpenAIEmbeddings()
@@ -139,7 +121,5 @@ res = vector_store.similarity_search_with_score("Blogs about cats")
 res
 ```
 
-    [(Document(page_content='Author Matvey Arye, title: First Post, contents:some super interesting content about cats.', metadata={'id': '4a784000-4bc4-11eb-855a-06302dbc8ce7', 'author': 'Matvey Arye', 'blog_id': 1, 'category': 'AI', 'published_time': '2021-01-01T00:00:00+00:00'}),
-      0.12595687795193833)]
-
+    [(Document(page_content='作者 Matvey Arye, 标题: 第一篇帖子, 内容:一些关于猫的非常有趣的内容。', metadata={'id': '4a784000-4bc4-11eb-855a-06302dbc8ce7', '作者': 'Matvey Arye', '博客_id': 1, '类别': 'AI', '发布时间': '2021-01-01T00:00:00+00:00'}),0.12595687795193833)]
 
