@@ -1,87 +1,78 @@
 ---
-title: Migrate data to Timescale from InfluxDB
-excerpt: Migrate data into Timescale using the Outflux tool
-products: [self_hosted]
-keywords: [data migration, InfluxDB]
-tags: [import, Outflux]
+标题: 将数据从 InfluxDB 迁移至 Timescale
+摘要: 使用 Outflux 工具将数据迁移至 Timescale
+产品: [自托管]
+关键词: [数据迁移，InfluxDB]
+标签: [导入，Outflux]
 ---
 
-# Migrate data to Timescale from InfluxDB
+# 从 InfluxDB 迁移数据到 Timescale
 
-You can migrate data to Timescale from InfluxDB using the Outflux tool.
-[Outflux][outflux] is an open source tool built by Timescale for fast, seamless
-migrations. It pipes exported data directly to Timescale, and manages schema
-discovery, validation, and creation.
+您可以使用 Outflux 工具将数据从 InfluxDB 迁移到 Timescale。
+[Outflux][outflux] 是由 Timescale 构建的开源工具，用于快速、无缝的迁移。
+它直接将导出的数据管道传输到 Timescale，并管理模式发现、验证和创建。
 
 <Highlight type="important">
 
-Outflux works with earlier versions of InfluxDB. It does not work with InfluxDB
-version 2 and later.
+Outflux 适用于 InfluxDB 的早期版本。它不适用于 InfluxDB 版本 2 及更高版本。
 
 </Highlight>
 
-## Prerequisites
+## 前提条件
 
-Before you start, make sure you have:
+开始之前，请确保您有：
 
-*   A running instance of InfluxDB and a means to connect to it.
-*   An [installation of Timescale][install] and a means to connect to it.
-*   Data in your InfluxDB instance. 
+*   一个运行中的 InfluxDB 实例以及连接到它的方法。
+*   一个[安装好的 Timescale][install]实例以及连接到它的方法。
+*   InfluxDB 实例中的数据。
 
-## Procedures
+## 程序
 
-To import data from Outflux, follow these procedures:
+从 Outflux 导入数据，请按照以下程序操作：
 
-1.  [Install Outflux][install-outflux]
-1.  [Discover, validate, and transfer schema][discover-validate-and-transfer-schema] to Timescale (optional)
-1.  [Migrate data to Timescale][migrate-data-to-timescale]
+1.  [安装 Outflux][install-outflux]
+2.  [发现、验证并转移模式][discover-validate-and-transfer-schema]到 Timescale（可选）
+3.  [将数据迁移到 Timescale][migrate-data-to-timescale]
 
-## Install Outflux
+## 安装 Outflux
 
-Install Outflux from the GitHub repository. There are builds for Linux, Windows,
-and MacOS.
+从 GitHub 仓库安装 Outflux。有适用于 Linux、Windows 和 MacOS 的构建版本。
 
 <Procedure>
 
-### Installing Outflux
+### 安装 Outflux
 
-1.  Go to the [releases section][outflux-releases] of the Outflux repository.
-1.  Download the latest compressed tarball for your platform.
-1.  Extract it to a preferred location.
+1.  转到 Outflux 仓库的[发布部分][outflux-releases]。
+2.  下载适用于您的平台的最新压缩 tarball。
+3.  将其提取到您喜欢的地点。
 
 <Highlight type="note">
 
-If you prefer to build Outflux from source, see the [Outflux README][outflux-readme] for
-instructions.
+如果您更喜欢从源代码构建 Outflux，请参见[Outflux README][outflux-readme]中的说明。
 
 </Highlight>
 
 </Procedure>
 
-To get help with Outflux, run `./outflux --help` from the directory
-where you installed it.
+要从安装目录获取 Outflux 的帮助，运行 `./outflux --help`。
 
-## Discover, validate, and transfer schema
+## 发现、验证并转移模式
 
-Outflux can:
+Outflux 可以：
 
-*   Discover the schema of an InfluxDB measurement
-*   Validate whether a Timescale table exists that can hold the transferred
-    data
-*   Create a new table to satisfy the schema requirements if no valid table
-    exists
+*   发现 InfluxDB 测量的模式
+*   验证是否存在可以容纳传输数据的 Timescale 表
+*   如果不存在有效表，则创建一个新表以满足模式要求
 
 <Highlight type="note">
 
-Outflux's `migrate` command does schema transfer and data migration in one step.
-For more information, see the [migrate][migrate-data-to-timescale] section.
-Use this section if you want to validate and transfer your schema independently
-of data migration.
+Outflux 的 `migrate` 命令将模式转移和数据迁移合并为一步。
+有关更多信息，请参见[迁移数据到 Timescale][migrate-data-to-timescale]部分。
+如果您想独立于数据迁移来验证和转移您的模式，请使用此部分。
 
 </Highlight>
 
-To transfer your schema from InfluxDB to Timescale, run `outflux
-schema-transfer`:
+要从 InfluxDB 到 Timescale 传输您的模式，运行 `outflux schema-transfer`：
 
 ```bash
 outflux schema-transfer <DATABASE_NAME> <INFLUX_MEASUREMENT_NAME> \
@@ -89,46 +80,34 @@ outflux schema-transfer <DATABASE_NAME> <INFLUX_MEASUREMENT_NAME> \
 --output-conn="dbname=tsdb user=tsdbadmin"
 ```
 
-To transfer all measurements from the database, leave out the measurement name
-argument.
+要传输数据库中的所有测量，请省略测量名称参数。
 
 <Highlight type="note">
 
-This example uses the `postgres` user and database to connect to the Timescale
-database. For other connection options and configuration, see the [Outflux
-Github repo][outflux-gitbuh].
+此示例使用 `postgres` 用户和数据库连接到 Timescale 数据库。
+有关其他连接选项和配置，请参见[Outflux Github 仓库][outflux-gitbuh]。
 
 </Highlight>
 
-### Schema transfer options
+### 模式转移选项
 
-Outflux's `schema-transfer` can use 1 of 4 schema strategies:
+Outflux 的 `schema-transfer` 可以使用 4 种模式策略之一：
 
-*   `ValidateOnly`: checks that Timescale is installed and that the specified
-    database has a properly partitioned hypertable with the correct columns, but
-    doesn't perform modifications
-*   `CreateIfMissing`: runs the same checks as `ValidateOnly`, and creates and
-    properly partitions any missing hypertables
-*   `DropAndCreate`: drops any existing table with the same name as the
-    measurement, and creates a new hypertable and partitions it properly
-*   `DropCascadeAndCreate`: performs the same action as `DropAndCreate`, and
-    also executes a cascade table drop if there is an existing table with the
-    same name as the measurement
+*   `ValidateOnly`：检查是否安装了 Timescale 以及指定的数据库是否有正确列的适当分区的超表，但不执行修改
+*   `CreateIfMissing`：运行与 `ValidateOnly` 相同的检查，并创建并正确分区任何缺失的超表
+*   `DropAndCreate`：删除任何与测量名称相同的现有表，并创建一个新的超表并正确分区
+*   `DropCascadeAndCreate`：执行与 `DropAndCreate` 相同的操作，并在存在与测量名称相同的现有表时执行级联表删除
 
-You can specify your schema strategy by passing a value to the
-`--schema-strategy` option in the `schema-transfer` command. The default
-strategy is `CreateIfMissing`.
+您可以通过在 `schema-transfer` 命令中传递 `--schema-strategy` 选项的值来指定您的模式策略。默认策略是 `CreateIfMissing`。
 
-By default, each tag and field in InfluxDB is treated as a separate column in
-your Timescale tables. To transfer tags and fields as a single JSONB column,
-use the flag `--tags-as-json`.
+默认情况下，InfluxDB 中的每个标签和字段都被视为 Timescale 表中的单独列。
+要将标签和字段作为单个 JSONB 列传输，使用 `--tags-as-json` 标志。
 
-## Migrate data to Timescale
+## 将数据迁移到 Timescale
 
-Transfer your schema and migrate your data all at once with the `migrate`
-command.
+使用 `migrate` 命令一次性传输您的模式并迁移您的数据。
 
-For example, run:
+例如，运行：
 
 ```bash
 outflux migrate <DATABASE_NAME> <INFLUX_MEASUREMENT_NAME> \
@@ -136,35 +115,30 @@ outflux migrate <DATABASE_NAME> <INFLUX_MEASUREMENT_NAME> \
 --output-conn="dbname=tsdb user=tsdbadmin"
 ```
 
-The schema strategy and connection options are the same as for
-`schema-transfer`. For more information, see 
-[Discover, validate, and transfer schema][discover-validate-and-transfer-schema].
+模式策略和连接选项与 `schema-transfer` 相同。
+有关更多信息，请参见[发现、验证并转移模式][discover-validate-and-transfer-schema]。
 
-In addition, `outflux migrate` also takes the following flags:
+此外，`outflux migrate` 还接受以下标志：
 
-*   `--limit`: Pass a number, `N`, to `--limit` to export only the first `N`
-    rows, ordered by time.
-*   `--from` and `to`: Pass a timestamp to `--from` or `--to` to specify a time
-    window of data to migrate.
-*   `chunk-size`: Changes the size of data chunks transferred. Data is pulled
-    from the InfluxDB server in chunks of default size 15 000.
-*   `batch-size`: Changes the number of rows in an insertion batch. Data is
-    inserted into Timescale in batches that are 8000 rows by default.
+*   `--limit`：传递一个数字 `N` 到 `--limit` 以仅导出前 `N` 行，按时间排序。
+*   `--from` 和 `--to`：传递一个时间戳到 `--from` 或 `--to` 以指定要迁移的数据的时间窗口。
+*   `chunk-size`：更改传输的数据块大小。数据以默认大小 15,000 的块从 InfluxDB 服务器拉取。
+*   `batch-size`：更改插入批处理中的行数。数据默认以 8000 行为一批插入 Timescale。
 
-For more flags, see the [Github documentation for `outflux
-migrate`][outflux-migrate]. Alternatively, see the command line help:
+有关更多标志，请参见 [Github 上的 `outflux migrate` 文档][outflux-migrate]。
+或者，查看命令行帮助：
 
 ```bash
 outflux migrate --help
 ```
 
-[influx-cmd]: https://docs.influxdata.com/influxdb/v1.7/tools/shell/
+[influx-cmd]: https://docs.influxdata.com/influxdb/v1.7/tools/shell/ 
 [install]: /getting-started/:currentVersion:/
-[outflux-migrate]: https://github.com/timescale/outflux#migrate
-[outflux-releases]: https://github.com/timescale/outflux/releases
-[outflux]: https://github.com/timescale/outflux
+[outflux-migrate]: https://github.com/timescale/outflux#migrate 
+[outflux-releases]: https://github.com/timescale/outflux/releases 
+[outflux]: https://github.com/timescale/outflux 
 [install-outflux]: /self-hosted/:currentVersion:/migration/migrate-influxdb/#install-outflux
 [discover-validate-and-transfer-schema]: /self-hosted/:currentVersion:/migration/migrate-influxdb/#discover-validate-and-transfer-schema
 [migrate-data-to-timescale]: /self-hosted/:currentVersion:/migration/migrate-influxdb/#migrate-data-to-timescale
-[outflux-gitbuh]: https://github.com/timescale/outflux#connection
+[outflux-gitbuh]: https://github.com/timescale/outflux#connection 
 [outflux-readme]: https://github.com/timescale/outflux/blob/master/README.md
