@@ -1,181 +1,89 @@
 ---
-title: High availability with multi-node
-excerpt: How to configure multi-node TimescaleDB for high availability
-products: [self_hosted]
-keywords: [multi-node, high availability]
+标题: 多节点实现高可用性
+摘要: 如何配置多节点 TimescaleDB 以实现高可用性
+产品: [自托管]
+关键词: [多节点，高可用性]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# High availability with multi-node
+# 多节点的高可用性
 
-A multi-node installation of TimescaleDB can be made highly available
-by setting up one or more standbys for each node in the cluster, or by
-natively replicating data at the chunk level.
+通过为集群中的每个节点设置一个或多个备用节点，或在块级别本地复制数据，可以使TimescaleDB的多节点安装具有高可用性。
 
-Using standby nodes relies on streaming replication and you set it up
-in a similar way to [configuring single-node HA][single-ha], although the
-configuration needs to be applied to each node independently.
+使用备用节点依赖于流复制，您需要类似地[配置单节点HA][single-ha]，尽管配置需要独立应用于每个节点。
 
-To replicate data at the chunk level, you can use the built-in
-capabilities of multi-node TimescaleDB to avoid having to
-replicate entire data nodes. The access node still relies on a
-streaming replication standby, but the data nodes need no additional
-configuration. Instead, the existing pool of data nodes share
-responsibility to host chunk replicas and handle node failures.
+要在块级别复制数据，您可以使用TimescaleDB多节点的内置功能，避免复制整个数据节点。访问节点仍然依赖于流复制备用节点，但数据节点不需要额外配置。相反，现有的数据节点池共同负责托管块副本，并处理节点故障。
 
-There are advantages and disadvantages to each approach.
-Setting up standbys for each node in the cluster ensures that
-standbys are identical at the instance level, and this is a tried
-and tested method to provide high availability. However, it also
-requires more setting up and maintenance for the mirror cluster.
+每种方法都有优点和缺点。为集群中的每个节点设置备用节点确保备用节点在实例级别是相同的，这是提供高可用性的经过验证和测试的方法。然而，它也需要更多的设置和维护镜像集群。
 
-Native replication typically requires less resources, nodes, and
-configuration, and takes advantage of built-in capabilities, such as
-adding and removing data nodes, and different replication factors on
-each distributed hypertable. However, only chunks are replicated on
-the data nodes.
+本地复制通常需要更少的资源、节点和配置，并利用内置功能，如添加和删除数据节点，以及每个分布式超表的不同复制因子。然而，只有在数据节点上复制块。
 
-The rest of this section discusses native replication. To set up
-standbys for each node, follow the instructions for [single node
-HA][single-ha].
+本节的其余部分讨论本地复制。要为每个节点设置备用节点，请按照[单节点HA][single-ha]的说明操作。
 
-## Native replication
+## 本地复制
 
-Native replication is a set of capabilities and APIs that allow you to
-build a highly available multi-node TimescaleDB installation. At the
-core of native replication is the ability to write copies of a chunk
-to multiple data nodes in order to have alternative _chunk replicas_
-in case of a data node failure. If one data node fails, its chunks
-should be available on at least one other data node. If a data node is
-permanently lost, a new data node can be added to the cluster, and
-lost chunk replicas can be re-replicated from other data nodes to
-reach the number of desired chunk replicas.
+本地复制是一组功能和API，允许您构建高可用的TimescaleDB多节点安装。本地复制的核心是能够将块的副本写入多个数据节点，以便在数据节点故障时有备用的_块副本_。如果一个数据节点失败，它的块应该至少在另一个数据节点上可用。如果一个数据节点永久丢失，可以向集群中添加一个新的数据节点，并且可以从其他数据节点重新复制丢失的块副本以达到所需的块副本数量。
 
 <Highlight type="warning">
-Native replication in TimescaleDB is under development and
-currently lacks functionality for a complete high-availability
-solution. Some functionality described in this section is still
-experimental. For production environments, we recommend setting up
-standbys for each node in a multi-node cluster.
+TimescaleDB中的本地复制正在开发中，目前缺乏完整的高可用性解决方案的功能。本节描述的某些功能仍然是实验性的。对于生产环境，我们建议为多节点集群中的每个节点设置备用节点。
 </Highlight>
 
-### Automation
+### 自动化
 
-Similar to how high-availability configurations for single-node
-PostgreSQL uses a system like Patroni for automatically handling
-fail-over, native replication requires an external entity to
-orchestrate fail-over, chunk re-replication, and data node
-management. This orchestration is _not_ provided by default in
-TimescaleDB and therefore needs to be implemented separately. The
-sections below describe how to enable native replication and the steps
-involved to implement high availability in case of node failures.
+类似于单节点PostgreSQL的高可用性配置使用Patroni等系统自动处理故障转移，本地复制需要一个外部实体来协调故障转移、块重新复制和数据节点管理。这种编排不是TimescaleDB默认提供的，因此需要单独实现。下面的部分描述了如何启用本地复制以及实现节点故障时高可用性的步骤。
 
-### Configuring native replication
+### 配置本地复制
 
-The first step to enable native replication is to configure a standby
-for the access node. This process is identical to setting up a [single
-node standby][single-ha].
+启用本地复制的第一步是为访问节点配置一个备用节点。这个过程与设置[单节点备用节点][single-ha]相同。
 
-The next step is to enable native replication on a distributed
-hypertable. Native replication is governed by the
-`replication_factor`, which determines how many data nodes a chunk is
-replicated to. This setting is configured separately for each
-hypertable, which means the same database can have some distributed
-hypertables that are replicated and others that are not.
+下一步是在分布式超表上启用本地复制。本地复制由`replication_factor`控制，它决定了块复制到多少个数据节点。此设置需要为每个超表单独配置，这意味着同一个数据库可以有一些被复制的分布式超表和其他未被复制的超表。
 
-By default, the replication factor is set to `1`, so there is no
-native replication. You can increase this number when you create the
-hypertable. For example, to replicate the data across a total of three
-data nodes:
+默认情况下，复制因子设置为`1`，因此没有本地复制。您可以在创建超表时增加这个数字。例如，要在总共三个数据节点上复制数据：
 
 ```sql
 SELECT create_distributed_hypertable('conditions', 'time', 'location',
  replication_factor => 3);
 ```
 
-Alternatively, you can use the
-[`set_replication_factor`][set_replication_factor] call to change the
-replication factor on an existing distributed hypertable. Note,
-however, that only new chunks are replicated according to the
-updated replication factor. Existing chunks need to be re-replicated
-by copying those chunks to new data nodes (see the [node
-failures section](#node-failures) below).
+或者，您可以使用[`set_replication_factor`][set_replication_factor]调用来更改现有分布式超表上的复制因子。注意，只有新的块根据更新的复制因子复制。现有的块需要通过将这些块复制到新的数据节点来重新复制（见下文的[节点故障部分](#node-failures)）。
 
-When native replication is enabled, the replication happens whenever
-you write data to the table. On every `INSERT` and `COPY` call, each
-row of the data is written to multiple data nodes. This means that you
-don't need to do any extra steps to have newly ingested data
-replicated. When you query replicated data, the query planner only
-includes one replica of each chunk in the query plan.
+当启用本地复制时，复制发生在您写入数据到表时。在每个`INSERT`和`COPY`调用中，每行数据都被写入多个数据节点。这意味着您不需要执行任何额外的步骤来复制新摄入的数据。当您查询复制的数据时，查询计划器只包括查询计划中每个块的一个副本。
 
-### Node failures
+### 节点故障
 
-When a data node fails, inserts that attempt to write to the failed
-node result in an error. This is to preserve data consistency in
-case the data node becomes available again. You can use the
-[`alter_data_node`][alter_data_node] call to mark a failed data node
-as unavailable by running this query:
+当一个数据节点失败时，尝试写入失败节点的插入操作会导致错误。这是为了在数据节点再次可用时保持数据一致性。您可以使用[`alter_data_node`][alter_data_node]调用来标记失败的数据节点为不可用，运行此查询：
 
 ```sql
 SELECT alter_data_node('data_node_2', available => false);
 ```
 
-Setting `available => false` means that the data node is no longer
-used for reads and writes queries.
+设置`available => false`意味着数据节点不再用于读写查询。
 
-To fail over reads, the [`alter_data_node`][alter_data_node] call finds
-all the chunks for which the unavailable data node is the primary query
-target and fails over to a chunk replica on another data node.
-However, if some chunks do not have a replica to fail over to, a warning
-is raised. Reads continue to fail for chunks that do not have a chunk
-replica on any other data nodes.
+要故障转移读取，[`alter_data_node`][alter_data_node]调用找到所有不可用数据节点是主查询目标的块，并故障转移到另一个数据节点上的块副本。然而，如果有些块没有副本可以故障转移，会发出警告。对于没有块副本在任何其他数据节点上的块，读取继续失败。
 
-To fail over writes, any activity that intends to write to the failed
-node marks the involved chunk as stale for the specific failed
-node by changing the metadata on the access node. This is only done
-for natively replicated chunks. This allows you to continue to write
-to other chunk replicas on other data nodes while the failed node has
-been marked as unavailable. Writes continue to fail for chunks that do
-not have a chunk replica on any other data nodes. Also note that chunks
-on the failed node which do not get written into are not affected.
+要故障转移写入，任何打算写入失败节点的活动都会通过更改访问节点上的元数据，将涉及的块标记为特定失败节点的陈旧。这只对本地复制的块进行。这允许您在失败的节点被标记为不可用时，继续在其他数据节点上的其他块副本上写入。对于没有块副本在任何其他数据节点上的块，写入继续失败。同样请注意，失败节点上没有写入的块不受影响。
 
-When you mark a chunk as stale, the chunk becomes under-replicated.
-When the failed data node becomes available then such chunks can be
-re-balanced using the [`copy_chunk`][copy_chunk] API.
+当您标记一个块为陈旧时，该块变得复制不足。当失败的数据节点变得可用时，可以使用[`copy_chunk`][copy_chunk] API重新平衡这样的块。
 
-If waiting for the data node to come back is not an option, either because
-it takes too long or the node is permanently failed, one can delete it instead.
-To be able to delete a data node, all of its chunks must have at least one
-replica on other data nodes. For example:
+如果等待数据节点恢复不是一个选项，无论是因为时间过长还是节点永久失败，可以删除它。要能够删除数据节点，其所有块都必须在其他数据节点上至少有一个副本。例如：
 
 ```sql
 SELECT delete_data_node('data_node_2', force => true);
 WARNING:  distributed hypertable "conditions" is under-replicated
 ```
 
-Use the `force` option when you delete the data node if the deletion
-means that the cluster no longer achieves the desired replication
-factor. This would be the normal case unless the data node has no
-chunks or the distributed hypertable has more chunk replicas than the
-configured replication factor.
+当您删除数据节点意味着集群不再达到所需的复制因子时，使用`force`选项。这将是正常的情况，除非数据节点没有块或分布式超表的块副本多于配置的复制因子。
 
 <Highlight type="important">
-You cannot force the deletion of a data node if it would mean that a multi-node
-cluster permanently loses data.
+如果强制删除数据节点意味着多节点集群永久丢失数据，您不能强制删除数据节点。
 </Highlight>
 
-When you have successfully removed a failed data node, or marked a
-failed data node unavailable, some data chunks might lack replicas but
-queries and inserts work as normal again. However, the cluster stays in
-a vulnerable state until all chunks are fully replicated.
+当您成功移除失败的数据节点，或标记失败的数据节点为不可用时，一些数据块可能缺少副本，但查询和插入再次正常工作。然而，直到所有块都被完全复制，集群仍处于脆弱状态。
 
-When you have restored a failed data node or marked it available again, you can
-see the chunks that need to be replicated with this query:
-
-<!--- Still experimental? --LKB 2021-10-20-->
+当您恢复失败的数据节点或再次标记它为可用时，您可以使用此查询查看需要复制的块：
 
 ```sql
 SELECT chunk_schema, chunk_name, replica_nodes, non_replica_nodes
@@ -183,7 +91,7 @@ FROM timescaledb_experimental.chunk_replication_status
 WHERE hypertable_name = 'conditions' AND num_replicas < desired_num_replicas;
 ```
 
-The output from this query looks like this:
+此查询的输出如下所示：
 
 ```sql
      chunk_schema      |      chunk_name       | replica_nodes |     non_replica_nodes
@@ -194,20 +102,14 @@ The output from this query looks like this:
 (3 rows)
 ```
 
-With the information from the chunk replication status view, an
-under-replicated chunk can be copied to a new node to ensure the chunk
-has the sufficient number of replicas. For example:
-
-<!--- Still experimental? --LKB 2021-10-20-->
+有了块复制状态视图的信息，可以将复制不足的块复制到新节点，以确保块具有足够数量的副本。例如：
 
 ```sql
 CALL timescaledb_experimental.copy_chunk('_timescaledb_internal._dist_hyper_1_1_chunk', 'data_node_3', 'data_node_2');
 ```
 
-<Highlight type="important">>
-When you restore chunk replication, the operation uses more than one transaction. This means that it cannot be automatically rolled back. If you cancel the operation before it is completed, an operation ID for the copy is logged. You can use this operation ID to clean up any state left by the cancelled operation. For example:
-
-<!--- Still experimental? --LKB 2021-10-20-->
+<Highlight type="important">
+当您恢复块复制时，操作使用超过一个事务。这意味着它不能自动回滚。如果您在操作完成之前取消操作，将记录复制的操作ID。您可以使用此操作ID来清理取消操作留下的任何状态。例如：
 
 ```sql
 CALL timescaledb_experimental.cleanup_copy_chunk_operation('ts_copy_1_31');
@@ -219,3 +121,4 @@ CALL timescaledb_experimental.cleanup_copy_chunk_operation('ts_copy_1_31');
 [single-ha]: /self-hosted/:currentVersion:/replication-and-ha/
 [alter_data_node]: /api/:currentVersion:/distributed-hypertables/alter_data_node/
 [copy_chunk]:/api/:currentVersion:/distributed-hypertables/copy_chunk_experimental
+
