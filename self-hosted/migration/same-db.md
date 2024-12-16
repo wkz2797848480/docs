@@ -1,41 +1,34 @@
 ---
-title: Migrate data to Timescale from the same PostgreSQL instance
-excerpt: Migrate data into a Timescale hypertable from a regular PostgreSQL table
-products: [self_hosted]
-keywords: [data migration, PostgreSQL]
-tags: [import]
+标题: 从同一个 PostgreSQL 实例将数据迁移至 Timescale
+摘要: 将数据从常规的 PostgreSQL 表迁移至 Timescale 超表
+产品: [自托管]
+关键词: [数据迁移，PostgreSQL]
+标签: [导入]
 ---
 
-# Migrate data to Timescale from the same PostgreSQL instance
+# 从同一PostgreSQL实例迁移数据到Timescale
 
-You can migrate data into a Timescale hypertable from a regular PostgreSQL
-table. This method assumes that you have Timescale set up in the same database
-instance as your existing table.
+您可以将常规PostgreSQL表中的数据迁移到Timescale的超表中。这种方法假设您已经在与现有表相同的数据库实例中设置了Timescale。
 
-## Prerequisites
+## 前提条件
 
-Before beginning, make sure you have [installed and set up][install] Timescale.
+开始之前，请确保您已经[安装并设置][install]了Timescale。
 
-You also need a table with existing data. In this example, the source table is
-named `old_table`. Replace the table name with your actual table name. The
-example also names the destination table `new_table`, but you might want to use
-a more descriptive name.
+您还需要一个包含现有数据的表。在这个例子中，源表被命名为`old_table`。请将表名替换为您实际的表名。例子中还将目标表命名为`new_table`，但您可能想要使用一个更具描述性的名称。
 
-## Migrate data
+## 迁移数据
 
-Migrate your data into Timescale from within the same database.
+在同一数据库内将数据迁移到Timescale。
 
 <Procedure>
 
-## Migrating data
+## 迁移数据
 
-1.  Create a new table based on your existing table. You can create your indexes
-    at the same time, so you don't have to recreate them manually. Or you can
-    create the table without indexes, which makes data migration faster.
+1.  基于现有表创建一个新表。您可以同时创建索引，这样您就不需要手动重新创建它们。或者，您可以在不包含索引的情况下创建表，这会使数据迁移更快。
 
     <Terminal>
 
-    <tab label="With indexes">
+    <tab label="包含索引">
 
     ```bash
     CREATE TABLE new_table (
@@ -45,7 +38,7 @@ Migrate your data into Timescale from within the same database.
 
     </tab>
 
-    <tab label="Without indexes">
+    <tab label="不包含索引">
 
     ```bash
     CREATE TABLE new_table (
@@ -57,28 +50,27 @@ Migrate your data into Timescale from within the same database.
 
     </Terminal>
 
-1.  Convert the new table to a hypertable using the
-    [`create_hypertable`][create_hypertable] function. Replace `ts` with the
-    name of the column that holds time values in your table.
+1.  使用[`create_hypertable`][create_hypertable]函数将新表转换为超表。将`ts`替换为您表中包含时间值的列名。
 
     ```sql
-    SELECT create_hypertable('new_table', by_range('ts'));
+    SELECT create_hypertable('new_table', 'ts');
     ```
 
     <Highlight type="note">
-    The `by_range` dimension builder is an addition to TimescaleDB 2.13.
+    `by_range`维度构建器是TimescaleDB 2.13的新增功能。
     </Highlight>
 
-1.  Insert data from the old table to the new table.
+1.  从旧表向新表插入数据。
 
     ```sql
     INSERT INTO new_table
       SELECT * FROM old_table;
     ```
 
-1.  If you created your new table without indexes, recreate your indexes now.
+1.  如果您在创建新表时没有包含索引，请现在重新创建您的索引。
 
 </Procedure>
 
 [create_hypertable]: /api/:currentVersion:/hypertable/create_hypertable/
 [install]: /getting-started/latest/
+
