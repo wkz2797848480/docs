@@ -1,25 +1,20 @@
 ---
-title: Backup and restore
-excerpt: Learn how to back up and restore your TimescaleDB instance
-products: [self_hosted]
-keywords: [backups, restore]
-tags: [recovery]
+标题: 备份与恢复
+摘要: 学习如何备份及恢复你的 TimescaleDB 实例
+产品: [自托管]
+关键词: [备份，restore]
+标签: [recovery]
 ---
 
-import ConsiderCloud from "versionContent/_partials/_consider-cloud.mdx";
+import 考虑云服务 from "versionContent/_partials/_consider-cloud.mdx";
 
-# Backup and restore
+# 备份和恢复
 
-TimescaleDB takes advantage of the reliable backup and restore functionality
-provided by PostgreSQL. There are a few different mechanisms you can use to
-backup your self-hosted TimescaleDB database:
+TimescaleDB 利用 PostgreSQL 提供的可靠备份和恢复功能。您可以使用几种不同的机制来备份您的自托管 TimescaleDB 数据库：
 
-*   Logical backups with pg_dump and pg_restore.
-*   [Physical backups][physical-backups] with `pg_basebackup` or another tool.
-*   _DEPRECATED_ [Ongoing physical backups][ongoing-physical-backups] using write-ahead log
-  (WAL) archiving.
+*   使用 pg_dump 和 pg_restore 进行逻辑备份。
+*   使用 `pg_basebackup` 或另一个工具进行[物理备份][物理备份]。
+*   使用写前日志 (WAL) 归档的[持续物理备份][持续物理备份]（已弃用）。
 
-<ConsiderCloud />
-
-[ongoing-physical-backups]: /self-hosted/:currentVersion:/backup-and-restore/docker-and-wale/
-[physical-backups]: /self-hosted/:currentVersion:/backup-and-restore/physical/
+[持续物理备份]: /self-hosted/:currentVersion:/backup-and-restore/docker-and-wale/
+[物理备份]: /self-hosted/:currentVersion:/backup-and-restore/physical/
