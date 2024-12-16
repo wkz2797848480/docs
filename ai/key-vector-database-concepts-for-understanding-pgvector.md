@@ -1,18 +1,19 @@
 ---
-title: Key vector database concepts for understanding pgvector
-excerpt: The most important vector database concepts for understanding AI in PostgreSQL - pgvector, pgvectorscale, and pgai
-products: [cloud]
-keywords: [ai, vector, pgvector, pgvectorscale, pgai]
-tags: [ai, vector]
+
+标题：理解 pgvector 的关键向量数据库概念：  
+摘录：用于理解 PostgreSQL 中人工智能的最重要的向量数据库概念 ——pgvector、pgvectorscale 以及 pgai   
+产品：\[云]  
+关键字：\[ai, 向量, pgvector, pgvectorscale, pgai]  
+标签: \[ai, 向量]
 ---
 
 <!-- vale Google.Headings = NO -->
-# Key vector database concepts for understanding pgvector
+# 理解 pgvector 的关键向量数据库概念
+
 <!-- vale Google.Headings = YES -->
+## `Vector`由 pgvector 提供的数据类型
 
-## `Vector` data type provided by pgvector
-
-Vectors inside of the database are stored in regular PostgreSQL tables using `vector` columns. The `vector` column type is provided by the [pgvector](https://github.com/pgvector/pgvector) extension. A common way to store vectors is alongside the data they have indexed. For example, to store embeddings for documents, a common table structure is:
+数据库中的向量使用`vector` 列存储在常规的PostgreSQL表中。该`vector`列类型是由 pgvector 扩展提供的一种常见的存储向量的方法是将它们与已索引的数据一起存储。例如，要存储文档的嵌入向量，常见的表结构如下：
 
 ```sql
 CREATE TABLE IF NOT EXISTS document_embedding  (
@@ -24,17 +25,17 @@ CREATE TABLE IF NOT EXISTS document_embedding  (
 )
 ```
 
-This table contains a primary key, a foreign key to the document table, some metadata, the text being embedded (in the `contents` column), and the embedded vector.
+这个表包含一个主键、一个指向文档表的外键、一些元数据、被嵌入的文本（在 contents`contents` 列中），以及嵌入向量
 
-This may seem like a bit of a weird design: why aren't the embeddings simply a separate column in the document table? The answer has to do with context length limits of embedding models and of LLMs. When embedding data, there is a limit to the length of content you can embed (for example, OpenAI's ada-002 has a limit of [8191 tokens](https://platform.openai.com/docs/guides/embeddings/embedding-models) ), and so, if you are embedding a long piece of text, you have to break it up into smaller chunks and embed each chunk individually. Therefore, when thinking about this at the database layer, there is usually a one-to-many relationship between the thing being embedded and the embeddings which is represented by a foreign key from the embedding to the thing.
+这可能看起来有点奇怪：为什么嵌入向量不只是文档表中的一个单独列呢？答案与嵌入模型和语言模型（LLMs）的上下文长度限制有关。在嵌入数据时，你可以嵌入的内容长度是有限制的（例如，OpenAI 的 ada - 002 有 8191 个令牌的限制），因此，如果你要嵌入一大段文本，你必须将其分解成更小的块，并分别嵌入每个块。因此，在数据库层考虑这个问题时，通常在被嵌入的事物和嵌入向量之间存在一对多的关系，这种关系通过从嵌入到被嵌入事物的外键来表示。
 
-Of course, if you do not want to store the original data in the database and you are just storing only the embeddings, that's totally fine too. Just omit the foreign key from the table. Another popular alternative is to put the foreign key into the metadata JSONB.
+当然，如果你不想在数据库中存储原始数据，而只存储嵌入向量，那也完全没问题。只需从表中省略外键。另一个流行的替代方法是将外键放入元数据 JSONB 中。
 
-## Querying vectors using pgvector
+## 使用 pgvector 查询向量
 
-The canonical query for vectors is for the closest query vectors to an embedding of the user's query. This is also known as finding the [K nearest neighbors](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm).
+对向量的标准查询是查询与用户查询的嵌入向量最接近的向量。这也被称为寻找 [K 近邻](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm).。
 
-In the example query below, `$1` is a parameter taking a query embedding, and the `<=>` operator calculates the distance between the query embedding and embedding vectors stored in the database (and returns a float value).
+在下面的示例查询中，`$1` 是一个接受查询嵌入向量的参数，而 `<=>` 操作符计算查询嵌入向量和存储在数据库中的嵌入向量之间的距离（并返回一个浮点值）。
 
 ```sql
 SELECT *
@@ -43,63 +44,61 @@ ORDER BY embedding <=> $1
 LIMIT 10
 ```
 
-The query above returns the 10 rows with the smallest distance between the query's embedding and the row's embedding. Of course, this being PostgreSQL, you can add additional `WHERE` clauses (such as filters on the metadata), joins, etc.
+上述查询返回与查询的嵌入向量距离最小的 10 行。当然，由于这是 PostgreSQL，你可以添加额外的 `WHERE` 子句（例如对元数据的筛选）、连接等。
 
+### 向量距离类型
 
-### Vector distance types
-
-The query shown above uses something called cosine distance (using the <=> operator) as a measure of how similar two embeddings are. But, there are multiple ways to quantify how far apart two vectors are from each other.
+上面展示的查询使用了所谓的余弦距离（使用 \<=> 操作符）作为衡量两个嵌入向量相似程度的方法。但是，有多种方法来量化两个向量彼此之间的距离。
 
 <Highlight type="note">
 In practice, the choice of distance measure doesn't matters much and it is recommended to just stick with cosine distance for most applications.
 </Highlight>
 
-#### Description of cosine distance, negative inner product, and Euclidean distance
+#### 余弦距离、负内积和欧几里得距离的描述
 
-Here's a succinct description of three common vector distance measures
+这是对三种常见向量距离度量的简要描述。
 
-- **Cosine distance a.k.a. angular distance**: This measures the cosine of the angle between two vectors. It's not a true "distance" in the mathematical sense but a similarity measure, where a smaller angle corresponds to a higher similarity. The cosine distance is particularly useful in high-dimensional spaces where the magnitude of the vectors (their length) is less important, such as in text analysis or information retrieval. It ranges from -1 (meaning exactly opposite) to 1 (exactly the same), with 0 typically indicating orthogonality (no similarity). See here for more on [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity).
+- **余弦距离（又名角度距离）**：这种方法衡量两个向量之间的角度。它在数学意义上并非真正的 “距离”，而是一种相似性度量，其中较小的角度对应较高的相似性。余弦距离在高维空间中特别有用，在这些空间中向量的大小（它们的长度）不太重要，例如在文本分析或信息检索中。它的取值范围从 - 1（意味着完全相反）到 1（完全相同），0 通常表示正交（无相似性）。查看这里获取更多关于余弦相似度的信息。
 
-- **Negative inner product**: This is simply the negative of the inner product (also known as the dot product) of two vectors. The inner product measures vector similarity based on the vectors' magnitudes and the cosine of the angle between them. A higher inner product indicates greater similarity. However, it's important to note that, unlike cosine similarity, the magnitude of the vectors influences the inner product.
+- **负内积**：这仅仅是两个向量内积（也称为点积）的负值。内积根据向量的大小和它们之间角度的余弦来衡量向量的相似性。较高的内积表明更大的相似性。然而，需要注意的是，与余弦相似度不同，向量的大小会影响内积。
 
-- **Euclidean distance**: This is the "ordinary" straight-line distance between two points in Euclidean space. In terms of vectors, it's the square root of the sum of the squared differences between corresponding elements of the vectors. This measure is sensitive to the magnitude of the vectors and is widely used in various fields such as clustering and nearest neighbor search.
+- **欧几里得距离**：这是欧几里得空间中两点之间的 “普通” 直线距离。就向量而言，它是向量对应元素间平方差之和的平方根。这种度量对向量的大小很敏感，广泛用于聚类和最近邻搜索等各个领域。
 
-Many embedding systems (for example OpenAI's ada-002) use vectors with length 1 (unit vectors). For those systems, the rankings (ordering) of all three measures is the same. In particular,
-- The cosine distance is `1−dot product`.
-- The negative inner product is `−dot product`.
-- The Euclidean distance is related to the dot product, where the squared Euclidean distance is `2(1−dot product)`.
+许多嵌入系统（例如 OpenAI 的 ada - 002）使用长度为 1 的向量（单位向量）。对于那些系统，所有度量的排名（顺序）都是相同的。特别是，
+
+- 余弦距离是 `1−dot product`。
+- 负内积是`−dot product`
+- 欧几里得距离与点积有关，其中欧几里得距离是`2(1−dot product)`
 
 <!-- vale Google.Headings = NO -->
-#### Recommended vector distance for use in PostgreSQL
+#### 在 PostgreSQL 中推荐使用的向量距离
+
 <!-- vale Google.Headings = YES -->
+推荐使用余弦距离，特别是在单位向量上。这些推荐是基于 OpenAI 的[推荐](https://platform.openai.com/docs/guides/embeddings/which-distance-function-should-i-use)，以及在单位向量上不同距离的排名得以保留这一事实。
 
-Using cosine distance, especially on unit vectors, is recommended. These recommendations are based on OpenAI's [recommendation](https://platform.openai.com/docs/guides/embeddings/which-distance-function-should-i-use) as well as the fact that the ranking of different distances on unit vectors is preserved.
+## 向量搜索索引（近似最近邻搜索）
 
-## Vector search indexing (approximate nearest neighbor search)
-
-In PostgreSQL and other relational databases, indexing is a way to speed up queries. For vector data, indexes speed up the similarity search query shown above where you find the most similar embedding to some given query embedding. This problem is often referred to as finding the [K nearest neighbors](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm).
+在 PostgreSQL 和其他关系型数据库中，索引是一种加速（查询）的方法。对于向量数据，索引可加速上述所示的相似性搜索查询，即找到与给定查询嵌入最相似的嵌入。这个问题通常被称为寻找 [K 近邻](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)。
 
 <Highlight type="note">
-The term "index" in the context of vector databases has multiple meanings. It can refer to both the storage mechanism for your data and the tool that enhances query efficiency. These docs use the latter meaning.
+在向量数据库的语境中，“索引” 一词有多种含义。它既可以指代数据的存储机制，也可以指代提高查询效率的工具。这些文档采用的是后一种含义。
 </Highlight>
+在 PostgreSQL 中寻找 K 近邻不是一个新问题，但现有的技术仅适用于低维数据。当处理大于约 10 维的数据时，这些方法由于 “维度灾难” 而失效。鉴于嵌入通常具有超过一千维（OpenAI 的有 1,536 维），因此必须开发新技术。
 
-Finding the K nearest neighbors is not a new problem in PostgreSQL, but existing techniques only work with low-dimensional data. These approaches cease to be effective when dealing with data larger than approximately 10 dimensions due to the "curse of dimensionality." Given that embeddings often consist of more than a thousand dimensions(OpenAI's are 1,536) new techniques had to be developed.
-
-There are no known exact algorithms for efficiently searching in such high-dimensional spaces. Nevertheless, there are excellent approximate algorithms that fall into the category of approximate nearest neighbor algorithms.
+对于在这种高维空间中进行高效搜索，不存在精确的算法。然而，有一些优秀的近似算法属于近似最近邻算法范畴。
 
 <!-- vale Google.Colons = NO -->
-There are 3 different indexing algorithms available as part of pgai on Timescale: StreamingDiskANN, HNSW, and ivfflat. The table below illustrates the high-level differences between these algorithms:
+在 Timescale 的 pgvector 上有 3 种不同的索引算法可用：StreamingDiskANN、HNSW 和 ivflat。下表说明了这些算法之间的高层次差异：
+
 <!-- vale Google.Colons = YES -->
+| 算法| 构建速度| 查询速度| 更新后是否需要重建|
+|----------|----------|----------|----------|
+| StreamingDiskANN| 快| 最快| 否|
+| HNSW| 快| 快| 否|
+| ivfflat| 最快| 最慢| 是|
 
-| Algorithm       | Build Speed | Query Speed | Need to rebuild after updates |
-|------------------|-------------|-------------|-------------------------------|
-| StreamingDiskANN | Fast        | Fastest     | No                            |
-| HNSW    | Fast     | Fast      | No                            |
-| ivfflat | Fastest     | Slowest     | Yes                           |
+查看性能基准[performance benchmarks](https://www.timescale.com/blog/how-we-made-postgresql-the-best-vector-database/)以获取关于每个索引在 100 万个 OpenAI 嵌入数据集上表现的详细信息。
 
+## 推荐的索引类型
 
-See the [performance benchmarks](https://www.timescale.com/blog/how-we-made-postgresql-the-best-vector-database/) for details on how the each index performs on a dataset of 1 million OpenAI embeddings.
-
-## Recommended index types
-
-For most applications, the StreamingDiskANN index is recommended.
+对于大多数应用程序，推荐使用 StreamingDiskANN 索引。
