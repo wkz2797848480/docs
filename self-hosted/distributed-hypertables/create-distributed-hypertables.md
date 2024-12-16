@@ -1,32 +1,27 @@
 ---
-title: Create distributed hypertables
-excerpt: Create a distributed hypertable in a multi-node Timescale instance
-products: [self_hosted]
-keywords: [distributed hypertables, multi-node, create]
+标题: 创建分布式超表
+摘要: 在多节点 Timescale 实例中创建分布式超表
+产品: [自托管]
+关键词: [分布式超表，多节点，创建]
 ---
 
-import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
+import 多节点已弃用 from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Create distributed hypertables
+# 创建分布式超表
 
-If you have a [multi-node environment][multi-node], you can create a distributed
-hypertable across your data nodes. First create a standard PostgreSQL table, and
-then convert it into a distributed hypertable.
+如果您有一个[多节点环境][multi-node]，您可以在数据节点之间创建一个分布式超表。首先创建一个标准的PostgreSQL表，然后将其转换为分布式超表。
 
 <Highlight type="important">
-You need to set up your multi-node cluster before creating a distributed
-hypertable. To set up multi-node, see the
-[multi-node section](/self-hosted/latest/multinode-timescaledb/).
+在创建分布式超表之前，您需要先设置好您的多节点集群。关于如何设置多节点，请参阅[多节点部分](/self-hosted/latest/multinode-timescaledb/)。
 </Highlight>
 
 <Procedure>
 
-### Creating a distributed hypertable
+### 创建分布式超表
 
-1.  On the access node of your multi-node cluster, create a standard
-    [PostgreSQL table][postgres-createtable]:
+1.  在您的多节点集群的接入节点上，创建一个标准的[PostgreSQL表][postgres-createtable]：
 
     ```sql
     CREATE TABLE conditions (
@@ -37,13 +32,11 @@ hypertable. To set up multi-node, see the
     );
     ```
 
-1.  Convert the table to a distributed hypertable. Specify the name of the table
-    you want to convert, the column that holds its time values, and a
-    space-partitioning parameter.
+1.  将表转换为分布式超表。指定您想要转换的表的名称，持有其时间值的列，以及一个空间分区参数。
 
-     ```sql
-     SELECT create_distributed_hypertable('conditions', 'time', 'location');
-     ```
+    ```sql
+    SELECT create_distributed_hypertable('conditions', 'time', 'location');
+    ```
 
 </Procedure>
 
