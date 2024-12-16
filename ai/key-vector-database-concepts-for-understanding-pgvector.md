@@ -1,10 +1,9 @@
 ---
-
-标题：理解 pgvector 的关键向量数据库概念：  
-摘录：用于理解 PostgreSQL 中人工智能的最重要的向量数据库概念 ——pgvector、pgvectorscale 以及 pgai   
-产品：\[云]  
-关键字：\[ai, 向量, pgvector, pgvectorscale, pgai]  
-标签: \[ai, 向量]
+标题: 理解 pgvector 的关键向量数据库概念：  
+摘录: 用于理解 PostgreSQL 中人工智能的最重要的向量数据库概念 ——pgvector、pgvectorscale 以及 pgai   
+产品: [云]  
+关键字: [ai, 向量, pgvector, pgvectorscale, pgai]  
+标签: [ai, 向量]
 ---
 
 <!-- vale Google.Headings = NO -->
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS document_embedding  (
 
 ## 使用 pgvector 查询向量
 
-对向量的标准查询是查询与用户查询的嵌入向量最接近的向量。这也被称为寻找 [K 近邻](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm).。
+对向量的标准查询是查询与用户查询的嵌入向量最接近的向量。这也被称为寻找 [K 近邻](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)。
 
 在下面的示例查询中，`$1` 是一个接受查询嵌入向量的参数，而 `<=>` 操作符计算查询嵌入向量和存储在数据库中的嵌入向量之间的距离（并返回一个浮点值）。
 
@@ -51,14 +50,14 @@ LIMIT 10
 上面展示的查询使用了所谓的余弦距离（使用 \<=> 操作符）作为衡量两个嵌入向量相似程度的方法。但是，有多种方法来量化两个向量彼此之间的距离。
 
 <Highlight type="note">
-In practice, the choice of distance measure doesn't matters much and it is recommended to just stick with cosine distance for most applications.
+在实际应用中，距离度量方式的选择影响不大，对于大多数应用场景，建议坚持使用余弦距离即可。
 </Highlight>
 
 #### 余弦距离、负内积和欧几里得距离的描述
 
 这是对三种常见向量距离度量的简要描述。
 
-- **余弦距离（又名角度距离）**：这种方法衡量两个向量之间的角度。它在数学意义上并非真正的 “距离”，而是一种相似性度量，其中较小的角度对应较高的相似性。余弦距离在高维空间中特别有用，在这些空间中向量的大小（它们的长度）不太重要，例如在文本分析或信息检索中。它的取值范围从 - 1（意味着完全相反）到 1（完全相同），0 通常表示正交（无相似性）。查看这里获取更多关于余弦相似度的信息。
+- **余弦距离（又名角度距离）**：这种方法衡量两个向量之间的角度。它在数学意义上并非真正的 “距离”，而是一种相似性度量，其中较小的角度对应较高的相似性。余弦距离在高维空间中特别有用，在这些空间中向量的大小（它们的长度）不太重要，例如在文本分析或信息检索中。它的取值范围从 - 1（意味着完全相反）到 1（完全相同），0 通常表示正交（无相似性）。查看这里获取更多关于[余弦相似度](https://en.wikipedia.org/wiki/Cosine_similarity)的信息。
 
 - **负内积**：这仅仅是两个向量内积（也称为点积）的负值。内积根据向量的大小和它们之间角度的余弦来衡量向量的相似性。较高的内积表明更大的相似性。然而，需要注意的是，与余弦相似度不同，向量的大小会影响内积。
 
