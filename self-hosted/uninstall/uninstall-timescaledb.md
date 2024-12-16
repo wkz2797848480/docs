@@ -1,47 +1,40 @@
 ---
-title: Uninstall TimescaleDB
-excerpt: Uninstall TimescaleDB
-products: [self_hosted]
-keywords: [uninstall]
+标题: 卸载 TimescaleDB
+摘要: 卸载 TimescaleDB
+产品: [自托管]
+关键词: [卸载]
 ---
 
-# Uninstall TimescaleDB
+# 卸载TimescaleDB
 
-PostgreSQL is designed to be easily extensible. The extensions loaded into the
-database can function just like features that are built in. TimescaleDB extends
-PostgreSQL for time-series data, giving PostgreSQL the high-performance,
-scalability, and analytical capabilities required by modern data-intensive
-applications. If you installed TimescaleDB with Homebrew or MacPorts, you can
-uninstall it without having to uninstall PostgreSQL.
+PostgreSQL被设计为易于扩展。加载到数据库中的扩展可以像内置功能一样工作。TimescaleDB扩展了PostgreSQL以处理时间序列数据，为PostgreSQL提供了现代数据密集型应用所需的高性能、可扩展性和分析能力。如果您通过Homebrew或MacPorts安装了TimescaleDB，您可以在不卸载PostgreSQL的情况下卸载它。
 
 <Procedure>
 
-## Uninstalling TimescaleDB using Homebrew
+## 使用Homebrew卸载TimescaleDB
 
-1.  At the `psql` prompt, remove the TimescaleDB extension:
+1.  在`psql`提示符下，移除TimescaleDB扩展：
 
     ```sql
     DROP EXTENSION timescaledb;
     ```
 
-1.  At the command prompt, remove `timescaledb` from `shared_preload_libraries`
-    in the `postgresql.conf` configuration file:
+1.  在命令提示符下，从`postgresql.conf`配置文件中的`shared_preload_libraries`移除`timescaledb`：
 
     ```bash
     nano /opt/homebrew/var/postgresql@14/postgresql.conf
     shared_preload_libraries = ''
     ```
 
-1.  Save the changes to the `postgresql.conf` file.
+1.  保存`postgresql.conf`文件的更改。
 
-1.  Restart PostgreSQL:
+1.  重启PostgreSQL：
 
     ```bash
     brew services restart postgresql
     ```
 
-1.  Check that the TimescaleDB extension is uninstalled by using the `\dx`
-    command at the `psql` prompt. Output is similar to:
+1.  通过在`psql`提示符下使用`\dx`命令检查TimescaleDB扩展是否已卸载。输出类似于：
 
     ```sql
     tsdb-# \dx
@@ -52,13 +45,13 @@ uninstall it without having to uninstall PostgreSQL.
     (1 row)
     ```
 
-1.  Uninstall TimescaleDB:
+1.  卸载TimescaleDB：
 
     ```bash
     brew uninstall timescaledb
     ```
 
-1.  Remove all the dependencies and related files:
+1.  移除所有依赖项和相关文件：
 
     ```bash
     brew remove timescaledb
@@ -68,32 +61,30 @@ uninstall it without having to uninstall PostgreSQL.
 
 <Procedure>
 
-## Uninstalling TimescaleDB using MacPorts
+## 使用MacPorts卸载TimescaleDB
 
-1.  At the `psql` prompt, remove the TimescaleDB extension:
+1.  在`psql`提示符下，移除TimescaleDB扩展：
 
     ```sql
     DROP EXTENSION timescaledb;
     ```
 
-1.  At the command prompt, remove `timescaledb` from `shared_preload_libraries`
-    in the `postgresql.conf` configuration file:
+1.  在命令提示符下，从`postgresql.conf`配置文件中的`shared_preload_libraries`移除`timescaledb`：
 
     ```bash
     nano /opt/homebrew/var/postgresql@14/postgresql.conf
     shared_preload_libraries = ''
     ```
 
-1.  Save the changes to the `postgresql.conf` file.
+1.  保存`postgresql.conf`文件的更改。
 
-1.  Restart PostgreSQL:
+1.  重启PostgreSQL：
 
     ```bash
     port reload postgresql
     ```
 
-1.  Check that the TimescaleDB extension is uninstalled by using the `\dx`
-    command at the `psql` prompt. Output is similar to:
+1.  通过在`psql`提示符下使用`\dx`命令检查TimescaleDB扩展是否已卸载。输出类似于：
 
     ```sql
     tsdb-# \dx
@@ -104,10 +95,11 @@ uninstall it without having to uninstall PostgreSQL.
     (1 row)
     ```
 
-1.  Uninstall TimescaleDB and the related dependencies:
+1.  卸载TimescaleDB和相关依赖项：
 
     ```bash
     port uninstall timescaledb --follow-dependencies
     ```
 
 </Procedure>
+
