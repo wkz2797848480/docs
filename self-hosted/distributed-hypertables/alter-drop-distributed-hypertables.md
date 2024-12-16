@@ -1,27 +1,23 @@
 ---
-title: Alter and drop distributed hypertables
-excerpt: How to alter and drop distributed hypertables
-products: [self_hosted]
-keywords: [distributed hypertables, alter, delete]
-tags: [change, delete]
+标题: 修改和删除分布式超表
+摘要: 如何修改和删除分布式超表
+产品: [自托管]
+关键词: [分布式超表，修改，删除]
+标签: [更改，删除]
 ---
 
-import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
+import 多节点已弃用 from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Alter and drop distributed hypertables
+# 分布式超表的修改和删除
 
-You can alter and drop distributed hypertables in the same way as standard
-hypertables. To learn more, see:
+您可以像修改和删除标准超表一样修改和删除分布式超表。要了解更多信息，请查看：
 
-*   [Altering hypertables][alter]
-*   [Dropping hypertables][drop]
+*   [修改超表][alter]
+*   [删除超表][drop]
 
-When you alter a distributed hypertable, or set privileges on it, the commands
-are automatically applied across all data nodes. For more information, see the
-section on
-[multi-node administration][multinode-admin].
+当您修改分布式超表或设置其权限时，这些命令会自动应用于所有数据节点。更多信息，请参见[多节点管理][multinode-admin]部分。
 
 [alter]: /use-timescale/:currentVersion:/hypertables/alter/
 [drop]: /use-timescale/:currentVersion:/hypertables/drop/
