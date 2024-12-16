@@ -1,82 +1,72 @@
 ---
-title: Install and update TimescaleDB Toolkit
-excerpt: How to install TimescaleDB Toolkit to access more hyperfunctions and function pipelines
-products: [mst, self_hosted]
-keywords: [Toolkit, installation, hyperfunctions, function pipelines]
+标题: 安装和更新 TimescaleDB 工具包
+摘要: 如何安装 TimescaleDB 工具包以使用更多超函数和函数管道
+产品: [托管服务（mst），自托管]
+关键词: [工具包，安装，超函数，函数管道]
 ---
 
-# Install and update TimescaleDB Toolkit
+# 安装和更新TimescaleDB Toolkit
 
-Some hyperfunctions are included by default in Timescale. For additional
-hyperfunctions, you need to install the TimescaleDB Toolkit PostgreSQL
-extension.
+Timescale默认包含了一些超函数。若需要更多的超函数，您需要安装TimescaleDB Toolkit PostgreSQL扩展。
 
-If you're using [Timescale][cloud], the Toolkit is already installed.
+如果您使用的是[Timescale][cloud]，Toolkit已经预安装好了。
 
-## Install and update Toolkit on Managed Service for TimescaleDB
+## 在TimescaleDB管理服务上安装和更新Toolkit
 
-On [Managed Service for TimescaleDB][mst], run this command on each database you
-want to use the Toolkit with:
+在[TimescaleDB管理服务][mst]上，对您希望使用Toolkit的每个数据库运行以下命令：
 
 ```sql
 CREATE EXTENSION timescaledb_toolkit;
 ```
 
-Update an installed version of the Toolkit using this command:
+使用此命令更新已安装的Toolkit版本：
 
 ```sql
 ALTER EXTENSION timescaledb_toolkit UPDATE;
 ```
 
-## Install Toolkit on self-hosted TimescaleDB
+## 在自托管的TimescaleDB上安装Toolkit
 
-If you're hosting your own TimescaleDB database, you can install Toolkit by:
+如果您托管自己的TimescaleDB数据库，可以通过以下方式安装Toolkit：
 
-*   Using the TimescaleDB high-availability Docker image
-*   Using a package manager such as `yum`, `apt`, or `brew` on platforms where
-    pre-built binaries are available
-*   Building from source
+*   使用TimescaleDB高可用性Docker镜像
+*   在提供预构建二进制文件的平台使用包管理器如`yum`、`apt`或`brew`
+*   从源代码构建
 
-### Install Docker image
+### 安装Docker镜像
 
-The recommended way to install the Toolkit is to use the
-[TimescaleDB Docker image](https://github.com/timescale/timescaledb-docker-ha).
-To get Toolkit, use the high availability image, `timescaledb-ha`:
+推荐使用[TimescaleDB Docker镜像](https://github.com/timescale/timescaledb-docker-ha)来安装Toolkit。
+要获取Toolkit，请使用高可用性镜像`timescaledb-ha`：
 
 ```bash
 docker pull timescale/timescaledb-ha:pg17
 ```
 
-For more information on running TimescaleDB using Docker, see the section on
-[pre-built containers][docker-install].
+有关使用Docker运行TimescaleDB的更多信息，请参见[预构建容器][docker-install]部分。
 
-### Install Toolkit on CentOS 7 and other Red Hat-based systems
+### 在CentOS 7和其他基于Red Hat的系统上安装Toolkit
 
-These instructions use the `yum` package manager. They have been tested on
-CentOS 7 and may also work on other Red Hat-based systems, such as Red Hat
-Enterprise Linux and Fedora.
+这些说明使用`yum`包管理器。它们已在CentOS 7上测试过，可能也适用于其他基于Red Hat的系统，如Red Hat Enterprise Linux和Fedora。
 
 <Procedure>
 
-#### Installing Toolkit on CentOS 7
+#### 在CentOS 7上安装Toolkit
 
-1.  Make sure you have installed TimescaleDB and created a TimescaleDB
-    repository in your `yum` `repo.d` directory. For more information, see [the
-    instructions for Red Hat-based systems][red-hat-install].
-1.  Update your local repository list:
+1.  确保您已安装TimescaleDB并在您的`yum` `repo.d`目录中创建了TimescaleDB仓库。更多信息，请参见[基于Red Hat系统的安装说明][red-hat-install]。
+1.  更新本地仓库列表：
 
     ```bash
     yum update
     ```
 
-1.  Install TimescaleDB Toolkit:
+1.  安装TimescaleDB Toolkit：
 
     ```bash
     yum install timescaledb-toolkit-postgresql-16
     ```
 
-1.  Connect to the database where you want to use Toolkit.
-1.  Create the Toolkit extension in the database:
+1.  连接到您希望使用Toolkit的数据库。
+1.  在数据库中创建Toolkit扩展：
 
     ```sql
     CREATE EXTENSION timescaledb_toolkit;
@@ -84,32 +74,29 @@ Enterprise Linux and Fedora.
 
 </Procedure>
 
-### Install Toolkit on Ubuntu and other Debian-based systems
+### 在Ubuntu和其他基于Debian的系统上安装Toolkit
 
-These instructions use the `apt` package manager. They have been tested on Ubuntu 20.04
-and may also work on other Debian-based systems.
+这些说明使用`apt`包管理器。它们已在Ubuntu 20.04上测试过，可能也适用于其他基于Debian的系统。
 
 <Procedure>
 
-#### Installing Toolkit on Ubuntu 20.04
+#### 在Ubuntu 20.04上安装Toolkit
 
-1.  Make sure you have installed TimescaleDB and added the TimescaleDB
-    repository and GPG key. For more information, see [the instructions for
-    Debian-based systems][debian-install].
-1.  Update your local repository list:
+1.  确保您已安装TimescaleDB并添加了TimescaleDB仓库和GPG密钥。更多信息，请参见[基于Debian系统的安装说明][debian-install]。
+1.  更新本地仓库列表：
 
     ```bash
     apt update
     ```
 
-1.  Install TimescaleDB Toolkit:
+1.  安装TimescaleDB Toolkit：
 
     ```bash
     apt install timescaledb-toolkit-postgresql-16
     ```
 
-1.  Connect to the database where you want to use Toolkit.
-1.  Create the Toolkit extension in the database:
+1.  连接到您希望使用Toolkit的数据库。
+1.  在数据库中创建Toolkit扩展：
 
     ```sql
     CREATE EXTENSION timescaledb_toolkit;
@@ -117,36 +104,34 @@ and may also work on other Debian-based systems.
 
 </Procedure>
 
-### Install Toolkit on macOS
+### 在macOS上安装Toolkit
 
-These instructions use the `brew` package manager. For more information on
-installing or using Homebrew, see [the `brew` homepage][brew-install].
+这些说明使用`brew`包管理器。有关安装或使用Homebrew的更多信息，请参见[`brew`首页][brew-install]。
 
 <Procedure>
 
-#### Installing Toolkit on macOS
+#### 在macOS上安装Toolkit
 
-1.  Tap the Timescale formula repository, which also contains formulae for
-    TimescaleDB and `timescaledb-tune`.
+1.  Tap Timescale公式仓库，其中也包含了TimescaleDB和`timescaledb-tune`的公式。
 
     ```bash
     brew tap timescale/tap
     ```
 
-1.  Update your local brew installation:
+1.  更新您的本地brew安装：
 
     ```bash
     brew update
     ```
 
-1.  Install TimescaleDB Toolkit:
+1.  安装TimescaleDB Toolkit：
 
     ```bash
     brew install timescaledb-toolkit
     ```
 
-1.  Connect to the database where you want to use Toolkit.
-1.  Create the Toolkit extension in the database:
+1.  连接到您希望使用Toolkit的数据库。
+1.  在数据库中创建Toolkit扩展：
 
     ```sql
     CREATE EXTENSION timescaledb_toolkit;
@@ -154,20 +139,19 @@ installing or using Homebrew, see [the `brew` homepage][brew-install].
 
 </Procedure>
 
-### Install Toolkit on Windows
+### 在Windows上安装Toolkit
 
-TimescaleDB Toolkit isn't currently supported on Windows. As a workaround, you
-can run PostgreSQL in a Docker container.
+TimescaleDB Toolkit目前不支持Windows。作为变通方法，您可以在Docker容器中运行PostgreSQL。
 
-## Update Toolkit on self-hosted TimescaleDB
+## 在自托管的TimescaleDB上更新Toolkit
 
-Update Toolkit by installing the latest version and running `ALTER EXTENSION`.
+通过安装最新版本并运行`ALTER EXTENSION`来更新Toolkit。
 
 <Procedure>
 
-### Updating Toolkit on self-hosted TimescaleDB
+### 在自托管的TimescaleDB上更新Toolkit
 
-1.  Update your local repository list:
+1.  更新您的本地仓库列表：
 
     <Terminal>
 
@@ -197,7 +181,7 @@ Update Toolkit by installing the latest version and running `ALTER EXTENSION`.
 
     </Terminal>
 
-1.  Install the latest version of TimescaleDB Toolkit:
+1.  安装最新版本的TimescaleDB Toolkit：
 
     <Terminal>
 
@@ -227,26 +211,24 @@ Update Toolkit by installing the latest version and running `ALTER EXTENSION`.
 
     </Terminal>
 
-1.  Connect to the database where you want to use the new version of Toolkit.
-1.  Update the Toolkit extension in the database:
+1.  连接到您希望使用新版本Toolkit的数据库。
+1.  在数据库中更新Toolkit扩展：
 
     ```sql
     ALTER EXTENSION timescaledb_toolkit UPDATE;
     ```
 
 <Highlight type="note">
-For some Toolkit versions, you might need to disconnect and reconnect active
-sessions.
+对于某些Toolkit版本，您可能需要断开并重新连接活动会话。
 </Highlight>
 
 </Procedure>
 
-### Build Toolkit from source
+### 从源代码构建Toolkit
 
-You can build Toolkit from source. For more information, see the [Toolkit
-developer documentation][toolkit-gh-docs].
+您可以从源代码构建Toolkit。更多信息，请参见[Toolkit开发者文档][toolkit-gh-docs]。
 
-[brew-install]: https://brew.sh
+[brew-install]: https://brew.sh 
 [cloud]: /use-timescale/:currentVersion:/services/
 [debian-install]: /self-hosted/latest/install/installation-linux/
 [docker-install]: /self-hosted/latest/install/installation-docker/
