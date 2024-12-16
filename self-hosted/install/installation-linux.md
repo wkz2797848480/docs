@@ -1,8 +1,8 @@
 ---
-title: Install TimescaleDB on Linux
-excerpt: Install self-hosted TimescaleDB on Linux
-products: [self_hosted]
-keywords: [installation, self-hosted, Debian, Ubuntu, RHEL, Fedora]
+标题: 在 Linux 系统上安装 TimescaleDB
+摘要: 在 Linux 系统上安装自托管的 TimescaleDB
+产品: [自托管]
+关键词: [安装，自托管，Debian（德比安），Ubuntu（乌班图），RHEL（红帽企业版 Linux），Fedora（费多拉）]
 ---
 
 import WhereTo from "versionContent/_partials/_where-to-next.mdx";
@@ -13,35 +13,29 @@ import SelfHostedArchLinuxBased from "versionContent/_partials/_install-self-hos
 import AddTimescaleDBToDB from "versionContent/_partials/_add-timescaledb-to-a-database.mdx";
 
 
-# Install TimescaleDB on Linux
+# 在 Linux 上安装 TimescaleDB
 
-TimescaleDB is a [PostgreSQL extension](https://www.postgresql.org/docs/current/external-extensions.html) for 
-time series and demanding workloads that ingest and query high volumes of data.
+TimescaleDB 是一个 [PostgreSQL 扩展](https://www.postgresql.org/docs/current/external-extensions.html)，用于时间序列和高吞吐量的数据查询和摄入。
 
-< Skip/>
+<跳过 />
 
-This section shows you how to:
+本节展示了如何：
 
-* [Install and configure TimescaleDB on PostgreSQL](#install-and-configure-timescaledb-on-postgresql) - set up
-  a self-hosted PostgreSQL instance to efficiently run TimescaleDB.
-* [Add the TimescaleDB extension to your database](#add-the-timescaledb-extension-to-your-database) - enable TimescaleDB features and 
-  performance improvements on a database. 
+* [在 PostgreSQL 上安装和配置 TimescaleDB](#在-postgresql 上安装和配置-timescaledb) - 设置自托管的 PostgreSQL 实例以高效运行 TimescaleDB。
+* [在数据库中添加 TimescaleDB 扩展](#在数据库中添加-timescaledb-扩展) - 在数据库上启用 TimescaleDB 特性和性能改进。
 
 <Highlight type="warning">
 
-If you have previously installed PostgreSQL without a package manager, you may encounter errors 
-following these install instructions. Best practice is to full remove any existing PostgreSQL 
-installations before you begin. 
+如果您之前在没有包管理器的情况下安装了 PostgreSQL，您可能会在遵循这些安装说明时遇到错误。最佳实践是在开始之前完全移除任何现有的 PostgreSQL 安装。
 
-To keep your current PostgreSQL installation, [Install from source][install-from-source].
+要保留您当前的 PostgreSQL 安装，请[从源代码安装][install-from-source]。
 </Highlight>
 
-## Install and configure TimescaleDB on PostgreSQL 
+## 在 PostgreSQL 上安装和配置 TimescaleDB
 
-This section shows you how to install the latest version of PostgreSQL and 
-TimescaleDB on a [supported platform](#supported-platforms) using the packages supplied by Timescale. 
+本节展示了如何使用 TimeScale 提供的包在[支持的平台](#支持的平台)上安装最新版本的 PostgreSQL 和 TimescaleDB。
 
-<Tabs label="Install TimescaleDB">
+<Tabs label="安装 TimescaleDB">
 
 <Tab title="Debian, Ubuntu">
 
@@ -63,31 +57,28 @@ TimescaleDB on a [supported platform](#supported-platforms) using the packages s
 
 </Tabs>
 
-Job jobbed, you have installed PostgreSQL and TimescaleDB.
+工作完成，您已经安装了 PostgreSQL 和 TimescaleDB。
 
-## Add the TimescaleDB extension to your database
+## 在数据库中添加 TimescaleDB 扩展
 
-For improved performance, you enable TimescaleDB on each database on your self-hosted PostgreSQL instance.
-This section shows you how to enable TimescaleDB for a new database in PostgreSQL using `psql` from the command line.
+为了提高性能，您需要在自托管的 PostgreSQL 实例上的每个数据库上启用 TimescaleDB。本节展示了如何使用命令行中的 `psql` 为 PostgreSQL 中的新数据库启用 TimescaleDB。
 
+<添加 TimescaleDB 到数据库 />
 
-<AddTimescaleDBToDB />
+就是这样！您已经在 PostgreSQL 的自托管实例上的数据库上运行了 TimescaleDB。
 
-And that is it! You have TimescaleDB running on a database on a self-hosted instance of PostgreSQL.  
-
-## Where to next
+## 接下来做什么
 
 <WhereTo />
 
+## 支持的平台
 
-## Supported platforms
+TimescaleDB 支持以下平台：
 
-TimescaleDB is supported on the following platforms:
+| Debian | Ubuntu | Red Hat Enterprise | Fedora | Rocky Linux |
+| - | - | - | - | - |
+| Debian 10 Buster | Ubuntu 20.04 LTS Focal Fossa | Red Hat Enterprise Linux 7 | Fedora 33 | Rocky Linux 8 |
+| Debian 11 Bullseye | Ubuntu 22.04 LTS Jammy Jellyfish | Red Hat Enterprise Linux 8 | Fedora 34 | Rocky Linux 9 |
+| Debian 12 Bookworm | Ubuntu 23.04 Lunar Lobster | Red Hat Enterprise Linux 9 | Fedora 35 |  |
 
-|Debian|Ubuntu|Red Hat Enterprise|Fedora|Rocky Linux|
-|-|-|-|-|-|
-|Debian 10 Buster|Ubuntu 20.04 LTS Focal Fossa|Red Hat Enterprise Linux 7|Fedora 33|Rocky Linux 8|
-|Debian 11 Bullseye|Ubuntu 22.04 LTS Jammy Jellyfish|Red Hat Enterprise Linux 8|Fedora 34|Rocky Linux 9|
-|Debian 12 Bookworm|Ubuntu 23.04 Lunar Lobster|Red Hat Enterprise Linux 9|Fedora 35| |
 
-[install-from-source]: /self-hosted/:currentVersion:/install/installation-source/
