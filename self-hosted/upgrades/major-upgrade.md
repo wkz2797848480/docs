@@ -1,8 +1,8 @@
 ---
-title: Major TimescaleDB upgrades
-excerpt: Upgrade self-hosted TimescaleDB to a new major version
-products: [self_hosted]
-keywords: [upgrades]
+标题: TimescaleDB 主版本升级
+摘要: 将自托管的 TimescaleDB 升级到一个新的主版本。
+产品: [自托管]
+关键词: [升级]
 ---
 
 import PlanUpgrade from "versionContent/_partials/_plan_upgrade.mdx";
@@ -11,193 +11,79 @@ import CheckVersions from "versionContent/_partials/_migrate_self_postgres_check
 import SupportMatrix from "versionContent/_partials/_migrate_self_postgres_timescaledb_compatibility.mdx";
 import ImplementMigrationPath from "versionContent/_partials/_migrate_self_postgres_implement_migration_path.mdx";
 
-# Upgrade TimescaleDB to a major version
+# 降级TimescaleDB到次要版本
 
-A major upgrade is when you update from TimescaleDB `X.<minor version>` to `Y.<minor version>`.
-A minor upgrade is when you update from TimescaleDB `<major version>.x`, to TimescaleDB `<major version>.y`.
-You can run different versions of TimescaleDB on different databases within the same PostgreSQL instance.
-This process uses the PostgreSQL `ALTER EXTENSION` function to upgrade TimescaleDB independently on different
-databases.
+如果您升级到新的TimescaleDB版本并遇到问题，您可以回滚到之前安装的版本。这与次要升级的工作方式相同。
 
-When you perform a major upgrade, new policies are automatically configured based on your current 
-configuration. In order to verify your policies post upgrade, in this upgrade process you export 
-your policy settings before upgrading.
+降级并不支持所有版本。通常，支持补丁版本之间以及连续次要版本之间的降级。例如，您可以从TimescaleDB 2.5.2降级到2.5.1，或者从2.5.0降级到2.4.2。要检查您是否可以从特定版本降级，请查看[发布说明][relnotes]。
 
 <ConsiderCloud />
 
-This page shows you how to perform a major upgrade. For minor upgrades, see
-[Upgrade TimescaleDB to a minor version][upgrade-minor].
+## 计划您的降级
 
-## Prerequisites
+您可以就地降级您的现场TimescaleDB安装。这意味着您不需要转储和恢复您的数据。然而，提前计划降级仍然很重要。
 
-<PlanUpgrade />
+在您降级之前：
 
-## Check the TimescaleDB and PostgreSQL versions
+*   阅读您要降级的TimescaleDB版本的[发布说明][relnotes]。
+*   检查您当前运行的PostgreSQL版本。在开始TimescaleDB降级之前，您可能需要[升级到最新的PostgreSQL版本][upgrade-pg]。
+*   [执行数据库备份][backup]。尽管TimescaleDB降级是就地进行的，但降级是一个侵入性操作。始终确保您手头有备份，并在灾难发生时能够读取备份。
 
-<CheckVersions />
+## 降级TimescaleDB到以前的次要版本
 
-## Plan your upgrade path
+此降级使用PostgreSQL `ALTER EXTENSION`函数降级到TimescaleDB扩展的以前版本。TimescaleDB支持在同一PostgreSQL实例的不同数据库上拥有不同扩展版本。这允许您在不同数据库上独立升级和降级扩展。在每个数据库上运行`ALTER EXTENSION`函数以单独降级它们。
 
-Best practice is to always use the latest version of TimescaleDB. Subscribe to our releases on GitHub or use Timescale
-Cloud and always get latest update without any hassle.
+<Highlight type="important">
 
-Check the following support matrix against the versions of TimescaleDB and PostgreSQL that you are
-running currently and the versions you want to update to, then choose your upgrade path.
+降级脚本针对单步降级进行了测试和支持。也就是说，从当前版本降级到上一个次要版本。如果您在升级和降级之间对数据库进行了更改，降级可能无法工作。
 
-For example, to upgrade from TimescaleDB 1.7 on PostgreSQL 12 to TimescaleDB 2.17.2 on PostgreSQL 15 you 
-need to:
-1. Upgrade TimescaleDB to 2.10
-1. Upgrade PostgreSQL to 15
-1. Upgrade TimescaleDB to 2.17.2.
-
-You may need to [upgrade to the latest PostgreSQL version][upgrade-pg] before you upgrade TimescaleDB.
-
-<SupportMatrix />
-
-## Check for failed retention policies
-
-When you upgrade from TimescaleDB 1 to TimescaleDB 2, scripts
-automatically configure updated features to work as expected with the new
-version. However, not everything works in exactly the same way as previously.
-
-Before you begin this major upgrade, check the database log for errors related
-to failed retention policies that could have occurred in TimescaleDB 1. You
-can either remove the failing policies entirely, or update them to be compatible
-with your existing continuous aggregates.
-
-If incompatible retention policies are present when you perform the upgrade, the
-`ignore_invalidation_older_than` setting is automatically turned off, and a
-notice is shown.
-
-## Export your policy settings 
+</Highlight>
 
 <Procedure>
 
-1. **Set your connection string**
+1. **设置您的连接字符串**
 
-   This variable holds the connection information for the database to upgrade:
+   此变量保存要升级的数据库的连接信息：
 
    ```bash
    export SOURCE="postgres://<user>:<password>@<source host>:<source port>/<db_name>"
    ```
 
-1. **Connect to your PostgreSQL deployment**
-   ```bash
-   psql -d $SOURCE
-   ```
-
-1. **Save your policy statistics settings to a `.csv` file**
-
-    ```sql
-    COPY (SELECT * FROM timescaledb_information.policy_stats)
-    TO policy_stats.csv csv header
-    ```
-
-1. **Save your continuous aggregates settings to a `.csv` file**
-
-    ```sql
-    COPY (SELECT * FROM timescaledb_information.continuous_aggregate_stats)
-    TO continuous_aggregate_stats.csv csv header
-    ```
-
-1. **Save your drop chunk policies to a `.csv` file**
-
-    ```sql
-    COPY (SELECT * FROM timescaledb_information.drop_chunks_policies)
-    TO drop_chunk_policies.csv csv header
-    ```
-
-1. **Save your reorder policies to a `.csv` file**
-
-    ```sql
-    COPY (SELECT * FROM timescaledb_information.reorder_policies)
-    TO reorder_policies.csv csv header
-    ```
-
-1. **Exit your psql session**
-    ```sql
-    \q;
-    ```
-
-</Procedure>
-
-
-
-## Implement your upgrade path
-
-<ImplementMigrationPath />
-
-
-<Highlight type="note">
-To upgrade TimescaleDB in a Docker container, see the 
-[Docker container upgrades](/self-hosted/latest/upgrades/upgrade-docker) 
-section.
-</Highlight>
-
-## Verify the updated policy settings and jobs
-
-<Procedure>
-
-1.  **Verify the continuous aggregate policy jobs**
-
-    ```sql
-    SELECT * FROM timescaledb_information.jobs
-      WHERE application_name LIKE 'Refresh Continuous%';
-    ```
-    Postgres returns something like:
+2. **连接到您的数据库实例**
     ```shell
-    -[ RECORD 1 ]-----+--------------------------------------------------
-    job_id            | 1001
-    application_name  | Refresh Continuous Aggregate Policy [1001]
-    schedule_interval | 01:00:00
-    max_runtime       | 00:00:00
-    max_retries       | -1
-    retry_period      | 01:00:00
-    proc_schema       | _timescaledb_internal
-    proc_name         | policy_refresh_continuous_aggregate
-    owner             | postgres
-    scheduled         | t
-    config            | {"start_offset": "20 days", "end_offset": "10
-    days", "mat_hypertable_id": 2}
-    next_start        | 2020-10-02 12:38:07.014042-04
-    hypertable_schema | _timescaledb_internal
-    hypertable_name   | _materialized_hypertable_2
+    psql -X -d $SOURCE
     ```
 
-1. **Verify the information for each policy type that you exported before you upgraded.**
-   
-   For continuous aggregates, take note of the `config` information to
-   verify that all settings were converted correctly. 
+   `-X`标志防止任何`.psqlrc`命令意外触发会话启动时加载先前的TimescaleDB版本。
 
-1. **Verify that all jobs are scheduled and running as expected**
+1. **降级TimescaleDB扩展** 
+    这必须是您在当前会话中执行的第一个命令：
 
     ```sql
-    SELECT * FROM timescaledb_information.job_stats
-      WHERE job_id = 1001;
+    ALTER EXTENSION timescaledb UPDATE TO '<PREVIOUS_VERSION>';
     ```
-    Postgres returns something like:
+
+    例如：
+
     ```sql
-    -[ RECORD 1 ]----------+------------------------------
-    hypertable_schema      | _timescaledb_internal
-    hypertable_name        | _materialized_hypertable_2
-    job_id                 | 1001
-    last_run_started_at    | 2020-10-02 09:38:06.871953-04
-    last_successful_finish | 2020-10-02 09:38:06.932675-04
-    last_run_status        | Success
-    job_status             | Scheduled
-    last_run_duration      | 00:00:00.060722
-    next_scheduled_run     | 2020-10-02 10:38:06.932675-04
-    total_runs             | 1
-    total_successes        | 1
-    total_failures         | 0
+    ALTER EXTENSION timescaledb UPDATE TO '2.17.0';
+    ```
+
+1. **检查您是否已降级到正确的TimescaleDB版本**
+
+    ```sql
+    \dx timescaledb;
+    ```
+   Postgres返回类似于：
+    ```shell
+    Name     | Version | Schema |                                      Description                                      
+    -------------+---------+--------+---------------------------------------------------------------------------------------
+    timescaledb | 2.17.0  | public | Enables scalable inserts and complex queries for time-series data (Community Edition)
     ```
 
 </Procedure>
 
-You are running a shiny new version of TimescaleDB.
-
-[upgrade-minor]: /self-hosted/:currentVersion:/upgrades/minor-upgrade/
-[relnotes]: https://github.com/timescale/timescaledb/releases
-[upgrade-pg]: /self-hosted/:currentVersion:/upgrades/upgrade-pg/#upgrade-postgresql
 [backup]: /self-hosted/:currentVersion:/backup-and-restore/
-[export-policy-settings]: /self-hosted/:currentVersion:/upgrades/major-upgrade/#export-your-policy-settings
+[relnotes]: https://github.com/timescale/timescaledb/releases 
+[upgrade-pg]: /self-hosted/:currentVersion:/upgrades/upgrade-pg/
+
