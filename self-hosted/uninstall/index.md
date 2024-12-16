@@ -1,15 +1,15 @@
 ---
-title: Uninstall TimescaleDB
-excerpt: Uninstall TimescaleDB on macOS
-products: [self_hosted]
-keywords: [Uninstall]
+标题: 卸载 TimescaleDB
+摘要: 在 macOS 系统上卸载 TimescaleDB
+产品: [自托管]
+关键词: [卸载]
 ---
 
-# Uninstall TimescaleDB
+# 卸载 TimescaleDB
 
-If you want to uninstall TimescaleDB because it does not meet your requirements,
-you can uninstall it without having to uninstall PostgreSQL.
+如果您想要卸载 TimescaleDB，因为它不符合您的要求，您可以在不卸载 PostgreSQL 的情况下卸载它。
 
-*   [Learn how to uninstall][uninstall-timescaledb] TimescaleDB in macOS
+*   [了解如何在 macOS 中卸载 TimescaleDB][uninstall-timescaledb]
 
 [uninstall-timescaledb]: /self-hosted/:currentVersion:/uninstall/
+
