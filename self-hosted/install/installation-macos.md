@@ -1,8 +1,8 @@
 ---
-title: Install TimescaleDB on macOS
-excerpt: Install self-hosted TimescaleDB on macOS
-products: [self_hosted]
-keywords: [installation, self-hosted, macOS]
+标题: 在 macOS 系统上安装 TimescaleDB
+摘要: 在 macOS 系统上安装自托管的 TimescaleDB
+产品: [自托管]
+关键词: [安装，自托管，macOS]
 ---
 
 import WhereTo from "versionContent/_partials/_where-to-next.mdx";
@@ -11,41 +11,34 @@ import SelfHostedHomebrew from "versionContent/_partials/_install-self-hosted-ho
 import SelfHostedMacports from "versionContent/_partials/_install-self-hosted-macports-based.mdx";
 import AddTimescaleDBToDB from "versionContent/_partials/_add-timescaledb-to-a-database.mdx";
 
-# Install self-hosted TimescaleDB on macOS
+# 在macOS上自行托管TimescaleDB安装
 
-TimescaleDB is a [PostgreSQL extension](https://www.postgresql.org/docs/current/external-extensions.html) for
-time series and demanding workloads that ingest and query high volumes of data. You can host TimescaleDB on 
-macOS device.
+TimescaleDB是一个[PostgreSQL扩展](https://www.postgresql.org/docs/current/external-extensions.html)，用于时间序列和高吞吐量数据查询的工作负载。你可以在macOS设备上托管TimescaleDB。
 
-< Skip /> 
+<跳过 />
 
-This section shows you how to:
+本节向您展示如何：
 
-* [Install and configure TimescaleDB on PostgreSQL](#install-and-configure-timescaledb-on-postgresql) - set up
-  a self-hosted PostgreSQL instance to efficiently run TimescaleDB.
-* [Add the TimescaleDB extension to your database](#add-the-timescaledb-extension-to-your-database) - enable TimescaleDB features and
-  performance improvements on a database.
+* [在PostgreSQL上安装和配置TimescaleDB](#在postgresql上安装和配置timescaledb) - 设置自托管的PostgreSQL实例以高效运行TimescaleDB。
+* [在数据库中添加TimescaleDB扩展](#在数据库中添加timescaledb扩展) - 在数据库上启用TimescaleDB功能和性能改进。
 
-### Prerequisites
+### 前提条件
 
-To install TimescaleDB on your MacOS device, you need:
+要在您的MacOS设备上安装TimescaleDB，您需要：
 
-* [PostgreSQL][install-postgresql]: for the latest functionality, install PostgreSQL v16
+* [PostgreSQL][install-postgresql]：为了获得最新功能，请安装PostgreSQL v16
 
 <Highlight type="warning">
-If you have already installed PostgreSQL using a method other than Homebrew or MacPorts, you may encounter errors
-following these install instructions. Best practice is to full remove any existing PostgreSQL
-installations before you begin.
+如果您已经使用除Homebrew或MacPorts之外的方法安装了PostgreSQL，您可能会在遵循这些安装说明时遇到错误。最佳实践是在开始之前完全移除任何现有的PostgreSQL安装。
 
-To keep your current PostgreSQL installation, [Install from source][install-from-source].
+如果您想保留当前的PostgreSQL安装，请[从源代码安装][install-from-source]。
 </Highlight>
 
-## Install and configure TimescaleDB on PostgreSQL
+## 在PostgreSQL上安装和配置TimescaleDB
 
-This section shows you how to install the latest version of PostgreSQL and
-TimescaleDB on a [supported platform](#supported-platforms) using the packages supplied by Timescale.
+本节向您展示如何在[支持的平台](#支持的平台)上使用Timescale提供的包安装最新版本的PostgreSQL和TimescaleDB。
 
-<Tabs label="Install TimescaleDB">
+<Tabs label="安装TimescaleDB">
 
 <Tab title="Homebrew">
 
@@ -60,24 +53,25 @@ TimescaleDB on a [supported platform](#supported-platforms) using the packages s
 </Tab>
 </Tabs>
 
-## Add the TimescaleDB extension to your database
+## 在数据库中添加TimescaleDB扩展
 
-For improved performance, you enable TimescaleDB on each database on your self-hosted PostgreSQL instance.
-This section shows you how to enable TimescaleDB for a new database in PostgreSQL using `psql` from the command line.
-
+为了提高性能，您需要在自托管的PostgreSQL实例上的每个数据库上启用TimescaleDB。
+本节向您展示如何使用命令行中的`psql`为PostgreSQL中的新数据库启用TimescaleDB。
 
 <AddTimescaleDBToDB />
 
-And that is it! You have TimescaleDB running on a database on a self-hosted instance of PostgreSQL.
+就是这样！您已经在自托管的PostgreSQL实例上的数据库上运行TimescaleDB。
 
+## 接下来去哪里
 
-## Where to next
+<WhereTo />
 
- <WhereTo />
+## 支持的平台
 
-## Supported platforms
+为了获得最新功能，请安装macOS 14 Sanoma。支持的最旧版本是macOS 10.15 Catalina。
 
-For the latest functionality, install MacOS 14 Sanoma. The oldest supported version is macOS 10.15 Catalina
+[install-postgresql]: https://www.postgresql.org/download/macosx/
+[install-from-source]: https://www.postgresql.org/docs/current/source.html
 
 [homebrew]: https://docs.brew.sh/Installation
 [install-psql]: /use-timescale/:currentVersion:/integrations/query-admin/about-psql/
