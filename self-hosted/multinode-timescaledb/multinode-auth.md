@@ -1,350 +1,253 @@
 ---
-title: Multi-node authentication
-excerpt: Configure authentication between access nodes and data nodes
-products: [self_hosted]
-keywords: [multi-node, authenticate]
-tags: [admin]
+标题: 多节点认证
+摘要: 配置访问节点和数据节点之间的认证
+产品: [自托管]
+关键词: [多节点，认证]
+标签: [管理]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Multi-node authentication
+# 多节点认证
 
-When you have your instances set up, you need to configure them to accept
-connections from the access node to the data nodes. The authentication mechanism
-you choose for this can be different than the one used by external clients to
-connect to the access node.
+当您设置好实例后，需要配置它们以接受从访问节点到数据节点的连接。您为此选择的认证机制可以与外部客户端用于连接访问节点的机制不同。您如何设置多节点集群取决于您选择的认证机制。选项包括：
 
-How you set up your multi-node cluster depends on which authentication mechanism
-you choose. The options are:
-
-*   Trust authentication. This is the simplest approach, but also the
-    least secure. This is a good way to start if you are trying out multi-node,
-    but is not recommended for production clusters.
-*   Pasword authentication. Every user role requires an internal password for
-    establishing connections between the access node and the data nodes. This
-    method is easier to set up than certificate authentication, but provides
-    only a basic level of protection.
-*   Certificate authentication. Every user role requires a certificate from a
-    certificate authority to establish connections between the access node and
-    the data nodes. This method is more complex to set up than password
-    authentication, but more secure and easier to automate.
+*   信任认证。这是最简单的方法，但也是最不安全的。如果您正在尝试多节点，这是一个很好的起点，但不推荐用于生产集群。
+*   密码认证。每个用户角色需要一个内部密码来建立访问节点和数据节点之间的连接。这种方法比证书认证更容易设置，但只提供基本级别的保护。
+*   证书认证。每个用户角色需要一个来自证书颁发机构的证书来建立访问节点和数据节点之间的连接。这种方法比密码认证更复杂，但更安全，更容易自动化。
 
 <Highlight type="important">
-Going beyond the simple trust approach to create a secure system can be complex,
-but it is important to secure your database appropriately for your environment.
-We do not recommend any one security model, but encourage you to perform a risk
-assessment and implement the security model that best suits your environment.
+超越简单的信任方法来创建一个安全的系统可能会很复杂，但对于您的环境来说，适当地保护数据库是非常重要的。我们不推荐任何一种安全模型，但鼓励您进行风险评估，并实施最适合您环境的安全模型。
 </Highlight>
 
-## Trust authentication
+## 信任认证
 
-Trusting all incoming connections is the quickest way to get your multi-node
-environment up and running, but it is not a secure method of operation. Use this
-only for developing a proof of concept, do not use this method for production
-installations.
+信任所有传入连接是让您的多节点环境快速运行起来的最快方法，但这不是一种安全的操作方式。仅用于开发概念验证，不要将这种方法用于生产安装。
 
 <Highlight type="warning">
-The trust authentication method allows insecure access to all nodes. Do not use
-this method in production. It is not a secure method of operation.
+信任认证方法允许对所有节点的不安全访问。不要在生产中使用这种方法。这不是一种安全的操作方式。
 </Highlight>
 
 <Procedure>
 
-### Setting up trust authentication
+### 设置信任认证
 
-1.  Connect to the access node with `psql`, and locate the `pg_hba.conf` file:
+1.  使用 `psql` 连接到访问节点，并找到 `pg_hba.conf` 文件：
 
     ```sql
     SHOW hba_file;
     ```
 
-1.  Open the `pg_hba.conf` file in your preferred text editor, and add this
-    line. In this example, the access node is located at IP `192.0.2.20` with a
-    mask length of `32`. You can add one of these two lines:
+1.  在您喜欢的文本编辑器中打开 `pg_hba.conf` 文件，并添加这一行。在这个例子中，访问节点位于 IP `192.0.2.20`，掩码长度为 `32`。您可以添加以下两行中的任意一行：
 
     ```txt
 
-    # Using local loopback TCP/IP connections
+    # 使用本地回环 TCP/IP 连接
 
     # TYPE  DATABASE        USER            ADDRESS                 METHOD
     host    all             all             192.0.2.20/32            trust
 
-    # The same as the previous line, but using a separate netmask column
+    # 与前一行相同，但使用单独的 netmask 列
 
     # TYPE  DATABASE        USER            IP-ADDRESS      IP-MASK             METHOD
     host    all             all             192.0.2.20      255.255.255.255    trust
 
-1.  At the command prompt, reload the server configuration:
+1.  在命令提示符下，重新加载服务器配置：
 
     ```bash
     pg_ctl reload
     ```
 
-    On some operating systems, you might need to use the `pg_ctlcluster` command
-    instead.
+    在某些操作系统上，您可能需要使用 `pg_ctlcluster` 命令代替。
 
-1.  If you have not already done so, add the data nodes to the access node. For
-    instructions, see the [multi-node setup][multi-node-setup] section.
-1.  On the access node, create the trust role. In this example, we call
-    the role `testrole`:
+1.  如果您尚未这样做，请将数据节点添加到访问节点。有关说明，请参见[多节点设置][multi-node-setup]部分。
+1.  在访问节点上，创建信任角色。在这个例子中，我们称角色为 `testrole`：
 
     ```sql
     CREATE ROLE testrole;
     ```
 
-    **OPTIONAL**: If external clients need to connect to the access node
-    as `testrole`, add the `LOGIN` option when you create the role. You can
-    also add the `PASSWORD` option if you want to require external clients to
-    enter a password.
-1.  Allow the trust role to access the foreign server objects for the data
-    nodes. Make sure you include all the data node names:
+    **可选**：如果外部客户端需要以 `testrole` 身份连接到访问节点，创建角色时添加 `LOGIN` 选项。如果您希望要求外部客户端输入密码，还可以添加 `PASSWORD` 选项。
+1.  允许信任角色访问数据节点的外部服务器对象。确保您包含了所有数据节点名称：
 
     ```sql
     GRANT USAGE ON FOREIGN SERVER <data node name>, <data node name>, ... TO testrole;
     ```
 
-1.  On the access node, use the [`distributed_exec`][distributed_exec] command
-    to add the role to all the data nodes:
+1.  在访问节点上，使用 [`distributed_exec`][distributed_exec] 命令将角色添加到所有数据节点：
 
     ```sql
     CALL distributed_exec($$ CREATE ROLE testrole LOGIN $$);
     ```
 
 <Highlight type="important">
-Make sure you create the role with the `LOGIN` privilege on the data nodes, even
-if you don't use this privilege on the access node. For all other privileges,
-ensure they are same on the access node and the data nodes.
+确保您在数据节点上为角色创建了具有 `LOGIN` 权限的角色，即使您在访问节点上不使用此权限。对于所有其他权限，请确保它们在访问节点和数据节点上相同。
 </Highlight>
 
 </Procedure>
 
-## Password authentication
+## 密码认证
 
-Password authentication requires every user role to know a password before it
-can establish a connection between the access node and the data nodes. This
-internal password is only used by the access node and it does not need to be
-the same password as the client uses to connect to the access node. External
-users do not need to share the internal password at all, it can be set up and
-administered by the database administrator.
+密码认证要求每个用户角色在建立访问节点和数据节点之间的连接之前都知道一个密码。这个内部密码仅由访问节点使用，不需要与客户端用于连接访问节点的密码相同。外部用户根本不需要共享内部密码，它可以由数据库管理员设置和管理。
 
-The access node stores the internal password so that it can verify the correct
-password has been provided by a data node. We recommend that you store the
-password on the access node in a local password file, and this section shows you
-how to set this up. However, if it works better in your environment, you can use
-[user mappings][user-mapping] to store your passwords instead. This is slightly
-less secure than a local pasword file, because it requires one mapping for each
-data node in your cluster.
+访问节点存储内部密码，以便验证数据节点提供的密码是否正确。我们建议您将密码存储在访问节点上的本地密码文件中，本节将向您展示如何设置。然而，如果您的环境更适合使用用户映射来存储密码，您也可以这样做。这比本地密码文件稍微不安全一些，因为它需要为您的集群中的每个数据节点都有一个映射。
 
-This section sets up your password authentication using SCRAM SHA-256 password
-authentication. For other password authentication methods, see the
-[PostgreSQL authentication documentation][auth-password].
+本节使用 SCRAM SHA-256 密码认证设置您的密码认证。对于其他密码认证方法，请参见[PostgreSQL 认证文档][auth-password]。
 
-Before you start, check that you can use the `postgres` username to log in to
-your access node.
+开始之前，请检查您是否可以使用 `postgres` 用户名登录到您的访问节点。
 
 <Procedure>
 
-### Setting up password authentication
+### 设置密码认证
 
-1.  On the access node, open the `postgresql.conf` configuration file, and add
-    or edit this line:
+1.  在访问节点上，打开 `postgresql.conf` 配置文件，并添加或编辑这一行：
 
     ```txt
-    password_encryption = 'scram-sha-256'  # md5 or scram-sha-256
+    password_encryption = 'scram-sha-256'  # md5 或 scram-sha-256
     ```
 
-1.  Repeat for each of the data nodes.
-1.  On each of the data nodes, at the `psql` prompt,  locate the `pg_hba.conf`
-    configuration file:
+1.  对于每个数据节点重复此操作。
+1.  在每个数据节点上，在 `psql` 提示符下，找到 `pg_hba.conf` 配置文件：
 
     ```sql
     SHOW hba_file
     ```
 
-1.  On each of the data nodes, open the `pg_hba.conf` configuration file, and
-    add or edit this line to enable encrypted authentication to the access
-    node:
+1.  在每个数据节点上，打开 `pg_hba.conf` 配置文件，并添加或编辑这一行以启用对访问节点的加密认证：
 
     ```txt
-    # IPv4 local connections:
+    # IPv4 本地连接：
     # TYPE  DATABASE  USER  ADDRESS      METHOD
-    host    all       all   192.0.2.20   scram-sha-256 #where '192.0.2.20' is the access node IP
+    host    all       all   192.0.2.20   scram-sha-256 #其中 '192.0.2.20' 是访问节点 IP
     ```
 
-1.  On the access node, open or create the password file at `data/passfile`.
-    This file stores the passwords for each role that the access node connects
-    to on the data nodes. If you need to change the location of the password
-    file, adjust the `timescaledb.passfile` setting in the `postgresql.conf`
-    configuration file.
-1.  On the access node, open the `passfile` file, and add a line like this for
-    each user, starting with the `postgres` user:
+1.  在访问节点上，打开或创建密码文件 `data/passfile`。此文件存储访问节点连接到数据节点上的每个角色的密码。如果您需要更改密码文件的位置，请调整 `postgresql.conf` 配置文件中的 `timescaledb.passfile` 设置。
+1.  在访问节点上，打开 `passfile` 文件，并为每个用户添加类似这样的一行，从 `postgres` 用户开始：
 
     ```bash
-    *:*:*:postgres:xyzzy #assuming 'xyzzy' is the password for the 'postgres' user
+    *:*:*:postgres:xyzzy #假设 'xyzzy' 是 'postgres' 用户的密码
     ```
 
-1.  On the access node, at the command prompt, change the permissions of the
-    `passfile` file:
+1.  在访问节点上，在命令提示符下更改 `passfile` 文件的权限：
 
     ```bash
     chmod 0600 passfile
     ```
 
-1.  On the access node, and on each of the data nodes, reload the server
-    configuration to pick up the changes:
+1.  在访问节点和每个数据节点上，重新加载服务器配置以应用更改：
 
     ```bash
     pg_ctl reload
     ```
 
-1.  If you have not already done so, add the data nodes to the access node. For
-    instructions, see the [multi-node setup][multi-node-setup] section.
-1.  On the access node, at the `psql` prompt, create additional roles, and
-    grant them access to foreign server objects for the data nodes:
+1.  如果您尚未这样做，请将数据节点添加到访问节点。有关说明，请参见[多节点设置][multi-node-setup]部分。
+1.  在访问节点上，在 `psql` 提示符下创建额外的角色，并授予它们访问数据节点的外部服务器对象的权限：
 
     ```sql
     CREATE ROLE testrole PASSWORD 'clientpass' LOGIN;
     GRANT USAGE ON FOREIGN SERVER <data node name>, <data node name>, ... TO testrole;
     ```
 
-    The `clientpass` password is used by external clients to connect to the
-    access node as user `testrole`. If the access node is configured to accept
-    other authentication methods, or the role is not a login role, then you
-    might not need to do this step.
-1.  On the access node, add the new role to each of the data nodes with
-    [`distributed_exec`][distributed_exec]. Make sure you add the `PASSWORD`
-    parameter to specify a different password to use when connecting to the
-    data nodes with role `testrole`:
+    `clientpass` 密码由外部客户端用于以 `testrole` 用户身份连接到访问节点。如果访问节点配置为接受其他认证方法，或者角色不是登录角色，则您可能不需要执行此步骤。
+1.  在访问节点上，使用 [`distributed_exec`][distributed_exec] 将新角色添加到每个数据节点。确保您添加了 `PASSWORD` 参数以指定连接到数据节点时使用的不同密码：
 
     ```sql
     CALL distributed_exec($$ CREATE ROLE testrole PASSWORD 'internalpass' LOGIN $$);
     ```
 
-1.  On the access node, add the new role to the `passfile` you created earlier,
-    by adding this line:
+1.  在访问节点上，将新角色添加到您之前创建的 `passfile` 中，添加这样的一行：
 
     ```bash
-    *:*:*:testrole:internalpass #assuming 'internalpass' is the password used to connect to data nodes
+    *:*:*:testrole:internalpass #假设 'internalpass' 是用于连接到数据节点的密码
     ```
 
 <Highlight type="important">
-Any user passwords that you created before you set up password authentication
-need to be re-created so that they use the new encryption method.
+您在设置密码认证之前创建的任何用户密码需要重新创建，以便它们使用新的加密方法。
 </Highlight>
 
 </Procedure>
 
-## Certificate authentication
+## 证书认证
 
-This method is a bit more complex to set up than password authentication, but
-it is more secure, easier to automate, and can be customized to your security environment.
+这种方法比密码认证设置更复杂，但它更安全，更容易自动化，并且可以根据您的安全环境进行定制。
 
-To use certificates, the access node and each data node need three files:
+要使用证书，访问节点和每个数据节点需要三个文件：
 
-*   The root CA certificate, called `root.crt`. This certificate serves as the
-    root of trust in the system. It is used to verify the other certificates.
-*   A node certificate, called `server.crt`. This certificate provides the node
-    with a trusted identity in the system.
-*   A node certificate key, called `server.key`. This provides proof of
-    ownership of the node certificate. Make sure you keep this file private on
-    the node where it is generated.
+*   根 CA 证书，称为 `root.crt`。此证书在系统中作为信任的根。它用于验证其他证书。
+*   节点证书，称为 `server.crt`。此证书为节点在系统中提供可信任的身份。
+*   节点证书密钥，称为 `server.key`。这提供了对节点证书所有权的证明。确保您在生成它的节点上保持此文件的私密性。
 
-You can purchase certificates from a commercial certificate authority (CA), or
-generate your own self-signed CA. This section shows you how to use your access
-node certificate to create and sign new user certificates for the data nodes.
+您可以从商业证书颁发机构（CA）购买证书，或生成您自己的自签名 CA。本节向您展示如何使用您的访问节点证书来创建和签署数据节点的新用户证书。
 
-Keys and certificates serve different purposes on the data nodes and access
-node. For the access node, a signed certificate is used to verify user
-certificates for access. For the data nodes, a signed certificate authenticates
-the node to the access node.
+密钥和证书在数据节点和访问节点上有不同的用途。对于访问节点，签名证书用于验证访问的用户证书。对于数据节点，签名证书向访问节点认证节点。
 
 <Procedure>
 
-### Generating a self-signed root certificate for the access node
+### 为访问节点生成自签名根证书
 
-1.  On the access node, at the command prompt, generate a private key called
-    `auth.key`:
+1.  在访问节点上，在命令提示符下生成一个名为 `auth.key` 的私钥：
 
     ```bash
-    openssl genpkey -algorithm rsa -out auth.key
+    openssl genpkey -algorithm
+ rsa -out auth.key
     ```
 
-1.  Generate a self-signed root certificate for the certificate authority (CA),
-    called `root.cert`:
+1.  为证书颁发机构（CA）生成一个自签名根证书，称为 `root.cert`：
 
     ```bash
     openssl req -new -key auth.key -days 3650 -out root.crt -x509
     ```
 
-1.  Complete the questions asked by the script to create your root certificate.
-    Type your responses in, press `enter` to accept the default value shown in
-    brackets, or type `.` to leave the field blank. For example:
+1.  完成脚本提出的问题以创建您的根证书。输入您的回答，按 `enter` 接受括号中显示的默认值，或输入 `.` 留空。例如：
 
     ```txt
-    Country Name (2 letter code) [AU]:US
-    State or Province Name (full name) [Some-State]:New York
-    Locality Name (eg, city) []:New York
-    Organization Name (eg, company) [Internet Widgets Pty Ltd]:Example Company Pty Ltd
-    Organizational Unit Name (eg, section) []:
-    Common Name (e.g. server FQDN or YOUR name) []:http://cert.example.com/
-    Email Address []:
+    国家名称（两位代码）[AU]:US
+    州或省名称（全名）[Some-State]:New York
+    本地名称（例如，城市）[]:New York
+    组织名称（例如，公司）[Internet Widgets Pty Ltd]:Example Company Pty Ltd
+    组织单位名称（例如，部门）[]:
+    通用名称（例如，服务器 FQDN 或您的名称）[]:http://cert.example.com/ 
+    电子邮件地址[]:
     ```
 
 </Procedure>
 
-When you have created the root certificate on the access node, you can generate
-certificates and keys for each of the data nodes. To do this, you need to create
-a certificate signing request (CSR) for each data node.
+当您在访问节点上创建了根证书后，您可以为每个数据节点生成证书和密钥。为此，您需要为每个数据节点创建一个证书签名请求（CSR）。
 
-The default names for the key is `server.key`, and for the certificate is
-`server.crt`. They are stored in together, in the `data` directory on the data
-node instance.
+默认的密钥名称为 `server.key`，证书为 `server.crt`。它们存储在一起，在数据节点实例的 `data` 目录中。
 
-The default name for the CSR is `server.csr` and you need to sign
-it using the root certificate you created on the access node.
+默认的 CSR 名称为 `server.csr`，您需要使用在访问节点上创建的根证书来签署它。
 
-<Procedure>
+### 为数据节点生成密钥和证书
 
-### Generating keys and certificates for data nodes
-
-1.  On the access node, generate a certificate signing request (CSR)
-    called `server.csr`, and create a new key called `server.key`:
+1.  在访问节点上，生成一个名为 `server.csr` 的证书签名请求（CSR），并创建一个名为 `server.key` 的新密钥：
 
     ```bash
     openssl req -out server.csr -new -newkey rsa:2048 -nodes \
     -keyout server.key
     ```
 
-1.  Sign the CSR using the root certificate CA you created earlier,
-    called `auth.key`:
+1.  使用您之前创建的根证书 CA，名为 `auth.key`，签署 CSR：
 
     ```bash
     openssl ca -extensions v3_intermediate_ca -days 3650 -notext \
     -md sha256 -in server.csr -out server.crt
     ```
 
-1.  Move the `server.crt` and `server.key` files from the access node, on to
-    each data node, in the `data` directory. Depending on your network setup,
-    you might need to use portable media.
-1.  Copy the root certificate file `root.crt` from the access node, on to each
-    data node, in the `data` directory. Depending on your network setup, you
-    might need to use portable media.
+1.  将 `server.crt` 和 `server.key` 文件从访问节点移动到每个数据节点的 `data` 目录中。根据您的网络设置，您可能需要使用便携式媒体。
+1.  将根证书文件 `root.crt` 从访问节点复制到每个数据节点的 `data` 目录中。根据您的网络设置，您可能需要使用便携式媒体。
 
 </Procedure>
 
-When you have created the certificates and keys, and moved all the files into
-the right places on the data nodes, you can configure the data nodes to use SSL
-authentication.
+当您创建了证书和密钥，并将所有文件移动到数据节点的正确位置后，您可以配置数据节点使用 SSL 认证。
 
 <Procedure>
 
-### Configuring data nodes to use SSL authentication
+### 配置数据节点使用 SSL 认证
 
-1.  On each data node, open the `postgresql.conf` configuration file and add or
-    edit the SSL settings to enable certificate authentication:
+1.  在每个数据节点上，打开 `postgresql.conf` 配置文件，并添加或编辑 SSL 设置以启用证书认证：
 
     ```txt
     ssl = on
@@ -353,12 +256,9 @@ authentication.
     ssl_key_file = 'server.key'
     ```
 
-1.  [](#)<optional />If you want the access node to use certificate authentication
-    for login, make these changes on the access node as well.
+1.  []()<optional />如果您希望访问节点也使用证书认证进行登录，请在访问节点上也进行这些更改。
 
-1.  On each data node, open the `pg_hba.conf` configuration file, and add or
-    edit this line to allow any SSL user log in with client certificate
-    authentication:
+1.  在每个数据节点上，打开 `pg_hba.conf` 配置文件，并添加或编辑这一行以允许任何 SSL 用户使用客户端证书认证登录：
 
     ```txt
     # TYPE    DATABASE  USER        ADDRESS   METHOD  OPTIONS
@@ -366,26 +266,18 @@ authentication.
     ```
 
 <Highlight type="note">
-If you are using the default names for your certificate and key, you do not need
-to explicitly set them. The configuration looks for `server.crt` and
-`server.key` by default. If you use different names for your certificate and
-key, make sure you specify the correct names in the `postgresql.conf`
-configuration file.
+如果您使用证书和密钥的默认名称，则无需显式设置它们。配置默认寻找 `server.crt` 和 `server.key`。如果您为证书和密钥使用不同的名称，请确保在 `postgresql.conf` 配置文件中指定正确的名称。
 </Highlight>
 
 </Procedure>
 
-When your data nodes are configured to use SSL certificate authentication, you
-need to create a signed certificate and key for your access node. This allows
-the access node to log in to the data nodes.
+当您的数据节点配置为使用 SSL 证书认证时，您需要为您的访问节点创建一个签名的证书和密钥。这允许访问节点登录到数据节点。
 
 <Procedure>
 
-### Creating certificates and keys for the access node
+### 为访问节点创建证书和密钥
 
-1.  On the access node, as the `postgres` user, compute a base name for the
-    certificate files using [md5sum][], generate a subject identifier, and
-    create names for the key and certificate files:
+1.  在访问节点上，作为 `postgres` 用户，使用 [md5sum][] 计算证书文件的基础名称，生成主题标识符，并创建密钥和证书文件的名称：
 
     ```bash
     pguser=postgres
@@ -395,20 +287,19 @@ the access node to log in to the data nodes.
     crt_file="timescaledb/certs/$base.crt"
     ```
 
-1.  Generate a new random user key:
+1.  生成一个新的随机用户密钥：
 
     ```bash
     openssl genpkey -algorithm RSA -out "$key_file"
     ```
 
-1.  Generate a certificate signing request (CSR). This file is temporary,
-    stored in the `data` directory, and is deleted later on:
+1.  生成一个证书签名请求（CSR）。此文件是临时的，存储在 `data` 目录中，稍后将被删除：
 
     ```bash
     openssl req -new -sha256 -key $key_file -out "$base.csr" -subj "$subj"
     ```
 
-1.  Sign the CSR with the access node key:
+1.  使用访问节点密钥签署 CSR：
 
     ```bash
     openssl ca -batch -keyfile server.key -extensions v3_intermediate_ca \
@@ -416,47 +307,34 @@ the access node to log in to the data nodes.
     rm $base.csr
     ```
 
-1.  Append the node certificate to the user certificate. This completes the
-    certificate verification chain and makes sure that all certificates are
-    available on the data node, up to the trusted certificate stored
-    in `root.crt`:
+1.  将节点证书追加到用户证书。这完成了证书验证链，并确保所有证书都在数据节点上可用，直到存储在 `root.crt` 中的受信任证书：
 
     ```bash
     cat >>$crt_file <server.crt
     ```
 
 <Highlight type="note">
-By default, the user key files and certificates are stored on the access node in
-the `data` directory, under `timescaledb/certs`. You can change this location
-using the `timescaledb.ssl_dir` configuration variable.
+默认情况下，用户密钥文件和证书存储在访问节点的 `data` 目录下，位于 `timescaledb/certs`。您可以使用 `timescaledb.ssl_dir` 配置变量更改此位置。
 </Highlight>
 
 </Procedure>
 
-Your data nodes are now set up to accept certificate authentication, the data
-and access nodes have keys, and the `postgres` user has a certificate. If you
-have not already done so, add the data nodes to the access node. For
-instructions, see the [multi-node setup][multi-node-setup] section. The final
-step is add additional user roles.
+您的数据节点现在已设置为接受证书认证，数据节点和访问节点都有密钥，`postgres` 用户有证书。如果您尚未这样做，请将数据节点添加到访问节点。有关说明，请参见[多节点设置][multi-node-setup]部分。最后一步是添加额外的用户角色。
 
 <Procedure>
 
-### Setting up additional user roles
+### 设置额外的用户角色
 
-1.  On the access node, at the `psql` prompt, create the new user and grant
-    permissions:
+1.  在访问节点上，在 `psql` 提示符下创建新用户并授予权限：
 
     ```sql
     CREATE ROLE testrole;
     GRANT USAGE ON FOREIGN SERVER <data node name>, <data node name>, ... TO testrole;
     ```
 
-    If you need external clients to connect to the access node as `testrole`,
-    make sure you also add the `LOGIN` option. You can also enable password
-    authentication by adding the `PASSWORD` option.
+    如果您需要外部客户端以 `testrole` 身份连接到访问节点，请确保您也添加了 `LOGIN` 选项。您还可以通过添加 `PASSWORD` 选项启用密码认证。
 
-1.  On the access node, use the [`distributed_exec`][distributed_exec] command
-    to add the role to all the data nodes:
+1.  在访问节点上，使用 [`distributed_exec`][distributed_exec] 命令将角色添加到所有数据节点：
 
     ```sql
     CALL distributed_exec($$ CREATE ROLE testrole LOGIN $$);
@@ -464,8 +342,9 @@ step is add additional user roles.
 
 </Procedure>
 
-[auth-password]: https://www.postgresql.org/docs/current/auth-password.html
+[auth-password]: https://www.postgresql.org/docs/current/auth-password.html 
 [distributed_exec]: /api/:currentVersion:/distributed-hypertables/distributed_exec
-[md5sum]: https://www.tutorialspoint.com/unix_commands/md5sum.htm
+[md5sum]: https://www.tutorialspoint.com/unix_commands/md5sum.htm 
 [multi-node-setup]: /self-hosted/:currentVersion:/multinode-timescaledb/multinode-setup/
 [user-mapping]: https://www.postgresql.org/docs/current/sql-createusermapping.html
+
