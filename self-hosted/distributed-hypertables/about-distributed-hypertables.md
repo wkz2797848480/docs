@@ -1,157 +1,84 @@
 ---
-title: About distributed hypertables
-excerpt: Learn how distributed hypertables work in multi-node Timescale
-products: [self_hosted]
-keywords: [distributed hypertables, multi-node]
+标题: 关于分布式超表
+摘要: 了解分布式超表在多节点 Timescale 中是如何运作的
+产品: [自托管]
+关键词: [分布式超表，多节点]
 ---
 
-import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
+import 多节点已经弃用 from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# About distributed hypertables
+# 关于分布式超级表
 
-Distributed hypertables are hypertables that span multiple nodes. With
-distributed hypertables, you can scale your data storage across multiple
-machines. The database can also parallelize some inserts and queries.
+分布式超级表是跨越多个节点的超级表。通过分布式超级表，您可以在多台机器上扩展数据存储。数据库还可以并行处理一些插入和查询操作。
 
-A distributed hypertable still acts as if it were a single table. You can work
-with one in the same way as working with a standard hypertable. To learn more
-about hypertables, see the [hypertables section][hypertables].
+分布式超级表仍然表现得就像一个单一的表。您可以像使用标准超级表一样使用它。要了解更多关于超级表的信息，请参见[超级表部分][hypertables]。
 
-Certain nuances can affect distributed hypertable performance. This section
-explains how distributed hypertables work, and what you need to consider before
-adopting one.
+某些细微差别可能会影响分布式超级表的性能。本节解释了分布式超级表的工作原理，以及在采用之前需要考虑的内容。
 
-## Architecture of a distributed hypertable
+## 分布式超级表的架构
 
-Distributed hypertables are used with multi-node clusters. Each cluster has an
-access node and multiple data nodes. You connect to your database using the
-access node, and the data is stored on the data nodes. For more information
-about multi-node, see the [multi-node section][multi-node].
+分布式超级表用于多节点集群。每个集群都有一个访问节点和多个数据节点。您通过访问节点连接到数据库，数据存储在数据节点上。有关多节点的更多信息，请参见[多节点部分][multi-node]。
 
-You create a distributed hypertable on your access node. Its chunks are stored
-on the data nodes. When you insert data or run a query, the access node
-communicates with the relevant data nodes and pushes down any processing if it
-can.
+您在访问节点上创建分布式超级表。它的块存储在数据节点上。当您插入数据或运行查询时，访问节点与相关数据节点通信，并尽可能下推任何处理。
 
-## Space partitioning
+## 空间分区
 
-Distributed hypertables are always partitioned by time, just like standard
-hypertables. But unlike standard hypertables, distributed hypertables should
-also be partitioned by space. This allows you to balance inserts and queries
-between data nodes, similar to traditional sharding. Without space partitioning,
-all data in the same time range would write to the same chunk on a single node.
+分布式超级表总是按时间分区，就像标准超级表一样。但与标准超级表不同，分布式超级表还应该按空间分区。这允许您在数据节点之间平衡插入和查询操作，类似于传统的分片。没有空间分区，相同时间范围内的所有数据将写入单个节点上的同一个块。
 
-By default, Timescale creates as many space partitions as there are data
-nodes. You can change this number, but having too many space partitions degrades
-performance. It increases planning time for some queries, and leads to poorer
-balancing when mapping items to partitions.
+默认情况下，Timescale会根据数据节点的数量创建相应数量的空间分区。您可以更改这个数量，但拥有太多空间分区会降低性能。它增加了某些查询的计划时间，并在将项目映射到分区时导致平衡性较差。
 
-Data is assigned to space partitions by hashing. Each hash bucket in the space
-dimension corresponds to a data node. One data node may hold many buckets, but
-each bucket may belong to only one node for each time interval.
+数据通过哈希分配给空间分区。空间维度中的每个哈希桶对应一个数据节点。一个数据节点可能持有许多桶，但每个桶对于每个时间间隔只能属于一个节点。
 
-When space partitioning is on, 2 dimensions are used to divide data into chunks:
-the time dimension and the space dimension. You can specify the number of
-partitions along the space dimension. Data is assigned to a partition by hashing
-its value on that dimension.
+当空间分区开启时，使用两个维度将数据划分为块：时间维度和空间维度。您可以指定空间维度上的分区数量。数据通过在该维度上的值进行哈希分配到分区。
 
-For example, say you use `device_id` as a space partitioning column. For each
-row, the value of the `device_id` column is hashed. Then the row is inserted
-into the correct partition for that hash value.
+例如，假设您使用`device_id`作为空间分区列。对于每一行，`device_id`列的值被哈希。然后该行被插入到对应哈希值的正确分区。
 
-<img class="main-content__illustration"
-width={1375} height={944}
-src="https://assets.timescale.com/docs/images/hypertable-time-space-partition.webp"
-alt="A hypertable visualized as a rectangular plane carved into smaller rectangles, which are chunks. One dimension of the rectangular plane is time and the other is space. Data enters the hypertable and flows to a chunk based on its time and space values." />
+![一个超级表被可视化为一个矩形平面，被划分为更小的矩形，即块。矩形平面的一个维度是时间，另一个是空间。数据进入超级表并根据其时间和空间值流向块。](https://assets.timescale.com/docs/images/hypertable-time-space-partition.webp)
 
-### Closed and open dimensions for space partitioning
+### 空间分区的封闭和开放维度
 
-Space partitioning dimensions can be open or closed. A closed dimension has a
-fixed number of partitions, and usually uses some hashing to match values to
-partitions. An open dimension does not have a fixed number of partitions, and
-usually has each chunk cover a certain range. In most cases the time dimension
-is open and the space dimension is closed.
+空间分区维度可以是开放的或封闭的。封闭维度有固定数量的分区，并通常使用某种哈希来匹配值到分区。开放维度没有固定数量的分区，并通常每个块覆盖某个范围。在大多数情况下，时间维度是开放的，空间维度是封闭的。
 
-If you use the `create_hypertable` command to create your hypertable, then the
-space dimension is open, and there is no way to adjust this. To create a
-hypertable with a closed space dimension, create the hypertable with only the
-time dimension first. Then use the `add_dimension` command to explicitly add an
-open device. If you set the range to `1`, each device has its own chunks. This
-can help you work around some limitations of regular space dimensions, and is
-especially useful if you want to make some chunks readily available for
-exclusion.
+如果您使用`create_hypertable`命令创建超级表，则空间维度是开放的，无法调整这一点。要创建具有封闭空间维度的超级表，首先仅使用时间维度创建超级表。然后使用`add_dimension`命令显式添加一个开放设备。如果您将范围设置为`1`，则每个设备都有自己的块。这可以帮助您绕过常规空间维度的一些限制，特别是如果您想要使某些块易于排除，这特别有用。
 
-### Repartitioning distributed hypertables
+### 重新分区分布式超级表
 
-You can expand distributed hypertables by adding additional data nodes. If you
-now have fewer space partitions than data nodes, you need to increase the
-number of space partitions to make use of your new nodes. The new partitioning
-configuration only affects new chunks. In this diagram, an extra data node
-was added during the third time interval. The fourth time interval now includes
-four chunks, while the previous time intervals still include three:
+您可以通过添加额外的数据节点来扩展分布式超级表。如果您现在拥有的数据节点比空间分区多，您需要增加空间分区的数量以利用您的新节点。新的分区配置只影响新块。在此图中，在第三个时间间隔期间添加了额外的数据节点。第四个时间间隔现在包括四个块，而之前的时间间隔仍然包括三个：
 
-<img class="main-content__illustration"
-width={1375} height={944}
-src="https://assets.timescale.com/docs/images/repartitioning.webp"
-alt="Diagram showing repartitioning on a distributed hypertable"
-/>
+![分布式超级表重新分区图示](https://assets.timescale.com/docs/images/repartitioning.webp)
 
-This can affect queries that span the two different partitioning configurations.
-For more information, see the section on
-[limitations of query push down][limitations].
+这可能会影响到跨越两种不同分区配置的查询。有关更多信息，请参见关于[查询下推限制][limitations]的部分。
 
-## Replicating distributed hypertables
+## 复制分布式超级表
 
-To replicate distributed hypertables at the chunk level, configure the
-hypertables to write each chunk to multiple data nodes. This native replication
-ensures that a distributed hypertable is protected against data node failures
-and provides an alternative to fully replicating each data node using streaming
-replication to provide high availability. Only the data nodes are replicated
-using this method. The access node is not replicated.
+要在块级别复制分布式超级表，配置超级表将每个块写入多个数据节点。这种原生复制确保分布式超级表受到数据节点故障的保护，并提供了一种替代方案，即完全复制每个数据节点以提供高可用性的流复制。仅使用此方法复制数据节点。访问节点不复制。
 
-For more information about replication and high availability, see the
-[multi-node HA section][multi-node-ha].
+有关复制和高可用性的更多信息，请参见[多节点高可用性部分][multi-node-ha]。
 
-## Performance of distributed hypertables
+## 分布式超级表的性能
 
-A distributed hypertable horizontally scales your data storage, so you're not
-limited by the storage of any single machine. It also increases performance for
-some queries.
+分布式超级表水平扩展您的数据存储，因此您不受任何单一机器存储的限制。它还提高了某些查询的性能。
 
-Whether, and by how much, your performance increases depends on your query
-patterns and data partitioning. Performance increases when the access node can
-push down query processing to data nodes. For example, if you query with a
-`GROUP BY` clause, and the data is partitioned by the `GROUP BY` column, the
-data nodes can perform the processing and send only the final results to the
-access node.
+您的性能是否提高以及提高多少取决于您的查询模式和数据分区。当访问节点可以将查询处理下推到数据节点时，性能会提高。例如，如果您使用`GROUP BY`子句进行查询，并且数据按`GROUP BY`列分区，则数据节点可以执行处理，并将最终结果发送给访问节点。
 
-If processing can't be done on the data nodes, the access node needs to pull in
-raw or partially processed data and do the processing locally. For more
-information, see the [limitations of pushing down
-queries][limitations-pushing-down].
+如果无法在数据节点上进行处理，访问节点需要拉取原始或部分处理的数据并在本地进行处理。有关更多信息，请参见[下推查询限制][limitations-pushing-down]。
 
-## Query push down
+## 查询下推
 
-The access node can use a full or a partial method to push down queries.
-Computations that can be pushed down include sorts and groupings. Joins on data
-nodes aren't currently supported.
+访问节点可以使用完整或部分方法下推查询。可以下推的计算包括排序和分组。当前不支持在数据节点上进行连接。
 
-To see how a query is pushed down to a data node, use `EXPLAIN VERBOSE` to
-inspect the query plan and the remote SQL statement sent to each data node.
+要查看查询如何下推到数据节点，请使用`EXPLAIN VERBOSE`检查查询计划和发送到每个数据节点的远程SQL语句。
 
-### Full push down
+### 完整下推
 
-In the full push-down method, the access node offloads all computation to the
-data nodes. It receives final results from the data nodes and appends them. To
-fully push down an aggregate query, the `GROUP BY` clause must include either:
+在完整下推方法中，访问节点将所有计算卸载到数据节点。它从数据节点接收最终结果并将它们追加。要完全下推聚合查询，`GROUP BY`子句必须包括：
 
-*   All the partitioning columns _or_
-*   Only the first space-partitioning column
+*   所有分区列_或_
+*   仅第一个空间分区列
 
-For example, say that you want to calculate the `max` temperature for each
-location:
+例如，假设您想要计算每个位置的`max`温度：
 
 ```sql
 SELECT location, max(temperature)
@@ -159,65 +86,29 @@ SELECT location, max(temperature)
   GROUP BY location;
 ```
 
-If `location` is your only space partition, each data node can compute the
-maximum on its own subset of the data.
+如果`location`是您唯一的空间分区，则每个数据节点可以计算自己的数据子集的最大值。
 
-### Partial push down
+### 部分下推
 
-In the partial push-down method, the access node offloads most of the
-computation to the data nodes. It receives partial results from the data nodes
-and calculates a final aggregate by combining the partials.
+在部分下推方法中，访问节点将大部分计算卸载到数据节点。它从数据节点接收部分结果，并通过组合部分结果计算最终聚合。
 
-For example, say that you want to calculate the `max` temperature across all
-locations. Each data node computes a local maximum, and the access node computes
-the final result by computing the maximum of all the local maximums:
+例如，假设您想要计算所有位置的`max`温度。每个数据节点计算本地最大值，访问节点通过计算所有本地最大值的最大值来计算最终结果：
 
 ```sql
 SELECT max(temperature) FROM conditions;
 ```
 
-### Limitations of query push down
+分布式超表在能够将查询下推到数据节点时可以获得更好的性能。但查询规划器可能无法下推每个查询，或者只能部分下推查询。这可能有几个原因：
 
-Distributed hypertables get improved performance when they can push down queries
-to the data nodes. But the query planner might not be able to push down every
-query. Or it might only be able to partially push down a query. This can occur
-for several reasons:
+*   您更改了分区配置。例如，您添加了新的数据节点并增加了空间分区的数量以匹配。这可能导致相同空间值的块存储在不同的节点上。例如，假设您按 `device_id` 分区。您开始时有3个分区，`device_B` 的数据存储在节点3上。您后来增加到4个分区。现在 `device_B` 的新块存储在节点4上。如果您在重新分区边界上进行查询，`device_B` 的最终聚合不能仅在节点3或节点4上计算。部分处理的数据必须发送到访问节点以进行最终聚合。Timescale查询规划器动态检测此类重叠块，并回退到适当的部分聚合计划。这意味着您可以添加数据节点并重新分区您的数据以实现弹性，而不必担心查询结果。在某些情况下，您的查询可能性能略有下降，但这是罕见的，受影响的块通常会很快移出您的保留窗口。
+*   查询包括[非不可变函数][volatility]和表达式。该函数不能下推到数据节点，因为根据定义，它不能保证在每个节点上都有一致的结果。一个非不可变函数的例子是[`random()`][random-func]，它依赖于当前的种子。
+*   查询包括用户定义的函数。访问节点假设数据节点上不存在该函数，因此不将其下推。
 
-*   You changed the partitioning configuration. For example, you added new data
-    nodes and increased the number of space partitions to match. This can cause
-    chunks for the same space value to be stored on different nodes. For
-    instance, say you partition by `device_id`. You start with 3 partitions, and
-    data for `device_B` is stored on node 3. You later increase to 4 partitions.
-    New chunks for `device_B` are now stored on node 4. If you query across the
-    repartitioning boundary, a final aggregate for `device_B` cannot be
-    calculated on node 3 or node 4 alone. Partially processed data must be sent
-    to the access node for final aggregation. The Timescale query planner
-    dynamically detects such overlapping chunks and reverts to the appropriate
-    partial aggregation plan. This means that you can add data nodes and
-    repartition your data to achieve elasticity without worrying about query
-    results. In some cases, your query could be slightly less performant, but
-    this is rare and the affected chunks usually move quickly out of your
-    retention window.
-*   The query includes [non-immutable functions][volatility] and expressions.
-    The function cannot be pushed down to the data node, because by definition,
-    it isn't guaranteed to have a consistent result across each node. An example
-    non-immutable function is [`random()`][random-func], which depends on the
-    current seed.
-*   The query includes a user-defined function. The access node assumes the
-    function doesn't exist on the data nodes, and doesn't push it down.
+Timescale使用几种优化来避免这些限制，并尽可能下推更多查询。例如，`now()` 是一个非不可变函数。数据库将其转换为访问节点上的常量，并将常量时间戳下推到数据节点。
 
-Timescale uses several optimizations to avoid these limitations, and push down
-as many queries as possible. For example, `now()` is a non-immutable function.
-The database converts it to a constant on the access node and pushes down the
-constant timestamp to the data nodes.
+## 结合分布式超表和标准超表
 
-## Combine distributed hypertables and standard hypertables
-
-You can use distributed hypertables in the same database as standard hypertables
-and standard PostgreSQL tables. This mostly works the same way as having
-multiple standard tables, with a few differences. For example, if you `JOIN` a
-standard table and a distributed hypertable, the access node needs to fetch the
-raw data from the data nodes and perform the `JOIN` locally.
+您可以在同一个数据库中使用分布式超表和标准超表以及标准的PostgreSQL表。这在大多数情况下与拥有多个标准表的工作方式相同，有一些差异。例如，如果您`JOIN`一个标准表和一个分布式超表，访问节点需要从数据节点获取原始数据并在本地执行`JOIN`。
 
 [limitations]: /self-hosted/:currentVersion:/distributed-hypertables/about-distributed-hypertables/#query-push-down/
 [hypertables]: /use-timescale/:currentVersion:/hypertables/
