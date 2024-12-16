@@ -1,23 +1,21 @@
 ---
-title: Install self-hosted TimescaleDB
-excerpt: Install TimescaleDB on your own hardware
-products: [self_hosted]
-keywords: [installation]
+标题: 安装自托管的 TimescaleDB
+摘要: 在你自己的硬件设备上安装 TimescaleDB
+产品: [自托管]
+关键词: [安装]
 ---
 
 import TimescaleDB from "versionContent/_partials/_timescaledb.mdx";
 import CTA from "versionContent/_partials/_selfhosted_cta.mdx";
 
-# Install TimescaleDB
+# 安装 TimescaleDB
 
 <TimescaleDB />
 <CTA />
 
-You can install self-hosted TimescaleDB for free from
-[source][self-hosted-source], or a [pre-built container][self-hosted-container].
-This guide provides instructions for installing the latest version of
-TimescaleDB. For more details about the latest release, see the
-[release notes][release-notes] section.
+您可以免费从 [源代码][self-hosted-source] 或 [预构建的容器][self-hosted-container] 安装自托管的 TimescaleDB。
+本指南提供了安装最新版本的 TimescaleDB 的说明。
+有关最新版本的更多详细信息，请查看 [发布说明][release-notes] 部分。
 
 <Installation />
 
