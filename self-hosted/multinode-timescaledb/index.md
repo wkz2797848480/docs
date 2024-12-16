@@ -1,29 +1,26 @@
 ---
-title: Multi-node
-excerpt: Multi-node TimescaleDB allows you to horizontally scale your database
-products: [self_hosted]
-keywords: [multi-node, scaling]
+标题: 多节点
+摘要: 多节点 TimescaleDB 能让你对数据库进行水平扩展。
+产品: [自托管]
+关键词: [多节点，扩展]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Multi-node
+# 多节点
 
-If you have a larger workload, you might need more than one TimescaleDB
-instance. TimescaleDB multi-node allows you to run and manage multiple instances,
-giving you faster data ingest, and more responsive and efficient queries.
+如果您有较大的工作负载，可能需要多个TimescaleDB实例。TimescaleDB多节点允许您运行和管理多个实例，为您提供更快的数据摄入以及更响应迅速和高效的查询。
 
-*   [Learn about multi-node][about-multi-node] to understand how it works
-    before you begin using it.
-*   Set up [multi-node][setup-selfhosted] in a self-hosted environment.
-*   Set up [authentication][multi-node-auth] for your cluster
-*   [Configure][multi-node-config] your cluster
-*   [Administer][multi-node-administration] your cluster
-*   [Grow or shrink][multi-node-grow-shrink] your cluster
-*   Set up [high availability][multi-node-ha] (HA) for your cluster
-*   [Maintain][multi-node-maintenance] your multi-node environment
+*   [了解多节点][about-multi-node]，在开始使用之前了解其工作原理。
+*   在自托管环境中设置[多节点][setup-selfhosted]。
+*   为您的集群设置[认证][multi-node-auth]。
+*   [配置][multi-node-config]您的集群。
+*   [管理][multi-node-administration]您的集群。
+*   [扩展或缩减][multi-node-grow-shrink]您的集群。
+*   为您的集群设置[高可用性][multi-node-ha]（HA）。
+*   [维护][multi-node-maintenance]您的多节点环境。
 
 [about-multi-node]: /self-hosted/:currentVersion:/multinode-timescaledb/about-multinode/
 [multi-node-administration]: /self-hosted/:currentVersion:/multinode-timescaledb/multinode-administration/
