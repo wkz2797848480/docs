@@ -1,25 +1,25 @@
 ---
-title: SQL inteface for pgvector and pgvectorscale
-excerpt: A detailed description of how to work with pgvector and pgvectorscale using SQL.
-products: [cloud]
-keywords: [ai, vector, pgvector, timescale vector, sql, pgvectorscale]
-tags: [ai, vector, sql]
+标题: 用于pg向量和pg向量缩放的SQL接口
+摘要: 关于如何使用SQL操作pg向量和pg向量缩放的详细说明。
+产品: [云服务]
+关键词: [人工智能,向量,pg向量,Timescale向量,SQL,pg 向量缩放]
+标签: [人工智能,向量,SQL]
 ---
 
-# SQL interface for pgvector and pgvectorscale
+# pgvector 和 pgvectorscale 的 SQL 接口
 
-## Installing the pgvector and pgvectorscale extensions
+## 安装 pgvector 和 pgvectorscale 扩展
 
-If not already installed, install the `vector` and `vectorscale` extensions on your Timescale database.
+如果尚未安装，请在您的 Timescale 数据库上安装 `vector` 和 `vectorscale` 扩展。
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS vectorscale;
 ```
 
-## Creating the table for storing embeddings using pgvector
+## 使用 pgvector 创建存储嵌入的表
 
-Vectors inside of the database are stored in regular PostgreSQL tables using `vector` columns. The `vector` column type is provided by the pgvector extension. A common way to store vectors is alongside the data they are embedding. For example, to store embeddings for documents, a common table structure is:
+数据库中的向量存储在常规的 PostgreSQL 表中，使用 `vector` 列。`vector` 列类型由 pgvector 扩展提供。存储向量的常见方式是将它们与被嵌入的数据一起存储。例如，要存储文档的嵌入，一个常见的表结构是：
 
 ```sql
 CREATE TABLE IF NOT EXISTS document_embedding  (
@@ -31,17 +31,17 @@ CREATE TABLE IF NOT EXISTS document_embedding  (
 )
 ```
 
-This table contains a primary key, a foreign key to the document table, some metadata, the text being embedded (in the `contents` column) and the embedded vector.
+此表包含一个主键、一个外键指向文档表、一些元数据、被嵌入的文本（在 `contents` 列中）和嵌入的向量。
 
-You may ask why not just add an embedding column to the document table? The answer is that there is a limit on the length of text an embedding can encode and so there needs to be a one-to-many relationship between the full document and its embeddings.
+您可能会问为什么不直接在文档表中添加一个嵌入列？答案是，嵌入可以编码的文本长度有限制，因此需要在完整文档和其嵌入之间建立一对多的关系。
 
-The above table is just an illustration, it's totally fine to have a table without a foreign key and/or without a metadata column. The important thing is to have a column with the data being embedded and the vector in the same row, enabling you to return the raw data for a given similarity search query
+上述表仅为示例，完全可以有一个没有外键和/或没有元数据列的表。重要的是要在同行列中拥有被嵌入的数据和向量列，这样您就可以为给定的相似性搜索查询返回原始数据。
 
-The vector type can specify an optional number of dimensions (1,538) in the example above). If specified, it enforces the constraint that all vectors in the column have that number of dimensions. A plain `VECTOR` (without specifying the number of dimensions) column is also possible and allows a variable number of dimensions.
+向量类型可以指定一个可选的维度数（例如上面的1,538）。如果指定，它强制列中的所有向量具有该数量的维度。不指定维度数的纯 `VECTOR` 列也是可能的，并允许变量数量的维度。
 
-## Query the vector embeddings
+## 查询向量嵌入
 
-The canonical query is:
+规范查询是：
 
 ```sql
 SELECT *
@@ -50,24 +50,24 @@ ORDER BY embedding <=> $1
 LIMIT 10
 ```
 
-Which returns the 10 rows whose distance is the smallest. The distance function used here is cosine distance (specified by using the `<=>` operator). Other distance functions are available, see the [discussion][distance-functions].
+它返回距离最小的10行。这里使用的距离函数是余弦距离（通过使用 `<=>` 操作符指定）。其他距离函数也可用，详见[讨论][distance-functions]。
 
-The available distance types and their operators are:
+可用的距离类型及其操作符是：
 
-| Distance type          | Operator      |
-|------------------------|---------------|
-| Cosine/Angular         | `<=>`           |
-| Euclidean              | `<->`           |
-| Negative inner product | `<#>`           |
+| 距离类型          | 操作符      |
+|-------------------|------------|
+| 余弦/角度         | `<=>`       |
+| 欧几里得              | `<->`       |
+| 负内积          | `<#>`       |
 
 <Highlight type="note">
-If you are using an index, you need to make sure that the distance function used in index creation is the same one used during query (see below). This is important because if you create your index with one distance function but query with another, your index cannot be used to speed up the query.
+如果您使用索引，您需要确保在索引创建期间使用的距离函数与查询期间使用的距离函数相同（见下文）。这很重要，因为如果您使用一种距离函数创建索引，但使用另一种距离函数查询，您的索引将无法用于加速查询。
 </Highlight>
 
 
-## Indexing the vector data using indexes provided by pgvector and pgvectorscale
+## 使用pgvector和pgvectorscale提供的索引对向量数据进行索引
 
-Indexing helps speed up similarity queries of the basic form:
+索引有助于加快基本形式的相似性查询：
 
 ```sql
 SELECT *
@@ -76,66 +76,62 @@ ORDER BY embedding <=> $1
 LIMIT 10
 ```
 
-The key part is that the `ORDER BY` contains a distance measure against a constant or a pseudo-constant.
+关键部分是`ORDER BY`包含了与常数或准常数的距离度量。
 
-Note that if performing a query without an index, you always get an exact result, but the query is slow (it has to read all of the data you store for every query). With an index, your queries are an order-of-magnitude faster, but the results are approximate (because there are no known indexing techniques that are exact see [here for more][vector-search-indexing]).
+请注意，如果不使用索引进行查询，您总是得到精确结果，但查询速度慢（它必须读取每次查询存储的所有数据）。使用索引后，您的查询速度提高了数倍，但结果是近似的（因为目前没有已知的精确索引技术，详见[这里][vector-search-indexing]）。
 
 <!-- vale Google.Colons = NO -->
-Nevertheless, there are excellent approximate algorithms. There are 3 different indexing algorithms available on the Timescale platform: StreamingDiskANN, HNSW, and ivfflat. Below is the trade-offs between these algorithms:
+尽管如此，仍有一些出色的近似算法。Timescale平台上有3种不同的索引算法：StreamingDiskANN、HNSW和ivfflat。以下是这些算法之间的权衡：
 <!-- vale Google.Colons = Yes -->
 
-| Algorithm       | Build Speed | Query Speed | Need to rebuild after updates |
-|------------------|-------------|-------------|-------------------------------|
-| StreamingDiskANN | Fast        | Fastest     | No                            |
-| HNSW    | Fast     | Fast      | No                            |
-| ivfflat | Fastest     | Slowest     | Yes                           |
+| 算法             | 构建速度 | 查询速度 | 更新后需要重建 |
+|------------------|----------|----------|--------------|
+| StreamingDiskANN | 快速     | 最快     | 否           |
+| HNSW            | 快速     | 快速     | 否           |
+| ivfflat         | 最快     | 最慢     | 是           |
 
+您可以在[博客][benchmarks]中查看基准测试结果。
 
-You can see [benchmarks](https://www.timescale.com/blog/how-we-made-postgresql-the-best-vector-database/) in the blog.
+对于大多数用例，推荐使用StreamingDiskANN索引。
 
-For most use cases, the StreamingDiskANN index is recommended.
+这些索引各有一组构建时选项，用于控制创建索引时的速度/准确性权衡，以及一个额外的查询时选项，用于控制特定查询期间的准确性。
 
-Each of these indexes has a set of build-time options for controlling the speed/accuracy trade-off when creating the index and an additional query-time option for controlling accuracy during a particular query.
+您可以在下面看到每个索引的详细信息。
 
-You can see the details of each index below.
+### StreamingDiskANN索引
 
-### StreamingDiskANN index
+StreamingDiskANN索引是一种基于图的算法，灵感来自[DiskANN](https://github.com/microsoft/DiskANN)算法。
+您可以在[如何使PostgreSQL像Pinecone一样快速处理向量数据](https://www.timescale.com/blog/how-we-made-postgresql-as-fast-as-pinecone-for-vector-data/)中了解更多信息。
 
-
-The StreamingDiskANN index is a graph-based algorithm that was inspired by the [DiskANN](https://github.com/microsoft/DiskANN) algorithm. 
-You can read more about it in 
-[How We Made PostgreSQL as Fast as Pinecone for Vector Data](https://www.timescale.com/blog/how-we-made-postgresql-as-fast-as-pinecone-for-vector-data/).
-
-
-To create an index named `document_embedding_idx` on table `document_embedding` having a vector column named `embedding`, with cosine distance metric, run:
+要在具有名为`embedding`的向量列的`document_embedding`表上创建一个名为`document_embedding_idx`的索引，并使用余弦距离度量，运行：
 ```sql
 CREATE INDEX document_embedding_cos_idx ON document_embedding
 USING diskann (embedding vector_cosine_ops);
 ```
 
-Since this index uses cosine distance, you should use the `<=>` operator in your queries.  StreamingDiskANN also supports L2 distance:
+由于这个索引使用余弦距离，您应该在查询中使用`<=>`操作符。StreamingDiskANN也支持L2距离：
 ```sql
 CREATE INDEX document_embedding_l2_idx ON document_embedding
 USING diskann (embedding vector_l2_ops);
 ```
-For L2 distance, use the `<->` operator in queries.
+对于L2距离，在查询中使用`<->`操作符。
 
-These examples create the index with smart defaults for all parameters not listed. These should be the right values for most cases. But if you want to delve deeper, the available parameters are below.
+这些示例创建的索引对于所有未列出的参数都使用了智能默认值。这些应该是大多数情况下的正确值。但如果您想要深入了解，可用的参数如下。
 
-#### StreamingDiskANN index build-time parameters
+#### StreamingDiskANN索引构建时参数
 
-These parameters can be set when an index is created.
+这些参数可以在创建索引时设置。
 
-| Parameter name   | Description                                                                                                                                                    | Default value |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| `storage_layout` | `memory_optimized` which uses SBQ to compress vector data or `plain` which stores data uncompressed | memory_optimized
-| `num_neighbors`    | Sets the maximum number of neighbors per node. Higher values increase accuracy but make the graph traversal slower.                                           | 50            |
-| `search_list_size` | This is the S parameter used in the greedy search algorithm used during construction. Higher values improve graph quality at the cost of slower index builds. | 100           |
-| `max_alpha`        | Is the alpha parameter in the algorithm. Higher values improve graph quality at the cost of slower index builds.                                              | 1.2           |
-| `num_dimensions` | The number of dimensions to index. By default, all dimensions are indexed. But you can also index less dimensions to make use of [Matryoshka embeddings](https://huggingface.co/blog/matryoshka) | 0 (all dimensions)
-| `num_bits_per_dimension` | Number of bits used to encode each dimension when using SBQ | 2 for less than 900 dimensions, 1 otherwise
+| 参数名称            | 描述                                                                                                                                                    | 默认值    |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `storage_layout` | `memory_optimized`使用SBQ压缩向量数据或`plain`存储未压缩的数据 | memory_optimized |
+| `num_neighbors`    | 设置每个节点的最大邻居数量。值越高，准确性增加，但图遍历变慢。                                           | 50       |
+| `search_list_size` | 这是在构建期间使用的贪婪搜索算法中的S参数。值越高，图质量提高，但索引构建速度变慢。 | 100      |
+| `max_alpha`        | 算法中的alpha参数。值越高，图质量提高，但索引构建速度变慢。                                              | 1.2      |
+| `num_dimensions` | 要索引的维度数量。默认情况下，索引所有维度。但您也可以索引较少的维度以利用[Matryoshka嵌入](https://huggingface.co/blog/matryoshka) | 0（所有维度） |
+| `num_bits_per_dimension` | 使用SBQ时每个维度用于编码的位数 | 小于900维度时为2，否则为1 |
 
-An example of how to set the `num_neighbors` parameter is:
+设置`num_neighbors`参数的一个示例是：
 
 ```sql
 CREATE INDEX document_embedding_idx ON document_embedding
@@ -146,24 +142,22 @@ USING diskann (embedding) WITH(num_neighbors=50);
 TODO: Add PQ options
 -->
 
+#### StreamingDiskANN查询时参数
 
-#### StreamingDiskANN query-time parameters
+您还可以设置两个参数来控制查询时的准确性与查询速度的权衡。我们建议调整`diskann.query_rescore`以微调准确性。
 
-You can also set two parameters to control the accuracy vs. query speed trade-off at query time. We suggest adjusting `diskann.query_rescore` to fine-tune accuracy.
+| 参数名称            | 描述                                                                                                                                                    | 默认值    |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `diskann.query_search_list_size` | 图搜索期间考虑的额外候选数量。 | 100
+| `diskann.query_rescore` | 重新评分的元素数量（0表示禁用重新评分） | 50
 
-| Parameter name   | Description                                                                                                                                                    | Default value |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| `diskann.query_search_list_size` | The number of additional candidates considered during the graph search. | 100
-| `diskann.query_rescore` | The number of elements rescored (0 to disable rescoring) | 50
-
-You can set the value by using `SET` before executing a query. For example:
+您可以通过在执行查询前使用`SET`来设置值。例如：
 
 ```sql
 SET diskann.query_rescore = 400;
 ```
 
-Note the [SET command](https://www.postgresql.org/docs/current/sql-set.html) applies to the entire session (database connection) from the point of execution. You can use a transaction-local variant using `LOCAL` which will
-be reset after the end of the transaction:
+请注意[SET命令](https://www.postgresql.org/docs/current/sql-set.html)适用于从执行点开始的整个会话（数据库连接）。您可以使用`LOCAL`的事务本地变体，它将在事务结束时重置：
 
 ```sql
 BEGIN;
@@ -172,9 +166,9 @@ SELECT * FROM document_embedding ORDER BY embedding <=> $1 LIMIT 10
 COMMIT;
 ```
 
-#### StreamingDiskANN index-supported queries
+#### StreamingDiskANN索引支持的查询
 
-You need to use the cosine-distance embedding measure (`<=>`) in your `ORDER BY` clause. A canonical query would be:
+您需要在`ORDER BY`子句中使用余弦距离嵌入度量（`<=>`）。一个规范的查询将是：
 
 ```sql
 SELECT *
@@ -185,51 +179,51 @@ LIMIT 10
 
 ### pgvector HNSW
 
-Pgvector provides a graph-based indexing algorithm based on the popular [HNSW algorithm](https://arxiv.org/abs/1603.09320).
+Pgvector提供了一种基于图的索引算法，基于流行的[HNSW算法](https://arxiv.org/abs/1603.09320)。
 
-To create an index named `document_embedding_idx` on table `document_embedding` having a vector column named `embedding`, run:
+要在具有名为`embedding`的向量列的`document_embedding`表上创建一个名为`document_embedding_idx`的索引，请运行：
 ```sql
 CREATE INDEX document_embedding_idx ON document_embedding
 USING hnsw(embedding vector_cosine_ops);
 ```
 
-This command creates an index for cosine-distance queries because of `vector_cosine_ops`. There are also "ops" classes for Euclidean distance and negative inner product:
+此命令由于`vector_cosine_ops`而创建了用于余弦距离查询的索引。还有用于欧几里得距离和负内积的“ops”类：
 
-| Distance type          | Query operator | Index ops class  |
+| 距离类型          | 查询操作符 | 索引ops类    |
 |------------------------|----------------|-------------------|
-| Cosine / Angular       | `<=>`            | `vector_cosine_ops` |
-| Euclidean / L2         | `<->`            | `vector_ip_ops`     |
-| Negative inner product | `<#>`            | `vector_l2_ops`     |
+| 余弦/角度       | `<=>`            | `vector_cosine_ops` |
+| 欧几里得/L2         | `<->`            | `vector_ip_ops`     |
+| 负内积         | `<#>`            | `vector_l2_ops`     |
 
-Pgvector HNSW also includes several index build-time and query-time parameters.
+Pgvector HNSW还包括几个索引构建时和查询时参数。
 
-#### pgvector HNSW index build-time parameters
+#### pgvector HNSW索引构建时参数
 
-These parameters can be set at index build time:
+这些参数可以在索引构建时设置：
 
-| Parameter name   | Description                                                                                                                                                    | Default value |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| `m`    | Represents the maximum number of connections per layer. Think of these connections as edges created for each node during graph construction. Increasing m increases accuracy but also increases index build time and size.                                       | 16            |
-| `ef_construction` | Represents the size of the dynamic candidate list for constructing the graph. It influences the trade-off between index quality and construction speed. Increasing `ef_construction` enables more accurate search results at the expense of lengthier index build times. | 64 |
+| 参数名称   | 描述                                                                                                                                                    | 默认值    |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `m`    | 表示每层的最大连接数。将这些连接视为在图构建过程中为每个节点创建的边。增加m可以提高准确性，但也会增加索引构建时间和大小。                                       | 16            |
+| `ef_construction` | 表示构建图时动态候选列表的大小。它影响索引质量和构建速度之间的权衡。增加`ef_construction`可以在牺牲更长的索引构建时间的代价下获得更准确的搜索结果。 | 64 |
 
-An example of how to set the m parameter is:
+设置m参数的一个示例是：
 
 ```sql
 CREATE INDEX document_embedding_idx ON document_embedding
 USING hnsw(embedding vector_cosine_ops) WITH (m = 20);
 ```
 
-#### pgvector HNSW query-time parameters
+#### pgvector HNSW查询时参数
 
-You can also set a parameter to control the accuracy vs. query speed trade-off at query time. The parameter is called `hnsw.ef_search`. This parameter specifies the size of the dynamic candidate list used during search. Defaults to 40. Higher values improve query accuracy while making the query slower.
+您还可以设置一个参数来控制查询时的准确性与查询速度的权衡。这个参数称为`hnsw.ef_search`。此参数指定了在搜索期间使用的动态候选列表的大小。默认值为40。值越高，查询准确性越好，但查询速度会变慢。
 
-You can set the value by running:
+您可以通过运行来设置值：
 
 ```sql
 SET hnsw.ef_search = 100;
 ```
 
-Before executing the query, note the [SET command](https://www.postgresql.org/docs/current/sql-set.html) applies to the entire session (database connection) from the point of execution. You can use a transaction-local variant using `LOCAL`:
+在执行查询之前，请注意[SET命令](https://www.postgresql.org/docs/current/sql-set.html)从执行点开始适用于整个会话（数据库连接）。您可以使用`LOCAL`使用事务本地变体：
 
 ```sql
 BEGIN;
@@ -238,9 +232,9 @@ SELECT * FROM document_embedding ORDER BY embedding <=> $1 LIMIT 10
 COMMIT;
 ```
 
-#### pgvector HNSW index-supported queries
+#### pgvector HNSW索引支持的查询
 
-You need to use the distance operator (`<=>`, `<->`, or `<#>`) matching the ops class you used during index creation in your `ORDER BY` clause. A canonical query would be:
+您需要在`ORDER BY`子句中使用与您在索引创建期间使用的ops类相匹配的距离操作符（`<=>`、`<->`或`<#>`）。一个规范的查询将是：
 
 ```sql
 SELECT *
@@ -251,35 +245,34 @@ LIMIT 10
 
 ### pgvector ivfflat
 
-Pgvector provides a clustering-based indexing algorithm. The [blog post](https://www.timescale.com/blog/nearest-neighbor-indexes-what-are-ivfflat-indexes-in-pgvector-and-how-do-they-work/) describes how it works in detail. It provides the fastest index-build speed but the slowest query speeds of any indexing algorithm.
+Pgvector提供了一种基于聚类的索引算法。[博客文章](https://www.timescale.com/blog/nearest-neighbor-indexes-what-are-ivfflat-indexes-in-pgvector-and-how-do-they-work/)详细描述了它的工作原理。它提供了最快的索引构建速度，但查询速度是最慢的任何索引算法。
 
-To create an index named `document_embedding_idx` on table `document_embedding` having a vector column named `embedding`, run:
+要在具有名为`embedding`的向量列的`document_embedding`表上创建一个名为`document_embedding_idx`的索引，请运行：
 ```sql
 CREATE INDEX document_embedding_idx ON document_embedding
 USING ivfflat(embedding vector_cosine_ops) WITH (lists = 100);
 ```
 
-This command creates an index for cosine-distance queries because of `vector_cosine_ops`. There are also "ops" classes for Euclidean distance and negative inner product:
+此命令由于`vector_cosine_ops`而创建了用于余弦距离查询的索引。还有用于欧几里得距离和负内积的“ops”类：
 
-| Distance type          | Query operator | Index ops class  |
+| 距离类型          | 查询操作符 | 索引ops类    |
 |------------------------|----------------|-------------------|
-| Cosine / Angular       | `<=>`            | `vector_cosine_ops` |
-| Euclidean / L2         | `<->`            | `vector_ip_ops`     |
-| Negative inner product | `<#>`            | `vector_l2_ops`     |
+| 余弦/角度       | `<=>`            | `vector_cosine_ops` |
+| 欧几里得/L2         | `<->`            | `vector_ip_ops`     |
+| 负内积         | `<#>`            | `vector_l2_ops`     |
 
-Note: *ivfflat should never be created on empty tables* because it needs to cluster data, and that only happens when an index is first created, not when new rows are inserted or modified. Also, if your table undergoes a lot of modifications, you need to rebuild this index occasionally to maintain good accuracy. See the [blog post](https://www.timescale.com/blog/nearest-neighbor-indexes-what-are-ivfflat-indexes-in-pgvector-and-how-do-they-work/) for details.
+注意：*ivfflat永远不应该在空表上创建*，因为它需要聚类数据，这只有在索引首次创建时才会发生，而不是在新行插入或修改时。此外，如果您的表经常进行修改，您需要定期重建此索引以保持良好的准确性。详见[博客文章](https://www.timescale.com/blog/nearest-neighbor-indexes-what-are-ivfflat-indexes-in-pgvector-and-how-do-they-work/)。
 
-Pgvector ivfflat has a `lists` index parameter that should be set. See the next section.
+Pgvector ivfflat有一个`lists`索引参数需要设置。见下一节。
 
-#### pgvector ivfflat index build-time parameters
+#### pgvector ivfflat索引构建时参数
 
-Pgvector has a `lists` parameter that should be set as follows:
-For datasets with less than one million rows, use lists =  rows / 1000.
-For datasets with more than one million rows, use lists = sqrt(rows).
-It is generally advisable to have at least 10 clusters.
+Pgvector有一个`lists`参数需要设置如下：
+对于少于一百万行的数据集，使用lists = rows / 1000。
+对于超过一百万行的数据集，使用lists = sqrt(rows)。
+通常建议至少有10个聚类。
 
-
-You can use the following code to simplify creating ivfflat indexes:
+您可以使用以下代码简化创建ivfflat索引：
 ```python
 def create_ivfflat_index(conn, table_name, column_name, query_operator="<=>"):
     index_method = "invalid"
@@ -306,18 +299,17 @@ def create_ivfflat_index(conn, table_name, column_name, query_operator="<=>"):
         conn.commit()
 ```
 
+#### pgvector ivfflat查询时参数
 
-#### pgvector ivfflat query-time parameters
+您还可以设置一个参数来控制查询时的准确性与查询速度的权衡。这个参数称为`ivfflat.probes`。此参数指定了在查询期间搜索的聚类数量。建议将此参数设置为`sqrt(lists)`，其中lists是在索引创建期间使用的参数。值越高，查询准确性越好，但查询速度会变慢。
 
-You can also set a parameter to control the accuracy vs. query speed tradeoff at query time. The parameter is called `ivfflat.probes`. This parameter specifies the number of clusters searched during a query. It is recommended to set this parameter to `sqrt(lists)` where lists is the parameter used above during index creation. Higher values improve query accuracy while making the query slower.
-
-You can set the value by running:
+您可以通过运行来设置值：
 
 ```sql
 SET ivfflat.probes = 100;
 ```
 
-Before executing the query, note the [SET command](https://www.postgresql.org/docs/current/sql-set.html) applies to the entire session (database connection) from the point of execution. You can use a transaction-local variant using `LOCAL`:
+在执行查询之前，请注意[SET命令](https://www.postgresql.org/docs/current/sql-set.html)从执行点开始适用于整个会话（数据库连接）。您可以使用`LOCAL`使用事务本地变体：
 
 ```sql
 BEGIN;
@@ -326,10 +318,9 @@ SELECT * FROM document_embedding ORDER BY embedding <=> $1 LIMIT 10
 COMMIT;
 ```
 
+#### pgvector ivfflat索引支持的查询
 
-#### pgvector ivfflat index-supported queries
-
-You need to use the distance operator (`<=>`, `<->`, or `<#>`) matching the ops class you used during index creation in your `ORDER BY` clause. A canonical query would be:
+您需要在`ORDER BY`子句中使用与您在索引创建期间使用的ops类相匹配的距离操作符（`<=>`、`<->`或`<#>`）。一个规范的查询将是：
 
 ```sql
 SELECT *
@@ -337,6 +328,3 @@ FROM document_embedding
 ORDER BY embedding <=> $1
 LIMIT 10
 ```
-
-[distance-functions]: /ai/:currentVersion:/key-vector-database-concepts-for-understanding-pgvector/#vector-distance-types
-[vector-search-indexing]: /ai/:currentVersion:/key-vector-database-concepts-for-understanding-pgvector/#vector-search-indexing-approximate-nearest-neighbor-search
