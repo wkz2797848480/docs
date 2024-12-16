@@ -1,27 +1,27 @@
 ---
-title: Upgrade TimescaleDB
-excerpt: Upgrade your self-hosted TimescaleDB installation in-place
-products: [self_hosted]
-keywords: [upgrades]
+标题: 升级 TimescaleDB
+摘要: 对已安装的自托管 TimescaleDB 进行原地升级。
+产品: [自托管]
+关键词: [升级]
 ---
 
 import ConsiderCloud from "versionContent/_partials/_consider-cloud.mdx";
 
-# Upgrade TimescaleDB
+# 升级 TimescaleDB
 
-A major upgrade is when you update from TimescaleDB `X.<minor version>` to `Y.<minor version>`.
-A minor upgrade is when you update from TimescaleDB `<major version>.x`, to TimescaleDB `<major version>.y`.
-You upgrade your self-hosted TimescaleDB installation in-place.
+**主要版本升级**是指您从TimescaleDB `X.<次要版本>`更新到`Y.<次要版本>`。
+**次要版本升级**是指您从TimescaleDB `<主版本>.x`更新到TimescaleDB `<主版本>.y`。
+您在原地升级自行托管的TimescaleDB安装。
 
 <ConsiderCloud />
 
-This section shows you how to:
+本节向您展示如何：
 
-* Upgrade self-hosted TimescaleDB to a new [minor version][upgrade-minor].
-* Upgrade self-hosted TimescaleDB to a new [major version][upgrade-major].
-* Upgrade self-hosted TimescaleDB running in a [Docker container][upgrade-docker] to a new minor version.
-* Upgrade [PostgreSQL][upgrade-pg] to a new version.
-* Downgrade self-hosted TimescaleDB to the [previous minor version][downgrade].
+* 将自行托管的TimescaleDB升级到新的[次要版本][upgrade-minor]。
+* 将自行托管的TimescaleDB升级到新的[主要版本][upgrade-major]。
+* 将运行在[Docker容器][upgrade-docker]中的自行托管TimescaleDB升级到新的次要版本。
+* 将[PostgreSQL][upgrade-pg]升级到新的版本。
+* 将自行托管的TimescaleDB降级到[之前的次要版本][downgrade]。
 
 [downgrade]: /self-hosted/:currentVersion:/upgrades/downgrade/
 [upgrade-docker]: /self-hosted/:currentVersion:/upgrades/upgrade-docker/
@@ -29,3 +29,4 @@ This section shows you how to:
 [upgrade-minor]: /self-hosted/:currentVersion:/upgrades/minor-upgrade/
 [upgrade-pg]: /self-hosted/:currentVersion:/upgrades/upgrade-pg/
 [upgrade-tshoot]: /self-hosted/:currentVersion:/troubleshooting/
+
