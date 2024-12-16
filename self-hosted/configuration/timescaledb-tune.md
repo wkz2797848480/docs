@@ -1,71 +1,63 @@
 ---
-title: TimescaleDB tuning tool
-excerpt: Use the timescaledb-tune tool to automatically configure your TimescaleDB instance
-products: [self_hosted]
-keywords: [configuration, settings, timescaledb-tune]
-tags: [tune]
+标题: TimescaleDB 调优工具
+摘要: 使用 timescaledb-tune 工具自动配置您的 TimescaleDB 实例
+产品: [自托管]
+关键词: [配置，设置，timescaledb-tune]
+标签: [调优]
 ---
 
-# TimescaleDB tuning tool
+以下是您提供的文章翻译成中文，并保留了超链接和格式，使用Markdown文档呈现：
 
-To help make configuring TimescaleDB a little easier, you can use the [`timescaledb-tune`][tstune]
-tool. This tool handles setting the most common parameters to good values based
-on your system. It accounts for memory, CPU, and PostgreSQL version.
-`timescaledb-tune` is packaged with the TimescaleDB binary releases as a
-dependency, so if you installed Timescale from a binary release (including
-Docker), you should already have access to the tool. Alternatively, you can use
-the `go install` command to install it:
+# TimescaleDB调优工具
+
+为了帮助简化TimescaleDB的配置过程，您可以使用[`timescaledb-tune`][tstune]工具。这个工具根据您的系统情况（包括内存、CPU和PostgreSQL版本）来设置最常见的参数到推荐值。`timescaledb-tune`随TimescaleDB二进制版本作为依赖项一起打包，所以如果您是从二进制版本（包括Docker）安装TimescaleDB的，您应该已经可以访问这个工具。或者，您可以使用`go install`命令来安装它：
 
 ```bash
 go install github.com/timescale/timescaledb-tune/cmd/timescaledb-tune@latest
 ```
 
-The `timescaledb-tune` tool reads your system's `postgresql.conf` file and
-offers interactive suggestions for your settings. Here is an example of the tool
-running:
+`timescaledb-tune`工具会读取您系统的`postgresql.conf`文件，并为您的设置提供交互式建议。以下是工具运行的示例：
 
 ```bash
-Using postgresql.conf at this path:
+使用的postgresql.conf文件位于此路径：
 /usr/local/var/postgres/postgresql.conf
 
-Is this correct? [(y)es/(n)o]: y
-Writing backup to:
+这是否正确？[(y)es/(n)o]: y
+备份写入到：
 /var/folders/cr/example/T/timescaledb_tune.backup202101071520
 
-shared_preload_libraries needs to be updated
-Current:
+shared_preload_libraries需要更新
+当前：
 #shared_preload_libraries = 'timescaledb'
-Recommended:
+建议：
 shared_preload_libraries = 'timescaledb'
-Is this okay? [(y)es/(n)o]: y
-success: shared_preload_libraries will be updated
+这样可以吗？[(y)es/(n)o]: y
+成功：shared_preload_libraries将被更新
 
-Tune memory/parallelism/WAL and other settings? [(y)es/(n)o]: y
-Recommendations based on 8.00 GB of available memory and 4 CPUs for PostgreSQL 12
+调整内存/并行性/WAL和其他设置？[(y)es/(n)o]: y
+基于8.00 GB可用内存和4个CPU为PostgreSQL 12提供的建议
 
-Memory settings recommendations
-Current:
+内存设置建议
+当前：
 shared_buffers = 128MB
 #effective_cache_size = 4GB
 #maintenance_work_mem = 64MB
 #work_mem = 4MB
-Recommended:
+建议：
 shared_buffers = 2GB
 effective_cache_size = 6GB
 maintenance_work_mem = 1GB
 work_mem = 26214kB
-Is this okay? [(y)es/(s)kip/(q)uit]:
+这样可以吗？[(y)es/(s)kip/(q)uit]:
 ```
 
-When you have answered the questions, the changes are written to your
-`postgresql.conf` and take effect when you next restart.
+当您回答了这些问题后，更改将被写入您的`postgresql.conf`文件，并在下次重启时生效。
 
-If you are starting on a fresh instance and don't want to approve each group of
-changes, you can automatically accept and append the suggestions to the end of
-your `postgresql.conf` by using some additional flags when you run the tool:
+如果您是在一个新的实例上开始，并且不想逐组批准更改，您可以在运行工具时使用一些额外的标志自动接受并将建议附加到您的`postgresql.conf`文件末尾：
 
 ```bash
 timescaledb-tune --quiet --yes --dry-run >> /path/to/postgresql.conf
 ```
 
 [tstune]: https://github.com/timescale/timescaledb-tune
+
