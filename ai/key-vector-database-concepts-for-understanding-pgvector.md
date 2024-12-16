@@ -1,6 +1,6 @@
 ---
 标题: 理解 pgvector 的关键向量数据库概念：  
-摘录: 用于理解 PostgreSQL 中人工智能的最重要的向量数据库概念 ——pgvector、pgvectorscale 以及 pgai   
+摘录: 用于理解 PostgreSQL 中人工智能的最重要的向量数据库概念 pgvector、pgvectorscale 以及 pgai   
 产品: [云]  
 关键字: [ai, 向量, pgvector, pgvectorscale, pgai]  
 标签: [ai, 向量]
