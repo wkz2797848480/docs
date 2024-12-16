@@ -3,7 +3,7 @@
 摘要: 将LangChain与 pg 向量、pg 向量缩放以及 pg 人工智能进行集成
 产品: [云服务]
 关键词: [人工智能，向量，pg 向量，Python，LangChain，pg 向量缩放，pg 人工智能]
-标签: [人工智能，向量，Python，朗链]
+标签: [人工智能，向量，Python，LangChain]
 ---
 
 # pgvector、pgvectorscale 和 pgai 的 LangChain 集成
