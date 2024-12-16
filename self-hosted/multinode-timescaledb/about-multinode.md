@@ -1,110 +1,52 @@
 ---
-title: About multi-node
-excerpt: Learn how multi-node TimescaleDB works
-products: [self_hosted]
-keywords: [multi-node]
+标题: 关于多节点
+摘要: 了解多节点 TimescaleDB 的工作原理
+产品: [自托管]
+关键词: [多节点]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# About multi-node
+# 关于多节点
 
-If you have a larger petabyte-scale workload, you might need more than
-one TimescaleDB instance. TimescaleDB multi-node allows you to run and
-manage a cluster of databases, which can give you faster data ingest,
-and more responsive and efficient queries for large workloads.
+如果您有较大的PB级工作负载，可能需要多个TimescaleDB实例。TimescaleDB多节点允许您运行和管理数据库集群，这可以为您提供更快的数据摄入以及对大型工作负载更响应和高效的查询。
 
 <Highlight type="important">
-In some cases, your queries could be slower in a multi-node cluster due to the
-extra network communication between the various nodes. Queries perform the best
-when the query processing is distributed among the nodes and the result set is
-small relative to the queried dataset. It is important that you understand
-multi-node architecture before you begin, and plan your database according to
-your specific requirements.
+在某些情况下，由于各个节点之间的额外网络通信，您的查询在多节点集群中可能会变慢。当查询处理在节点之间分布，并且结果集与查询数据集相比很小的时候，查询性能最佳。在开始之前，重要的是您要了解多节点架构，并根据您的具体需求规划数据库。
 </Highlight>
 
-## Multi-node architecture
+## 多节点架构
 
-Multi-node TimescaleDB allows you to tie several databases together into a
-logical distributed database to combine the processing power of many physical
-PostgreSQL instances.
+多节点TimescaleDB允许您将多个数据库连接到一个逻辑分布式数据库中，以结合多个物理PostgreSQL实例的处理能力。
 
-One of the databases exists on an access node and stores
-metadata about the other databases. The other databases are
-located on data nodes and hold the actual data. In theory, a
-PostgreSQL instance can serve as both an access node and a data node
-at the same time in different databases. However, it is recommended not to
-have mixed setups, because it can be complicated, and server
-instances are often provisioned differently depending on the role they
-serve.
+其中一个数据库存在于访问节点上，存储有关其他数据库的元数据。其他数据库位于数据节点上，持有实际数据。理论上，一个PostgreSQL实例可以同时作为访问节点和数据节点存在于不同的数据库中。然而，建议不要混合设置，因为这可能很复杂，服务器实例通常根据它们所扮演的角色以不同的方式配置。
 
-For self-hosted installations, create a server that can act as an
-access node, then use that access node to create data nodes on other
-servers.
+对于自托管安装，请创建一个可以作为访问节点的服务器，然后使用该访问节点在其他服务器上创建数据节点。
 
-When you have configured multi-node TimescaleDB, the access node coordinates
-the placement and access of data chunks on the data nodes. In most
-cases, it is recommend that you use multidimensional partitioning to
-distribute data across chunks in both time and space dimensions. The
-figure in this section shows how an access node (AN) partitions data in the same
-time interval across multiple data nodes (DN1, DN2, and DN3).
+当您配置了多节点TimescaleDB后，访问节点协调数据节点上数据块的放置和访问。在大多数情况下，建议使用多维分区在时间和空间维度上分布数据。本节中的图表显示了访问节点（AN）如何在多个数据节点（DN1、DN2和DN3）上划分同一时间间隔的数据。
 
 <img class="main-content__illustration"
 width={1375} height={944}
 src="https://assets.timescale.com/docs/images/multi-node-arch.webp"
-alt="Diagram showing how multi-node access and data nodes interact"/>
+alt="图表显示了多节点访问和数据节点如何交互"/>
 
-A database user connects to the access node to issue commands and
-execute queries, similar to how one connects to a regular single
-node TimescaleDB instance. In most cases, connecting directly to the
-data nodes is not necessary.
+数据库用户连接到访问节点来发布命令和执行查询，类似于连接到常规的单节点TimescaleDB实例。在大多数情况下，直接连接到数据节点是不必要的。
 
-Because TimescaleDB exists as an extension within a specific
-database, it is possible to have both distributed and non-distributed
-databases on the same access node. It is also possible to
-have several distributed databases that use different sets of physical
-instances as data nodes. In this section,
-however, it is assumed that you have a single
-distributed database with a consistent set of data nodes.
+由于TimescaleDB存在于特定数据库内的扩展中，因此可以在同一访问节点上拥有分布式和非分布式数据库。还可以有多个使用不同物理实例集作为数据节点的分布式数据库。然而，在本节中，假设您有一个具有一致数据节点集的单一分布式数据库。
 
-## Distributed hypertables
+## 分布式超表
 
-If you use a regular table or hypertable on a distributed database, they are not
-automatically distributed. Regular tables and hypertables continue to work as
-usual, even when the underlying database is distributed. To enable multi-node
-capabilities, you need to explicitly create a distributed hypertable on the
-access node to make use of the data nodes. A distributed hypertable is similar
-to a regular [hypertable][hypertables], but with the difference that chunks are
-distributed across data nodes instead of on local storage. By distributing the
-chunks, the processing power of the data nodes is combined to achieve higher
-ingest throughput and faster queries. However, the ability to achieve good
-performance is highly dependent on how the data is partitioned across the data
-nodes.
+如果您在分布式数据库上使用常规表或超表，它们不会自动分布。常规表和超表即使在底层数据库是分布式的情况下也会照常工作。要启用多节点功能，您需要在访问节点上显式创建分布式超表以利用数据节点。分布式超表类似于常规[超表][hypertables]，但不同之处在于数据块分布在数据节点上而不是本地存储。通过分布数据块，可以结合数据节点的处理能力，实现更高的摄入吞吐量和更快的查询。然而，实现良好性能的能力高度依赖于数据在数据节点上的分区方式。
 
-To achieve good ingest performance, write the data in batches, with each batch
-containing data that can be distributed across many data nodes. To achieve good
-query performance, spread the query across many nodes and have a result set that
-is small relative to the amount of processed data. To achieve this, it is
-important to consider an appropriate partitioning method.
+为了实现良好的摄入性能，请批量写入数据，每个批次包含可以分布在许多数据节点上的数据。为了实现良好的查询性能，请将查询分布在许多节点上，并使结果集与处理的数据量相比很小。为了实现这一点，考虑适当的分区方法是重要的。
 
-### Partitioning methods
+### 分区方法
 
-Data that is ingested into a distributed hypertable is spread across the data
-nodes according to the partitioning method you have chosen. Queries that can be
-sent from the access node to multiple data nodes and processed simultaneously
-generally run faster than queries that run on a single data node, so it is
-important to think about what kind of data you have, and the type of queries you
-want to run.
+摄入到分布式超表中的数据根据您选择的分区方法在数据节点之间传播。能够从访问节点发送到多个数据节点并同时处理的查询通常比在单个数据节点上运行的查询要快，因此重要的是要考虑您拥有什么样的数据，以及您想要运行的查询类型。
 
-TimescaleDB multi-node currently supports capabilities that make it best suited
-for large-volume time-series workloads that are partitioned on `time`, and a
-space dimension such as `location`. If you usually run wide queries that
-aggregate data across many locations and devices, choose this partitioning
-method. For example, a query like this is faster on a database partitioned on
-`time,location`, because it spreads the work across all the data nodes in
-parallel:
+TimescaleDB多节点目前支持的能力使其最适合于按`time`和空间维度如`location`分区的大容量时间序列工作负载。如果您通常运行聚合数据跨多个位置和设备的宽查询，请选择这种分区方法。例如，像这样的查询在按`time,location`分区的数据库上运行速度更快，因为它并行地将工作传播到所有数据节点：
 
 ```sql
 SELECT time_bucket('1 hour', time) AS hour, location, avg(temperature)
@@ -114,18 +56,9 @@ ORDER BY hour, location
 LIMIT 100;
 ```
 
-Partitioning on `time` and a space dimension such as `location`, is also best if
-you need faster insert performance. If you partition only on time, and your
-inserts are generally occuring in time order, then you are always writing to one
-data node at a time. Partitioning on `time` and `location` means your
-time-ordered inserts are spread across multiple data nodes, which can lead to
-better performance.
+按`time`和空间维度如`location`分区，如果您需要更快的插入性能，也是最好的。如果您仅按时间分区，并且您的插入通常按时间顺序发生，那么您一次总是在一个数据节点上写入。按`time`和`location`分区意味着您的时间顺序插入分布在多个数据节点上，这可以带来更好的性能。
 
-If you mostly run deep time queries on a single location, you might see better
-performance by partitioning solely on the `time` dimension, or on a space
-dimension other than `location`. For example, a query like this is faster on a
-database partitioned on `time` only, because the data for a single location is
-spread across all the data nodes, rather than being on a single one:
+如果您主要在单个位置运行深度时间查询，您可能会看到仅按`time`维度分区，或按除`location`之外的空间维度分区的性能更好。例如，像这样的查询在仅按`time`分区的数据库上运行速度更快，因为单个位置的数据分布在所有数据节点上，而不是仅在一个节点上：
 
 ```sql
 SELECT time_bucket('1 hour', time) AS hour, avg(temperature)
@@ -136,63 +69,26 @@ ORDER BY hour
 LIMIT 100;
 ```
 
-### Transactions and consistency model
+### 事务和一致性模型
 
-Transactions that occur on distributed hypertables are atomic, just
-like those on regular hypertables. This means that a distributed
-transaction that involves multiple data nodes is guaranteed to
-either succeed on all nodes or on none of them. This guarantee
-is provided by the [two-phase commit protocol][2pc], which
-is used to implement distributed transactions in TimescaleDB.
+在分布式超表上进行的事务是原子性的，就像常规超表上的事务一样。这意味着涉及多个数据节点的分布式事务保证要么在所有节点上成功，要么在所有节点上都不成功。这个保证是由[两阶段提交协议][2pc]提供的，它用于在TimescaleDB中实现分布式事务。
 
-However, the read consistency of a distributed hypertable is different
-to a regular hypertable. Because a distributed transaction is a set of
-individual transactions across multiple nodes, each node can commit
-its local transaction at a slightly different time due to network
-transmission delays or other small fluctuations. As a consequence, the
-access node cannot guarantee a fully consistent snapshot of the
-data across all data nodes. For example, a distributed read
-transaction might start when another concurrent write transaction is
-in its commit phase and has committed on some data nodes but not
-others. The read transaction can therefore use a snapshot on one node
-that includes the other transaction's modifications, while the
-snapshot on another data node might not include them.
+然而，分布式超表的读取一致性与常规超表不同。由于分布式事务是跨多个节点的一组单独事务，每个节点由于网络传输延迟或其他小波动，可以在略微不同的时间提交其本地事务。因此，访问节点不能保证跨所有数据节点的数据完全一致的快照。例如，当另一个并发写入事务处于提交阶段，并已在一些数据节点上提交但尚未在其他节点上提交时，分布式读取事务可能开始。因此，读取事务可以使用一个节点上的快照，该快照包括其他事务的修改，而另一个数据节点上的快照可能不包括它们。
 
-If you need stronger read consistency in a distributed transaction, then you
-can use consistent snapshots across all data nodes. However, this
-requires a lot of coordination and management, which can negatively effect
-performance, and it is therefore not implemented by default for distributed
-hypertables.
+如果您在分布式事务中需要更强的读取一致性，那么您可以使用所有数据节点上的一致快照。然而，这需要大量的协调和管理，这可能会对性能产生负面影响，因此默认情况下不为分布式超表实现。
 
-## Using continuous aggregates in a multi-node environment
+## 在多节点环境中使用连续聚合
 
-If you are using Timescale in a multi-node environment, there are some
-additional considerations for continuous aggregates.
+如果您在多节点环境中使用Timescale，对于连续聚合有一些额外的考虑。
 
-When you create a continuous aggregate within a multi-node environment, the
-continuous aggregate should be created on the access node. While it is possible
-to create a continuous aggregate on data nodes, it interferes with the
-continuous aggregates on the access node and can cause problems.
+当您在多节点环境中创建连续聚合时，应在访问节点上创建连续聚合。虽然可以在数据节点上创建连续聚合，但它会干扰访问节点上的连续聚合，并可能导致问题。
 
-When you refresh a continuous aggregate on an access node, it computes a single
-window to update the time buckets. This could slow down your query if the actual
-number of rows that were updated is small, but widely spread apart. This is
-aggravated if the network latency is high if, for example, you have remote data
-nodes.
+当您在访问节点上刷新连续聚合时，它会计算一个单一窗口以更新时间桶。如果实际更新的行数很少但分布广泛，这可能会减慢您的查询速度，尤其是如果网络延迟很高，例如，如果您有远程数据节点。
 
-Invalidation logs are on kept on the data nodes, which is designed to limit the
-amount of data that needs to be transferred. However, some statements send
-invalidations directly to the log, for example, when dropping a chunk or
-truncate a hypertable. This action could slow down performance, in comparison to
-a local update. Additionally, if you have infrequent refreshes but a lot of
-changes to the hypertable, the invalidation logs could get very large, which
-could cause performance issues. Make sure you are maintaining your invalidation
-log size to avoid this, for example, by refreshing the continuous aggregate
-frequently.
+失效日志保留在数据节点上，旨在限制需要传输的数据量。然而，一些语句直接将失效发送到日志，例如，当删除一个块或截断一个超表时。这个操作与本地更新相比可能会减慢性能。此外，如果您的刷新不频繁但超表的更改很多，失效日志可能会变得非常大，这可能会导致性能问题。确保您维护失效日志大小以避免这种情况，例如，通过频繁刷新连续聚合。
 
-For more information about setting up multi-node, see the
-[multi-node section][multi-node]
+有关设置多节点的更多信息，请参见[多节点部分][multi-node]。
 
-[2pc]: https://www.postgresql.org/docs/current/sql-prepare-transaction.html
+[2pc]: https://www.postgresql.org/docs/current/sql-prepare-transaction.html 
 [hypertables]: /use-timescale/:currentVersion:/hypertables/
 [multi-node]: /self-hosted/:currentVersion:/multinode-timescaledb/
