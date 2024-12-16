@@ -1,38 +1,26 @@
 ---
-title: Multi-node maintenance tasks
-excerpt: How to maintain your multi-node instance
-products: [self_hosted]
-keywords: [multi-node, maintenance]
-tags: [manage]
+标题: 多节点维护任务
+摘要: 如何维护你的多节点实例
+产品: [自托管]
+关键词: [多节点，维护]
+标签: [管理]
 ---
 
 import MultiNodeDeprecation from "versionContent/_partials/_multi-node-deprecation.mdx";
 
 <MultiNodeDeprecation />
 
-# Multi-node maintenance tasks
+# 多节点维护任务
 
-Various maintenance activities need to be carried out for effective
-upkeep of the distributed multi-node setup. You can use `cron` or
-another scheduling system outside the database to run these below
-maintenance jobs on a regular schedule if you prefer. Also make sure
-that the jobs are scheduled separately for each database that contains
-distributed hypertables.
+为了有效维护分布式多节点设置，需要进行各种维护活动。如果需要，您可以使用`cron`或其他调度系统在数据库外部定期运行以下维护工作。同时确保为包含分布式超表的每个数据库分别安排作业。
 
-## Maintaining distributed transactions
+## 维护分布式事务
 
-A distributed transaction runs across multiple data nodes, and can remain in a
-non-completed state if a data node reboots or experiences temporary issues. The
-access node keeps a log of distributed transactions so that nodes that haven't
-completed their part of the distributed transaction can complete it later when
-they become available. This transaction log requires regular cleanup to remove
-transactions that have completed, and complete those that haven't.
-We highly recommended that you configure the access node to run a maintenance
-job that regularly cleans up any unfinished distributed transactions.
+分布式事务跨多个数据节点运行，如果数据节点重新启动或遇到临时问题，可能会保持未完成状态。访问节点保留分布式事务的日志，以便尚未完成其部分分布式事务的节点在可用时可以稍后完成。这个事务日志需要定期清理以移除已完成的事务，并完成尚未完成的事务。我们强烈建议您配置访问节点定期运行维护作业，清理任何未完成的分布式事务。
 
-The custom maintenance job can be run as a user-defined action. For example:
+自定义维护作业可以作为用户定义的操作运行。例如：
 
-<Tabs title="Custom Maintenance Job">
+<Tabs title="自定义维护作业">
 <Tab title="TimescaleDB >= 2.12">
 
 ```sql
@@ -68,13 +56,9 @@ SELECT add_job('data_node_maintenance', '5m');
 </Tab>
 </Tabs>
 
-## Statistics for distributed hypertables
+## 分布式超表的统计信息
 
-On distributed hypertables, the table statistics need to be kept updated.
-This allows you to efficiently plan your queries. Because of the nature of
-distributed hypertables, you can't use the `auto-vacuum` tool to gather
-statistics. Instead, you can explicitly ANALYZE the distributed hypertable
-periodically using a maintenance job, like this:
+在分布式超表上，需要保持表统计信息的更新。这允许您有效地计划查询。由于分布式超表的特性，您不能使用`auto-vacuum`工具收集统计信息。相反，您可以定期使用维护作业显式分析分布式超表，如下所示：
 
 ```sql
 CREATE OR REPLACE PROCEDURE distributed_hypertables_analyze(job_id int, config jsonb)
@@ -94,8 +78,5 @@ $$;
 SELECT add_job('distributed_hypertables_analyze', '12h');
 ```
 
-You can merge the jobs in this example into a single maintenance job
-if you prefer. However, analyzing distributed hypertables should be
-done less frequently than remote transaction healing activity. This
-is because the former could analyze a large number of remote chunks
-everytime and can be expensive if called too frequently.
+如果您喜欢，可以将此示例中的作业合并为一个单一的维护作业。然而，分析分布式超表应该比远程事务修复活动做得不那么频繁。这是因为前者每次可能会分析大量的远程数据块，如果调用得太频繁，可能会很昂贵。
+
