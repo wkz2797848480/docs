@@ -1,36 +1,30 @@
 ---
-title: Build a time-series graph in Grafana
-excerpt: Create a time-series graph to show values changing over time
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualizations, analytics]
-tags: [time-series]
+标题: 在格拉法纳（Grafana）中构建时间序列图
+摘要: 创建一个时间序列图来展示数值随时间变化的情况。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
+标签: [时间序列]
 ---
 
 import GrafanaVizPrereqs from 'versionContent/_partials/_grafana-viz-prereqs.mdx';
 
-# Build a time-series graph in Grafana
+# 在Grafana中构建时间序列图
 
-A time-series graph is a line graph that plots points changing over time. It
-allows you to see trends and fluctuations in your data. It's usually plotted in
-two dimensions. The x-axis represents time, and the y-axis represents the
-value of your data.
+时间序列图是一种折线图，它绘制随时间变化的点。它允许您看到数据中的趋势和波动。通常在两个维度上绘制。x轴代表时间，y轴代表数据的值。
 
-Because the time-series graph is the most common graph in Grafana, it's also
-the default panel type.
+由于时间序列图是Grafana中最常见的图表，它也是默认的面板类型。
 
-With a time-series graph, you can answer questions like:
+使用时间序列图，您可以回答以下问题：
 
-*   What is the hourly stock price of AMD today?
-*   How many users visited a website page each day in the past week?
-*   What was the temperature yesterday?
+*   今天AMD的每小时股票价格是多少？
+*   过去一周每天有多少用户访问网站页面？
+*   昨天的温度是多少？
 
-## Data for Grafana time-series graphs
+## Grafana时间序列图的数据
 
-To plot a time-series graph, Grafana requires you to provide a time column and
-a value column. To plot multiple time-series graphs in a single
-panel, you need to provide multiple value columns.
+要绘制时间序列图，Grafana需要您提供时间列和值列。要在单个面板中绘制多个时间序列图，您需要提供多个值列。
 
-This is an example of valid time-series data:
+这是一个有效时间序列数据的示例：
 
 ```bash
 Time                | Value_1 | Value_2 |
@@ -42,33 +36,30 @@ Time                | Value_1 | Value_2 |
 2022-02-08 07:34:01 |      30 |       5 |
 ```
 
-This tutorial shows you how to:
+本教程向您展示如何：
 
-*   Create a time-series graph with raw data
-*   Create a time-series graph with pre-aggregated data using time_bucket()
-*   Create multiple time-series graphs in a single panel
+*   使用原始数据创建时间序列图
+*   使用`time_bucket()`创建预聚合数据的时间序列图
+*   在单个面板中创建多个时间序列图
 
-## Prerequisites
+## 前提条件
 
 <GrafanaVizPrereqs />
 
-Check out this video for a step-by-step walk-through on creating
-time-series graphs in Grafana:
-<Video url="https://www.youtube-nocookie.com/embed/uRgKwcL6lDQ"/>
+查看这个视频，了解在Grafana中创建时间序列图的逐步操作：
+<Video url="https://www.youtube-nocookie.com/embed/uRgKwcL6lDQ&#34;/&gt; 
 
-## Create a time-series graph with raw data
+## 使用原始数据创建时间序列图
 
-A very common use case of the time-series graph is displaying stock data. The
-graph makes it easy to see if the value of a stock is going up or down. Also, no
-extra calculations are needed to make the graph.
+时间序列图的一个非常常见的用例是显示股票数据。图表可以轻松看出股票价值是上升还是下降。此外，制作图表不需要额外的计算。
 
 <Procedure>
 
-### Creating a time-series graph with raw data
+### 使用原始数据创建时间序列图
 
-1.  Add the `$symbol` variable of type `Text box` to the Grafana dashboard.
+1.  在Grafana仪表板中添加`$symbol`文本框类型的变量。
 
-1.  In Grafana, create a new panel and add this query:
+2.  在Grafana中创建一个新的面板，并添加此查询：
 
     ```SQL
     SELECT time,
@@ -79,59 +70,47 @@ extra calculations are needed to make the graph.
     ORDER BY time;
     ```
 
-1.  Enter `AMD` in the `symbol` variable. Adjust the time range of your
-    dashboard if desired. This plot uses a raw query, so if you set a large
-    time range, it might take a long time for Grafana to get all the rows and
-    display the data.
+3.  在`symbol`变量中输入`AMD`。如需要，调整仪表板的时间范围。此图表使用原始查询，因此如果您设置了一个较大的时间范围，Grafana可能需要很长时间来获取所有行并显示数据。
 
-1.  When 'Table view' is selected, the returned data looks like this:
+4.  当选择“Table view”时，返回的数据如下所示：
 
     ```bash
     time                | price |
     --------------------+--------+
-    2022-02-08 06:38:21 |  123  |
-    2022-02-08 06:38:28 |  123  |
-    2022-02-08 06:39:18 |  123  |
-    2022-02-08 06:39:56 |  123  |
-                …       |   …   |
+    2022-02-08 06:38:21 |  123   |
+    2022-02-08 06:38:28 |  123   |
+    2022-02-08 06:39:18 |  123   |
+    2022-02-08 06:39:56 |  123   |
+                …       |   …    |
     ```
 
-    Check that your data meets Grafana's requirements for graphing time series.
-    The data must have a column named `time`, containing timestamps. Other
-    columns can be named as you like. For the time-series visualization, the
-    timestamps must be in ascending order. Otherwise, you get an error.
+    检查您的数据是否符合Grafana绘制时间序列的要求。数据必须有一个名为`time`的列，包含时间戳。其他列可以任意命名。对于时间序列可视化，时间戳必须按升序排列。否则，您将收到错误。
 
-1.  Select `Time series` as your visualization type.
+5.  选择`Time series`作为您的可视化类型。
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-series-visualization-type.png" alt="Screenshot of the Grafana dashboard. The 'Visualizations' tab is focused. Underneath, 'Time-series' shows as a visualization type."/>
+    ![Grafana仪表板截图。“Visualizations”标签被选中。在下面，“Time-series”显示为可视化类型。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-series-visualization-type.png)
 
-1.  Grafana returns a graph that looks similar to this:
+6.  Grafana返回的图表如下所示：
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/simple-time-series-graph.png" alt="Screenshot of the time-series graph produced by Grafana. The graph represents the price of AMD in the past 6 hours."/>
+    ![Grafana生成的时间序列图截图。图表代表了过去6小时AMD的价格。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/simple-time-series-graph.png)
 
 </Procedure>
 
-## Create a time-series graph from pre-aggregated data using time_bucket()
+## 使用`time_bucket()`预聚合数据创建时间序列图
 
-In the previous example, you queried for all transactions of AMD stock in a 6 -hour period.
-This returned approximately 3 800 data points. If you query for all transactions
-of AMD stock in a 3-month period, you get approximately 1,500,000 data
-points.
+在之前的示例中，您查询了AMD股票在一个6小时周期内的所有交易。这大约返回了3800个数据点。如果您查询AMD股票在一个3个月周期内的所有交易，您将获得大约1,500,000个数据点。
 
-Grafana, like many charting tools, doesn't perform well when plotting millions of points.
-Also, by default, Grafana refreshes dashboards every 30 seconds. This further strains
-CPU, memory, and network bandwidth. In extreme cases, Grafana freezes.
+Grafana像许多绘图工具一样，在绘制数百万点时表现不佳。此外，默认情况下，Grafana每30秒刷新一次仪表板。这进一步加大了CPU、内存和网络带宽的压力。在极端情况下，Grafana会冻结。
 
-To solve this problem, you can pre-aggregate your data using TimescaleDB's
-[`time_bucket`][time_bucket] hyperfunction.
+为了解决这个问题，您可以使用TimescaleDB的[`time_bucket`][time_bucket]超函数预聚合您的数据。
 
 <Procedure>
 
-## Creating a time-series graph from pre-aggregated data using time_bucket()
+## 使用`time_bucket()`预聚合数据创建时间序列图
 
-1.  Add the `$bucket_interval` variable of type `Interval` to the Grafana dashboard.
+1.  在Grafana仪表板中添加`$bucket_interval`间隔类型的变量。
 
-1.  In Grafana, create a new panel and add this query:
+2.  在Grafana中创建一个新的面板，并添加此查询：
 
     ```sql
     SELECT time_bucket('$bucket_interval', time) AS time,
@@ -143,25 +122,15 @@ To solve this problem, you can pre-aggregate your data using TimescaleDB's
     ORDER BY time;
     ```
 
-1.  With a `bucket_interval` of 30 minutes and a date range of `Last 30 days`,
-    Grafana returns this graph:
+3.  使用`bucket_interval`为30分钟和日期范围为`Last 30 days`，Grafana返回此图表：
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-bucket-graph.png" alt="Screenshot of the time-series graph produced by Grafana using the `time_bucket` hyperfunction. The graph represents the price of AMD stock in the past 30 days with an interval of 30 minutes."/>
+    ![Grafana使用`time_bucket`超函数生成的时间序列图截图。图表代表了过去30天AMD股票的价格，间隔为30分钟。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-bucket-graph.png)
 
-    Because the stock market is only open from 9:30&nbsp;AM to 4:00&nbsp;PM on
-    weekdays, there are large gaps in the dataset where there is no data.
-    Grafana automatically connects the last non-null value to the nearest other
-    non-null value. This creates the long, straight, almost-horizontal lines you
-    see in the graph.
+    因为股票市场只在工作日的上午9:30到下午4:00开放，所以数据集中有大量没有数据的空白区域。Grafana自动将最后一个非空值连接到最近的另一个非空值。这在图表中创建了您看到的长、直、几乎水平的线。
 
-1.  To circumvent this issue, you can use Grafana's `Connect null values`
-    settings. But first, you need rows containing null values wherever you have
-    no data. By default, `time_bucket` doesn't return a row if there is no data.
-    In your query, replace `time_bucket` with [`time_bucket_gapfill`](/api/latest/hyperfunctions/gapfilling/time_bucket_gapfill/).
-    If you don't specify a gapfilling function, `time_bucket_gapfill` returns a
-    row with a null value wherever there is no data.
+4.  要解决这个问题，您可以使用Grafana的`Connect null values`设置。但首先，您需要在没有数据的地方包含空值的行。默认情况下，`time_bucket`如果不返回数据，则不返回行。在您的查询中，用[`time_bucket_gapfill`](/api/latest/hyperfunctions/gapfilling/time_bucket_gapfill/)替换`time_bucket`。如果您不指定填充函数，`time_bucket_gapfill`会在没有数据的地方返回一个空值的行。
 
-1.  In your query, replace `time_bucket` with `time_bucket_gapfill`.
+5.  在您的查询中，用`time_bucket_gapfill`替换`time_bucket`。
 
     ```SQL
     SELECT time_bucket_gapfill('$bucket_interval', time) AS time,
@@ -173,50 +142,41 @@ To solve this problem, you can pre-aggregate your data using TimescaleDB's
     ORDER BY time;
     ```
 
-1.  In the options panel, set `Connect null values` to `Threshold`. Give
-    `Threshold` a value of `24h`.
+6.  在选项面板中，将`Connect null values`设置为`Threshold`。给`Threshold`一个24小时的值。
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/connect-null-values.png" alt="Screenshot of the 'Connect null values' in the time-series options panel. The selected value is 'Threshold' and it has a value of less than 24 hours."/>
+    ![Grafana时间序列选项面板中“Connect null values”的截图。所选值为“Threshold”，并且它的值小于24小时。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/connect-null-values.png)
 
-1.  Grafana returns a graph similar to this one:
+7.  Grafana返回的图表如下所示：
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-bucket-gapfill-graph.png" alt="Screenshot of the time-series graph produced by Grafana using the `time_bucket_gapfill` hyperfunction. The graph represents the price of AMD stock in the past 30 days with an interval of 30 minutes and null values for every gap larger than 24 hours"/>
+    ![Grafana使用`time_bucket_gapfill`超函数生成的时间序列图截图。图表代表了过去30天AMD股票的价格，间隔为30分钟，并且对于超过24小时的每个空白区域，空值为null。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/time-bucket-gapfill-graph.png)
 
-    This graph allows you to better visualize the stock price during the week.
-    It bridges the less-than-24-hour gap between 4:00&nbsp;PM and 9:30&nbsp;AM,
-    but doesn't connect the values over the weekend.
+    这个图表允许您更好地可视化一周内的股票价格。它填补了下午4:00到上午9:30之间不到24小时的空白，但不连接周末的值。
 
 </Procedure>
 
-## Create multiple time-series graphs in a single panel
+## 在单个面板中创建多个时间序列图
 
-If you want to compare the price of two stocks over time, you could make
-two separate panels with 2 separate symbol variables. A better alternative is to
-combine the two time-series graphs into a single panel. To do this,
-change the `$symbol` variable to a multi-value answer and make a slight
-change to your query.
+如果您想比较两只股票随时间的价格，您可以制作两个单独的面板，每个面板有两个单独的符号变量。一个更好的选择是将两个时间序列图合并到一个面板中。为此，将`$symbol`变量更改为多值答案，并对您的查询进行轻微更改。
 
 <Procedure>
 
-## Creating multiple time-series graphs in a single panel
+## 在单个面板中创建多个时间序列图
 
-1.  Change the `$symbol` variable to the `Query` type.
+1.  将`$symbol`变量更改为`Query`类型。
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/symbol-query-type.png" alt="A screenshot of the 'symbol' variable settings. The variable type option has 'Query' selected."/>
+    ![“symbol”变量设置的截图。变量类型选项已选择“Query”。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/symbol-query-type.png)
 
-1.  In the query options, add the following query. In the selection options,
-    select `Multi-Value`.
+2.  在查询选项中，添加以下查询。在选项中，选择`Multi-Value`。
 
     ```SQL
     SELECT DISTINCT(symbol) FROM company ORDER BY symbol ASC;
     ```
 
-1.  Under `Preview of values`, you see a handful of company symbols ordered
-    alphabetically.
+3.  在`Preview of values`下，您会按字母顺序看到一些公司符号。
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/preview-values.png" alt="A screenshot of the 'Preview of values' in the 'symbol' variable settings. A handful of company symbols are displayed."/>`
+    ![“symbol”变量设置中“Preview of values”的截图。显示了一些公司符号。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/preview-values.png)
 
-1.  In the dashboard panel, change the query to allow for multi-value answers:
+4.  在仪表板面板中，更改查询以允许多值答案：
 
     ```SQL
     SELECT time_bucket_gapfill('$bucket_interval', time) AS time,
@@ -229,14 +189,15 @@ change to your query.
     ORDER BY time;
     ```
 
-1.  Select multiple stocks from the symbol variables
+5.  从符号变量中选择多个股票
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/select-stock.png" alt="A screenshot of the symbol variable selector. The symbols 'AAPL' and 'AMD' are selected."/>
+    ![符号变量选择器的截图。选择了'AAPL'和'AMD'两个符号。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/select-stock.png)
 
-1.  Grafana returns a graph similar to this one:
+6.  Grafana返回的图表如下所示：
 
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/multi-value-graph.png" alt="A screenshot of the multi-value time-series graph produced by Grafana. This graph displays the stock price for 'AAPL' in green and 'AMD' in yellow for the past 30 days."/>
+    ![Grafana生成的多值时间序列图截图。这个图表显示了过去30天'AAPL'的股价为绿色，'AMD'的股价为黄色。](https://assets.timescale.com/docs/images/tutorials/visualizations/time-series/multi-value-graph.png)
 
 </Procedure>
 
 [time_bucket]: /api/:currentVersion:/hyperfunctions/time_bucket/
+
