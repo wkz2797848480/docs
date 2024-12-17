@@ -5,7 +5,7 @@
 关键词: [加密货币，金融，分析]
 ---
 
-```markdown
+
 # 分析加密货币市场数据
 
 本教程是一个逐步指南，介绍了如何使用TimescaleDB分析时间序列加密货币数据集。本教程中的指导用于创建[这个分析4100多个加密货币][crypto-blog]。
@@ -239,8 +239,6 @@ print('Done getting price data for all coins. See crypto_prices.csv for result')
 [cryptocompare-apikey]: https://min-api.cryptocompare.com/pricing/
 ```
 
-
-```markdown
 #####################################################################
 #4. 填充不同法定货币中的BTC价格
 #####################################################################
