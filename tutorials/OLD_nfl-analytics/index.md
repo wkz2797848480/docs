@@ -1,65 +1,54 @@
 ---
-title: Analyze data using continuous aggregates and hyperfunctions
-excerpt: Learn how to efficiently analyze time-series data with TimescaleDB's features
-products: [cloud, mst, self_hosted]
-keywords: [continuous aggregates, hyperfunctions, analytics]
+标题: 使用连续聚合和超级函数分析数据
+摘要: 学习如何利用 TimescaleDB 的功能高效地分析时间序列数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [连续聚合，超级函数，分析]
 ---
 
-# Analyze data using TimescaleDB continuous aggregates and hyperfunctions
+# 使用TimescaleDB连续聚合和超函数分析数据
 
-This tutorial is a step-by-step guide on how to use TimescaleDB for analyzing time-series data. We show you how to utilize TimescaleDB's continuous aggregates and hyperfunctions for faster and more efficient queries.
-We also take advantage of a unique capability of TimescaleDB: the ability to
-join time-series data with relational data.
+本教程是关于如何使用TimescaleDB分析时间序列数据的逐步指南。我们将向您展示如何利用TimescaleDB的连续聚合和超函数进行更快速、更高效的查询。我们还利用了TimescaleDB的独特能力：将时间序列数据与关系数据进行连接。
 
-The dataset that we're using is provided by the National Football League (NFL)
-and contains player and tracking data for all the passing plays of the 2018 NFL
-season. We're going to ingest this dataset with Python into TimescaleDB and start
-exploring it to uncover insights about players and teams.
+我们使用的数据集由国家橄榄球联盟（NFL）提供，包含2018年NFL赛季所有传球比赛的球员和追踪数据。我们将使用Python将这个数据集导入TimescaleDB，并开始探索它，以发现有关球员和球队的洞见。
 
-If you happen to be a NFL fantasy football player, using
-some of this analysis on past data could be helpful in selecting the most effective
-players for the upcoming year. And, as the NFL releases new data throughout the
-upcoming season, you can ingest that data to help you make better decisions from
-week to week.
+如果您恰好是NFL梦幻橄榄球玩家，使用这些对过去数据的分析可能有助于您为即将到来的年份选择最有效的球员。而且，随着NFL在整个赛季中发布新数据，您可以导入这些数据，帮助您从一周到另一周做出更好的决策。
 
-Even if you aren't an NFL fan, this tutorial provides a great example
-of how to ingest time-series data into TimescaleDB (even when it doesn't _seem_ like
-time-series data), how you can use plain SQL and TimescaleDB hyperfunctions to do
-powerful data analysis, and also visualize the data with Python.
+即使您不是NFL粉丝，本教程也提供了一个很好的示例，展示了如何将时间序列数据导入TimescaleDB（即使它看起来不像时间序列数据），如何使用普通的SQL和TimescaleDB超函数进行强大的数据分析，以及如何使用Python进行数据可视化。
 
-This tutorial has a few sections to help you on your journey:
+本教程有几个部分可以帮助您在您的旅程中：
 
-1.  Ingest and query data
-    Download the data, create tables in TimescaleDB, and run your first query on NFL tracking data.
-1.  Analyze data using continuous aggregates and hyperfunctions
-    Examine the data at a deeper level with more advanced queries, using features of TimescaleDB to make queries faster and effective. You'll also see examples of some visualizations you can create using the data.
-1.  Join time-series data with relational data
-    Gain further insight into your time-series data by joining it with relational data.
-1.  Visualize time-series play-by-play data
-    For a little extra fun, create images that plot the movement of every player on the field for any play using Python and MatPlotlib.
+1. 导入和查询数据
+   下载数据，在TimescaleDB中创建表，并运行您对NFL追踪数据的第一个查询。
+2. 使用连续聚合和超函数分析数据
+   使用更高级的查询深入检查数据，利用TimescaleDB的功能使查询更快、更有效。您还将看到一些使用数据创建的可视化示例。
+3. 将时间序列数据与关系数据连接
+   通过将时间序列数据与关系数据连接，进一步了解您的时间序列数据。
+4. 可视化时间序列逐场数据
+   为了增加一些额外的乐趣，使用Python和Matplotlib创建图像，绘制任何比赛中场上每个球员的移动轨迹。
 
-## Prerequisites
+## 前提条件
 
 *   Python 3
-*   TimescaleDB (see [installation options][install-timescale])
-*   [Psql][psql-install] or any other PostgreSQL client (for example, DBeaver)
-*   The [Timescale toolkit][toolkit]
+*   TimescaleDB（参见[安装选项][install-timescale]）
+*   [Psql][psql-install]或任何其他PostgreSQL客户端（例如，DBeaver）
+*   [Timescale工具包][toolkit]
 
-## Download the dataset
+## 下载数据集
 
-*   [The NFL dataset is available for download on Kaggle.][kaggle-download]
-*   [Additional stadium and scores dataset (.zip) (source: wikipedia.com).][extra-download]
+*   [NFL数据集可在Kaggle上下载。][kaggle-download]
+*   [额外的体育场和得分数据集（.zip）（来源：wikipedia.com）。][extra-download]
 
-## Resources
+## 资源
 
-*   [NFL Big Data Bowl 2021 on Kaggle](https://www.kaggle.com/c/nfl-big-data-bowl-2021)
+*   [Kaggle上的NFL Big Data Bowl 2021](https://www.kaggle.com/c/nfl-big-data-bowl-2021) 
 
 [analyze-data]: /tutorials/:currentVersion:/nfl-analytics/advanced-analysis/
-[extra-download]: https://assets.timescale.com/docs/downloads/nfl_2018.zip
+[extra-download]: https://assets.timescale.com/docs/downloads/nfl_2018.zip 
 [ingest-query]: /tutorials/:currentVersion:/nfl-analytics/ingest-and-query
 [install-timescale]: /getting-started/latest/
 [join-data]: /tutorials/:currentVersion:/nfl-analytics/join-with-relational
-[kaggle-download]: https://www.kaggle.com/c/nfl-big-data-bowl-2021/data
+[kaggle-download]: https://www.kaggle.com/c/nfl-big-data-bowl-2021/data 
 [psql-install]: /use-timescale/:currentVersion:/integrations/query-admin/about-psql
 [toolkit]: /self-hosted/:currentVersion:/tooling/install-toolkit/
 [visualize-plays]: /tutorials/:currentVersion:/nfl-analytics/play-visualization/
+
