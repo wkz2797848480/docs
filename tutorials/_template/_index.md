@@ -1,64 +1,51 @@
 ---
-title: Verb the widget in the tool
-excerpt: Verb your widgets to achieve an outcome using the tool
-keywords: [noun, verb, tutorial]
-tags: [noun, noun]
+标题: 在工具中对部件进行动词化
+摘要: 通过对部件进行动词化，利用该工具达成某个成果。
+关键词: [名词，动词，教程]
+标签: [名词，名词]
 ---
 
 <!-- markdown-link-check-disable -->
 
-# Verb the widget in the tool
+# 在工具中使用小部件
 
-A single paragraph description of the tutorial. Make sure to cover what the
-tutorial does in one or two sentences, including the desired learning outcome.
-For example:
+本教程的单段描述。确保在一两句话中涵盖教程的内容，包括预期的学习成果。例如：
 
 ```txt
-This tutorial shows you how to efficiently store raw financial tick
-data, create different candlestick views, and query aggregated data in
-TimescaleDB using the OHLCV format.
+本教程向您展示如何高效存储原始金融tick数据，创建不同的K线视图，并使用OHLCV格式在TimescaleDB中查询聚合数据。
 ```
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+在开始之前，请确保您拥有：
 
-*   A TimescaleDB instance running locally or on the cloud.
-  For more information, see [installation options][install-docs].
-*   [`psql`][psql], or any other PostgreSQL client.
+*   本地或云端运行的TimescaleDB实例。
+  有关更多信息，请参见[安装选项][install-docs]。
+*   [`psql`][psql]或任何其他PostgreSQL客户端。
 
-## Steps in this tutorial
+## 本教程中的步骤
 
-A numbered list of the sub-pages in the tutorial. Remember that this is
-curricula content, so these steps must be in order:
+本教程中子页面的编号列表。请记住，这是课程内容，因此这些步骤必须按顺序进行：
 
-1.  [Set up up your dataset][tutorial-dataset]
-1.  [Query your dataset][tutorial-query]
-1.  [More things to try][tutorial-advanced]
+1.  [设置您的数据集][tutorial-dataset]
+2.  [查询您的数据集][tutorial-query]
+3.  [更多尝试的内容][tutorial-advanced]
 
-## About the widget and the tool
+## 关于小部件和工具
 
-This section collects all the concept information related to the tutorial, and
-the tools that are being used throughout. It answers the question "What is it?"
-This section should not include any procedures, but it can contain code samples
-if they are being used to explain the feature. Break this page up in a way that
-is logical, starting from simpler concepts and moving to more complicated ones.
-Use diagrams and screenshots sparingly, and ensure they add value. Try to keep
-this section succinct, by linking to lengthier material that exists elsewhere.
+本节收集与教程相关的所有概念信息，以及在整个过程中使用的工具。它回答了“这是什么？”的问题。本节不应包含任何程序，但如果用于解释功能，可以包含代码示例。以逻辑的方式划分此页面，从简单概念开始，逐步过渡到更复杂的概念。谨慎使用图表和截图，并确保它们增加价值。尽量保持本节简洁，通过链接到其他地方存在的更长材料来实现。
 
-For example:
+例如：
 
 ```txt
-Candlestick charts are used in the financial sector to visualize the price
-change of an asset. Each candlestick represents a time frame, such as 1
-minute, 1 hour, or similar, and shows how the asset's price changed
-during that time.
+K线图在金融领域中用于可视化资产价格的变化。每个K线代表一个时间框架，例如1分钟、1小时或类似的时间，并显示该时间段内资产价格的变化。
 ```
 
-Include reference-style links at the bottom of the page.
+在页面底部包含参考风格的链接。
 
 [install-docs]: install/:currentVersion:/
 [psql]: timescaledb/:currentVersion:/how-to-guides/connecting/
 [tutorial-dataset]: timescaledb/tutorials/_template/_dataset-tutorial
 [tutorial-query]: timescaledb/tutorials/_template/_query-template
 [tutorial-advanced]: timescaledb/tutorials/_template/_advanced-tutorial
+
