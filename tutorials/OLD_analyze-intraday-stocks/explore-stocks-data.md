@@ -1,39 +1,37 @@
 ---
-title: Explore stock market data
-excerpt: Explore a stock market dataset using TimescaleDB with Plotly, Pandas, and psycopg2
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, psycopg2, pandas, plotly]
-tags: [candlestick]
+标题: 探索股票市场数据
+摘要: 使用结合了 Plotly（绘图库）、Pandas（数据分析库）以及 psycopg2（Python 数据库连接库）的 TimescaleDB（时间序列数据库）来探索股票市场数据集。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，psycopg2，Pandas，Plotly]
+标签: [K 线]
 ---
 
-# Explore stock market data
+# 探索股市数据
 
-When you've successfully collected 1-min intraday stock data, it's time to have some fun and explore the
-data.
+当您成功收集了1分钟的日内股票数据后，是时候开始有趣地探索这些数据了。
 
-Because of the high granularity of the dataset, there are numerous ways to explore it. For example, you could analyze stock prices and volumes on a minute-by-minute basis. With TimescaleDB, you could also bucket records into custom intervals (for example, 2 min or 15 min) using TimescaleDB aggregate functions.
+由于数据集的高粒度性，有多种方式可以探索它。例如，您可以逐分钟分析股票价格和交易量。使用TimescaleDB，您还可以使用TimescaleDB聚合函数将记录分桶到自定义的时间间隔（例如，2分钟或15分钟）。
 
-Let's see how it's done!
+让我们看看如何操作！
 
-## Install Plotly and Pandas
+## 安装Plotly和Pandas
 
-To get started with data exploration, you need to install a couple of tools first:
+开始数据探索之前，您需要先安装几个工具：
 
-*   [Pandas][pandas-docs], to query and structure the data (this is already installed if you have completed the steps in the previous sections)
-*   [Plotly][plotly-docs], to create visualizations quickly
+*   [Pandas][pandas-docs]，用于查询和结构化数据（如果您已完成前几节的步骤，这已经安装好了）
+*   [Plotly][plotly-docs]，用于快速创建可视化
 
-**Install both**
+**安装这两个工具**
 
 ```bash
 pip install plotly pandas
 ```
 
-When you have those installed, you need to open a new Python file, or use a Jupyter notebook to
-start exploring the dataset.
+安装完成后，您需要打开一个新的Python文件，或使用Jupyter笔记本开始探索数据集。
 
-## Establish database connection
+## 建立数据库连接
 
-Use the configuration file you created earlier with `psycopg2` to create a database connection object:
+使用您之前用`psycopg2`创建的配置文件来创建数据库连接对象：
 
 ```python
 import config, psycopg2
@@ -44,31 +42,28 @@ conn = psycopg2.connect(database=config.DB_NAME,
                         port=config.DB_PORT)
 ```
 
-In each data exploration script, you need to reference this connection object to be able to
-query the database.
+在每个数据探索脚本中，您需要引用这个连接对象才能查询数据库。
 
-## Generate stock market insights
+## 生成股市洞察
 
-Let's start off analyzing trading volumes, then have a look at weekly price points, and finally, dig deep on
-price changes. The results of the queries shown are visualized using Plotly.
+让我们开始分析交易量，然后看看每周的价格点，最后深入研究价格变化。所示查询的结果使用Plotly进行可视化。
 
 <Highlight type="tip">
-Let these queries serve as inspiration to you, and feel free to change things up, like the analyzed `bucket`,
-the `symbol` or other parts of the query. Have fun!
+让这些查询作为您的灵感来源，随意更改，比如分析的`bucket`，`symbol`或查询的其他部分。玩得开心！
 </Highlight>
 
-1.  Which symbols have the highest transaction volumes?
-1.  How did Apple's trading volume change over time?
-1.  How did Apple's stock price change over time?
-1.  Which symbols had the highest weekly gains?
-1.  Weekly FAANG prices over time?
-1.  Weekly price changes of Apple, Facebook, Google?
-1.  Distribution of daily price changes of Amazon and Zoom
-1.  Apple 15-min candlestick chart
+1.  哪些符号有最高的交易量？
+2.  Apple的交易量随时间如何变化？
+3.  Apple的股价随时间如何变化？
+4.  哪些符号有最高的周收益？
+5.  FAANG（Facebook、Apple、Amazon、Netflix、Google/Alphabet）随时间的周价格？
+6.  Apple、Facebook、Google的周价格变化？
+7.  Amazon和Zoom的日价格变化分布？
+8.  Apple的15分钟K线图
 
-### 1. Which symbols have the highest transaction volumes?
+### 1. 哪些符号有最高的交易量？
 
-Let's generate a bar chart that shows the most traded symbols in the last 14 days:
+让我们生成一个条形图，显示过去14天中最活跃交易的符号：
 
 ```python
 import plotly.express as px
@@ -82,15 +77,15 @@ query = """
     LIMIT 5
 """.format(bucket="14 day")
 df = pd.read_sql(query, conn)
-fig = px.bar(df, x='symbol', y='volume', title="Most traded symbols in the last 14 days")
+fig = px.bar(df, x='symbol', y='volume', title="过去14天最活跃交易的符号")
 fig.show()
 ```
 
-![most traded symbols](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/most_traded_symbols.png)
+![most traded symbols](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/most_traded_symbols.png) 
 
-### 2. How did Apple's trading volume change over time?
+### 2. Apple的交易量随时间如何变化？
 
-Now let's try a similar query focused on the daily trading volume of one symbol (for example, 'AAPL').
+现在让我们尝试一个类似的查询，关注一个符号（例如'AAPL'）的日交易量。
 
 ```python
 import plotly.express as px
@@ -103,15 +98,15 @@ query = """
     ORDER BY bucket
 """.format(bucket="1 day", symbol="AAPL")
 df = pd.read_sql(query, conn)
-fig = px.line(df, x='bucket', y='volume', title="Apple's daily trading volume over time")
+fig = px.line(df, x='bucket', y='volume', title="Apple的日交易量随时间变化")
 fig.show()
 ```
 
-![apple trading volume over time](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/apple_trading_volume.png)
+![apple trading volume over time](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/apple_trading_volume.png) 
 
-### 3. How did Apple's stock price change over time?
+### 3. Apple的股价随时间如何变化？
 
-This query returns the weekly stock price of Apple over time:
+这个查询返回了Apple随时间变化的周股价：
 
 ```python
 import plotly.express as px
@@ -129,11 +124,11 @@ fig = px.line(df, x='bucket', y='last_closing_price')
 fig.show()
 ```
 
-![apple price over time](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/apple_price.png)
+![apple price over time](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/apple_price.png) 
 
-### 4. Which symbols had the highest weekly gains?
+### 4. 哪些符号有最高的周收益？
 
-Now generate a table containing the symbols with the biggest weekly gains:
+现在生成一个包含最大周收益符号的表格：
 
 ```python
 import plotly.express as px
@@ -165,17 +160,17 @@ print(df)
 |SNAP   |2021-02-01 |16.149649        |
 |TSLA   |2021-03-08 |15.842941        |
 
-`price_change_pct` shows the price change that happened between the start and end of the week.
+`price_change_pct`显示了一周开始和结束之间的价格变化。
 
-`bucket` shows (the first day of) the week.
+`bucket`显示了（周的第一天）。
 
 <Highlight type="tip">
-Change `orderby` to "ASC" to query the biggest losses.
+将`orderby`改为"ASC"以查询最大损失。
 </Highlight>
 
-### 5. Weekly FAANG prices over time?
+### 5. FAANG随时间的周价格？
 
-Let's see a line chart with the FAANG (Facebook, Apple, Amazon, Netflix, Google/Alphabet) weekly stock prices:
+让我们看看FAANG（Facebook、Apple、Amazon、Netflix、Google/Alphabet）的周股价线图：
 
 ```python
 import plotly.express as px
@@ -189,17 +184,15 @@ query = """
     ORDER BY bucket
 """.format(bucket="7 days", symbols="('FB', 'AAPL',  'AMZN', 'NFLX', 'GOOG')")
 df = pd.read_sql(query, conn)
-fig = px.line(df, x='bucket', y='last_closing_price', color='symbol', title="FAANG prices over time")
+fig = px.line(df, x='bucket', y='last_closing_price', color='symbol', title="FAANG随时间的周价格")
 fig.show()
 ```
 
-![faang prices](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/faang_prices.png)
+![faang prices](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/faang_prices.png) 
 
-### 6. Weekly price changes of Apple, Facebook, Google?
+### 6. Apple、Facebook、Google的周价格变化？
 
-Analyzing the price points directly can be useful when you are looking at one specific symbol, but if you want to
-compare different stocks, it might be better to look at price changes instead. Let's compare the
-price changes of Apple, Facebook, and Google:
+直接分析价格点在查看特定符号时很有用，但如果您想比较不同的股票，可能最好看看价格变化。让我们比较Apple、Facebook和Google的价格变化：
 
 ```python
 import plotly.express as px
@@ -220,17 +213,16 @@ query = """
     ORDER BY bucket
 """.format(bucket="7 days", symbols="('AAPL', 'FB', 'GOOG')")
 df = pd.read_sql(query, conn)
-figure = px.line(df, x="bucket", y="price_change_pct", color="symbol", title="Apple, Facebook, Google weekly price changes")
+figure = px.line(df, x="bucket", y="price_change_pct", color="symbol", title="Apple、Facebook、Google的周价格变化")
 figure = figure.update_layout(yaxis={'tickformat': '.2%'})
 figure.show()
 ```
 
-![weekly price changes](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/weekly_price_changes.png)
+![weekly price changes](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/weekly_price_changes.png) 
 
-### 7. Distribution of daily price changes of Amazon and Zoom
+### 7. Amazon和Zoom的日价格变化分布
 
-Now let's generate a scatter chart to look at the distribution of daily price changes of Amazon and Zoom. Analyzing
-this data enables you to better understand the volatility of individual stocks and how they compare to each other.
+现在让我们生成一个散点图，看看Amazon和Zoom的日价格变化分布。分析这些数据可以让您更好地了解个股的波动性以及它们之间的比较。
 
 ```python
 import plotly.express as px
@@ -244,6 +236,7 @@ query = """
         first(price_open, time) AS opening_price,
         last(price_close, time) AS closing_price
         FROM stocks_intraday
+
         WHERE symbol IN {symbols}
         GROUP BY bucket, symbol
     ) s
@@ -251,18 +244,18 @@ query = """
     ORDER BY bucket
 """.format(bucket="1 day", symbols="('ZM', 'AMZN')")
 df = pd.read_sql(query, conn)
-figure = px.scatter(df, x="price_change_pct", color="symbol", title="Distribution of daily price changes (Amazon, Zoom)")
+figure = px.scatter(df, x="price_change_pct", color="symbol", title="Amazon和Zoom的日价格变化分布")
 figure = figure.update_layout(xaxis={'tickformat': '.2%'})
 figure.show()
 ```
 
-![distribution of price changes](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/distribution_price_changes.png)
+![distribution of price changes](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/distribution_price_changes.png) 
 
-### 8. Apple 15-min candlestick chart
+### 8. Apple的15分钟K线图
 
-Finally, because this is a tutorial about stocks, let's generate a 15-min candlestick chart for Apple:
+最后，因为这是一个关于股票的教程，让我们为Apple生成一个15分钟的K线图：
 
-For candlestick charts, you need to import Plotly's `graph_object` module.
+对于K线图，您需要导入Plotly的`graph_object`模块。
 
 ```python
 import pandas as pd
@@ -283,15 +276,14 @@ figure = go.Figure(data=[go.Candlestick(x=df['bucket'],
                    high=df['price_high'],
                    low=df['price_low'],
                    close=df['price_close'],)])
-figure.update_layout(title="15-min candlestick chart of Apple, 2021-06-09")
+figure.update_layout(title="Apple的15分钟K线图，2021-06-09")
 figure.show()
 ```
 
 <Highlight type="tip">
-Change `date` to see the candlesticks for another day.
+更改`date`以查看另一天的K线图。
 </Highlight>
 
 ![candlestick chart apple](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick.png)
-
 [pandas-docs]: https://pandas.pydata.org
 [plotly-docs]: https://plotly.com/python/
