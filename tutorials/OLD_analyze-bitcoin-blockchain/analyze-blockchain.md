@@ -1,64 +1,47 @@
 ---
-title: Analyze the blockchain with hyperfunctions
-excerpt: Use SQL functions and hyperfunctions to analyze Bitcoin transactions
-products: [cloud, mst, self_hosted]
-keywords: [crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Analyze the Bitcoin blockchain
+标题: 使用超函数分析区块链
+摘要: 运用 SQL 函数和超函数来分析比特币交易。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一篇 / 下一篇按钮]
+内容分组: 分析比特币区块链
 ---
 
-# Analyze the blockchain with hyperfunctions
+# 使用超函数分析区块链
 
-In this section, analyze Bitcoin transactions with SQL in different ways.
-See how hyperfunctions and continuous aggregates can make it easier to query
-and analyze blockchain data.
+在本节中，我们将使用SQL以不同方式分析比特币交易。看看超函数和连续聚合如何使查询和分析区块链数据变得更容易。
 
-## Hyperfunctions for simplified statistical queries
+## 简化统计查询的超函数
 
-In some of the following queries you can find custom SQL functions that are
-not part of vanilla PostgreSQL. These queries are TimescaleDB
-[hyperfunctions][docs-hyperfunctions] and they are
-either part of the TimescaleDB extension or the Toolkit extension.
-Hyperfunctions is a series of SQL functions that make it easier to manipulate
-and analyze time-series data in PostgreSQL. You need to
-[install and enable the Toolkit extension][install-toolkit] to be able to use
-the whole set of hyperfunctions and successfully run the following queries.
+在以下一些查询中，您会发现一些自定义的SQL函数，它们不是标准PostgreSQL的一部分。这些查询是TimescaleDB的[超函数][docs-hyperfunctions]，它们是TimescaleDB扩展或工具包扩展的一部分。超函数是一系列SQL函数，使在PostgreSQL中操作和分析时间序列数据变得更容易。您需要[安装并启用工具包扩展][install-toolkit]才能使用全套超函数并成功运行以下查询。
 
-After installing the extension, enable it:
+安装扩展后，启用它：
 
 ```sql
 CREATE EXTENSION timescaledb_toolkit;
 ```
 
-Now set up a few continuous aggregates for faster and simplifed analysis.
+现在，设置一些连续聚合以进行更快和简化的分析。
 
-## Continuous aggregates for blockchain analytics
+## 区块链分析的连续聚合
 
-[Continuous aggregates][docs-cagg] are materialized views for time-series data.
-They make
-queries faster by continuously materializing aggregated data. At the same
-time, they provide real-time results. That means they include the latest data
-from the underlying hypertable.
+[连续聚合][docs-cagg]是时间序列数据的物质化视图。它们通过持续物化聚合数据使查询更快。同时，它们提供实时结果。这意味着它们包括底层超表中的最新数据。
 
-By using continuous aggregates, you simplify and speed up your queries.
+通过使用连续聚合，您简化并加快了查询速度。
 
-In this tutorial, you create three continuous aggregates, focusing
-on three aspects of the dataset:
+在本教程中，您将创建三个连续聚合，重点关注数据集的三个方面：
 
-*   Bitcoin transactions
-*   Bitcoin blocks
-*   Coinbase transactions (miner revenue)
+*   比特币交易
+*   比特币区块
+*    Coinbase交易（矿工收入）
 
-Pre-aggregating your data is important because the dataset contains a lot
-of transactions: over 10,000 per hour.
+预聚合您的数据很重要，因为数据集包含大量交易：每小时超过10,000笔。
 
-In this section, you also learn how to keep your continuous
-aggregate views up-to-date with automatic refresh policies.
+在本节中，您还将学习如何通过自动刷新策略使您的连续聚合视图保持最新。
 
-### Continuous aggregate: transactions
+### 连续聚合：交易
 
-Create a continuous aggregate called `one_hour_transactions`. This view holds
-aggregated data about each hour of transactions.
+创建一个名为`one_hour_transactions`的连续聚合。此视图保存每小时交易的聚合数据。
 
 ```sql
 CREATE MATERIALIZED VIEW one_hour_transactions
@@ -80,21 +63,19 @@ SELECT time_bucket('1 hour', time) AS bucket,
 GROUP BY bucket;
 ```
 
-In this query, you create these aggregate columns within the continuous
-aggregate:
+在此查询中，您在连续聚合中创建了这些聚合列：
 
-*   `tx_count`: Total transaction volume
-*   `total_fee_sat`: Total fees paid in Sat
-*   `total_fee_usd`: Total fees paid in USD
-*   `stats_fee_sat`: Fee stats (in Sat)
-    This column uses a hyperfunction called [`stats_agg`][stats_agg].
-    The raw `stats_agg` value isn't easily interpretable.
-    Later, you can use `stats_agg` to calculate other statistics, such as the average.
-*   `avg_tx_size`: Average transaction size in KB
-*   `high_fee_count`: Number of transactions where the fee is higher than the
-    transaction volume
+*   `tx_count`：总交易量
+*   `total_fee_sat`：支付的总费用（以Sat为单位）
+*   `total_fee_usd`：支付的总费用（以USD为单位）
+*   `stats_fee_sat`：费用统计（以Sat为单位）
+    此列使用了一个名为[`stats_agg`][stats_agg]的超函数。
+    原始的`stats_agg`值不易解释。
+    稍后，您可以使用`stats_agg`计算其他统计数据，例如平均值。
+*   `avg_tx_size`：平均交易大小（以KB为单位）
+*   `high_fee_count`：费用高于交易量的交易数量
 
-Add a refresh policy to keep the continuous aggregate up-to-date:
+添加刷新策略以保持连续聚合最新：
 
 ```sql
 SELECT add_continuous_aggregate_policy('one_hour_transactions',
@@ -103,10 +84,9 @@ SELECT add_continuous_aggregate_policy('one_hour_transactions',
    schedule_interval => INTERVAL '1 hour');
 ```
 
-### Continuous aggregate: blocks
+### 连续聚合：区块
 
-Create a continuous aggregate called `one_hour_blocks`. This view holds
-aggregated data about all the blocks that were mined each hour.
+创建一个名为`one_hour_blocks`的连续聚合。此视图保存每小时开采的所有区块的聚合数据。
 
 ```sql
 CREATE MATERIALIZED VIEW one_hour_blocks
@@ -130,23 +110,22 @@ WHERE is_coinbase IS NOT TRUE
 GROUP BY bucket, block_id;
 ```
 
-Running this query, you create these aggregate columns within the continuous
-aggregate:
+运行此查询时，您在连续聚合中创建了这些聚合列：
 
-*   `tx_count`: Number of transactions per block
-*   `block_fee_sat`: Transaction fee paid per block (in Sat)
-*   `block_fee_usd`:  Transaction fee paid per block (in USD)
-*   `stats_tx_fee_sat`: Stats for transaction fees
-*   `avg_tx_size`: Average transaction size within the block
-*   `avg_tx_weight`: Average transaction weight within the block
-*   `block_size`: Total block size
-*   `block_weight`: Total block weight
-*   `max_tx_size`: Maximum transaction size within the block
-*   `max_tx_weight`: Maximum transaction weight within the block
-*   `min_tx_size`: Minimum transaction size within the block
-*   `min_tx_weight`: Minimum transaction weight within the block
+*   `tx_count`：每个区块的交易数量
+*   `block_fee_sat`：每个区块支付的交易费用（以Sat为单位）
+*   `block_fee_usd`：每个区块支付的交易费用（以USD为单位）
+*   `stats_tx_fee_sat`：交易费用统计
+*   `avg_tx_size`：区块内的平均交易大小
+*   `avg_tx_weight`：区块内的平均交易权重
+*   `block_size`：总区块大小
+*   `block_weight`：总区块权重
+*   `max_tx_size`：区块内的最大交易大小
+*   `max_tx_weight`：区块内的最大交易权重
+*   `min_tx_size`：区块内的最小交易大小
+*   `min_tx_weight`：区块内的最小交易权重
 
-Add a refresh policy to keep the continuous aggregate up-to-date:
+添加刷新策略以保持连续聚合最新：
 
 ```sql
 SELECT add_continuous_aggregate_policy('one_hour_blocks',
@@ -155,11 +134,9 @@ SELECT add_continuous_aggregate_policy('one_hour_blocks',
    schedule_interval => INTERVAL '1 hour');
 ```
 
-## Continuous aggregate: coinbase transactions (miner revenue)
+## 连续聚合：Coinbase交易（矿工收入）
 
-Create a continuous aggregate called `one_hour_coinbase`. This view holds
-aggregated data about all the transactions that miners received as
-rewards each hour.
+创建一个名为`one_hour_coinbase`的连续聚合。此视图保存每小时矿工作为奖励收到的所有交易的聚合数据。
 
 ```sql
 CREATE MATERIALIZED VIEW one_hour_coinbase
@@ -174,15 +151,14 @@ WHERE is_coinbase IS TRUE
 GROUP BY bucket;
 ```
 
-Running this query, you create these aggregate columns within the continuous
-aggregate:
+运行此查询时，您在连续聚合中创建了这些聚合列：
 
-*   `tx_count`: Number of coinbase transactions per day
-*   `stats_miner_revenue`: Stats for miner revenue (both in Sat and USD)
-*   `min_miner_revenue`: Minimum miner revenue received after mining a block per day
-*   `max_miner_revenue`: Maximum miner revenue received after mining a block per day
+*   `tx_count`：每天的Coinbase交易数量
+*   `stats_miner_revenue`：矿工收入统计（包括Sat和USD）
+*   `min_miner_revenue`：每天挖掘一个区块后矿工收入的最低值
+*   `max_miner_revenue`：每天挖掘一个区块后矿工收入的最高值
 
-Add a refresh policy to keep the continuous aggregate up-to-date:
+添加刷新策略以保持连续聚合最新：
 
 ```sql
 SELECT add_continuous_aggregate_policy('one_hour_coinbase',
@@ -191,32 +167,26 @@ SELECT add_continuous_aggregate_policy('one_hour_coinbase',
    schedule_interval => INTERVAL '1 hour');
 ```
 
-In each continuous aggregate definition, the `time_bucket()` function controls
-how large the time buckets are. The examples all use 1-hour time
-buckets.
+在每个连续聚合定义中，`time_bucket()`函数控制时间桶的大小。所有示例都使用1小时的时间桶。
 
-## Generate insights with SQL
+## 使用SQL生成洞察
 
-Here are some questions you might ask about blockchain
-transactions, blocks, and miner revenue. For each question,
-you get a relevant SQL query and a chart that answers the question.
+以下是您可能对区块链交易、区块和矿工收入提出的一些问题。对于每个问题，您都会得到一个相关的SQL查询和一个回答问题的图表。
 
-**Questions**
+**问题**
 
-*   [Is there any connection between the number of transactions and the transaction fees?](#is-there-any-connection-between-the-number-of-transactions-and-the-transaction-fees)
-*   [Does the transaction volume affect the BTC-USD rate?](#does-the-transaction-volume-affect-the-btc-usd-rate)
-*   [Do more transactions in a block mean the block is more expensive to mine?](#do-more-transactions-in-a-block-mean-the-block-is-more-expensive-to-mine)
-*   [What percentage of the average miner's revenue comes from fees vs. block rewards?](#what-percentage-of-the-average-miners-revenue-comes-from-fees-compared-to-block-rewards)
-*   [How does block weight affect miner fees?](#how-does-block-weight-affect-miner-fees)
-*   [What’s the average miner revenue per block?](#whats-the-average-miner-revenue-per-block)
+*   [交易数量和交易费用之间有任何联系吗？](#交易数量和交易费用之间有任何联系吗)
+*   [交易量是否影响BTC-USD汇率？](#交易量是否影响BTC-USD汇率)
+*   [区块中的交易越多，区块的开采成本就越高吗？](#区块中的交易越多，区块的开采成本就越高吗)
+*   [平均矿工收入中有多少百分比来自费用与区块奖励？](#平均矿工收入中有多少百分比来自费用与区块奖励)
+*   [区块权重如何影响矿工费用？](#区块权重如何影响矿工费用)
+*   [每个区块的平均矿工收入是多少？](#每个区块的平均矿工收入是多少)
 
-### Is there any connection between the number of transactions and the transaction fees?
 
-Transaction fees are a major concern for blockchain users.
-If a blockchain is too expensive, you might not want to use it. This query
-shows you whether there's any correlation between the
-number of Bitcoin transactions and the fees. The time range for this analysis
-is the last day.
+
+### 交易数量与交易费用之间是否存在关联？
+
+交易费用是区块链用户非常关注的问题。如果一个区块链网络的费用过高，你可能就不想使用它。这个查询展示了比特币交易数量与费用之间是否存在相关性。这次分析的时间范围是最近一天。
 
 <Terminal>
 
@@ -234,7 +204,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |tx volume|fees              |
@@ -249,19 +219,13 @@ time               |tx volume|fees              |
 
 </Terminal>
 
-![Hourly transaction volume and fees, plotted over the last day](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/tx_volume_fees.png)
+![最近一天每小时交易量和费用的图表](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/tx_volume_fees.png) 
 
-On this chart, the green line indicates the average transaction volume over
-time. The yellow line indicates the average fee per transaction over
-time. These trends might help you decide whether to
-submit a transaction now or wait a few days for fees to
-decrease.
+在这张图表中，绿线表示随时间变化的平均交易量。黄线表示随时间变化的每笔交易的平均费用。这些趋势可能帮助你决定是现在提交交易，还是等几天费用降低后再提交。
 
-### Does the transaction volume affect the BTC-USD rate?
+### 交易量是否影响BTC-USD汇率？
 
-In cryptocurrency trading, there's a lot of speculation. You can adopt
-a data-based trading strategy by looking at correlations between blockchain
-metrics, such as transaction volume and fees.
+在加密货币交易中，有很多猜测。你可以通过查看区块链指标之间的相关性，如交易量和费用，来采取基于数据的交易策略。
 
 <Terminal>
 
@@ -279,7 +243,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |tx volume|btc-usd rate      |
@@ -294,19 +258,15 @@ time               |tx volume|btc-usd rate      |
 
 </Terminal>
 
-![Hourly transaction volume and BTC-USD conversion rate, plotted over the last day](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/volume_btc_usd.png)
+![最近一天每小时交易量和BTC-USD转换率的图表](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/volume_btc_usd.png) 
 
-Again, the green line shows the average transaction volume over time. The
-yellow line shows the BTC-USD conversion rate.
+再次，绿线显示了随时间变化的平均交易量。黄线显示了BTC-USD转换率。
 
-Next, get block-level insights by analyzing the connection
-between transactions and blocks.
+接下来，通过分析交易和区块之间的联系，获得区块级别的洞察。
 
-### Do more transactions in a block mean the block is more expensive to mine?
+### 区块中更多的交易是否意味着区块更昂贵？
 
-See how the number of transactions in a block influences the overall block
-mining fee. For this analysis, you might want to look at a larger time frame.
-Change the analyzed time range to the last five days.
+看看区块中交易数量如何影响整体区块挖矿费用。对于这次分析，你可能想要查看更大的时间范围。将分析的时间范围更改为最近五天。
 
 <Terminal>
 
@@ -325,7 +285,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |transactions         |mining fee |
@@ -340,16 +300,11 @@ time               |transactions         |mining fee |
 
 </Terminal>
 
-![Line graph with two lines showing the average number of transactions in a block and the block mining fee, over the last five days](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/tx_in_block_expensive.png)
+![最近五天区块平均交易数量和区块挖矿费用的折线图](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/tx_in_block_expensive.png) 
 
-Unsurprisingly, there's a high correlation between the number of transactions
-in a block and the mining fee. The more transactions a block has, the higher
-the block mining fee.
+毫不奇怪，区块中的交易数量和挖矿费用之间存在很高的相关性。区块中的交易越多，区块挖矿费用就越高。
 
-In the next query, see if there is the same correlation between block
-weight and mining fee. (Block weight is the size measure of a block). More
-transactions should increase the block weight, boosting the miner fee as well.
-This query looks very similar to the previous one:
+在下一个查询中，看看区块重量和挖矿费用之间是否存在相同的相关性。（区块重量是区块大小的度量单位）。更多的交易应该会增加区块重量，从而提高矿工费用。这个查询与前一个查询非常相似：
 
 <Terminal>
 
@@ -368,7 +323,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |block weight        |mining fee            |
@@ -383,24 +338,15 @@ time               |block weight        |mining fee            |
 
 </Terminal>
 
-![Line graph with two lines showing the block weight and the block mining fee, over the last five days](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/weight_fee.png)
+![最近五天区块重量和挖矿费用的折线图](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/weight_fee.png) 
 
-You can see the same kind of high correlation between block weight
-(defined in weight units) and mining fee. The relationship weakens when the block weight gets
-close to its maximum value (4 million weight units), in which case it's impossible for a
-block to include more transactions.
+你可以看到区块重量（以重量单位定义）和挖矿费用之间存在相同类型的高相关性。当区块重量接近其最大值（400万重量单位）时，这种关系会减弱，在这种情况下，区块无法包含更多的交易。
 
-In the previous charts, you saw how mining fees are correlated to block
-weights and transaction volumes. In the next query, analyze the data from a
-different perspective. Miner revenue is not only made up of miner fees. It
-also includes block rewards after mining a new block. This reward is currently
-6.25 BTC, and it gets halved every four years. What are some trends in miner revenue?
+在之前的图表中，你看到了挖矿费用与区块重量和交易量之间的相关性。在下一个查询中，从不同的角度分析数据。矿工收入不仅由矿工费用组成，还包括挖出新区块后的区块奖励。目前的奖励是6.25 BTC，并且每四年减半一次。矿工收入有哪些趋势？
 
-### What percentage of the average miner's revenue comes from fees compared to block rewards?
+### 平均矿工收入中有多少百分比来自费用与区块奖励相比？
 
-Miners are incentivized to keep the network up and running because they earn
-fees and rewards after mining each block. How much of their
-revenue comes from each source?
+矿工因为挖矿每个区块而获得费用和奖励，从而激励他们保持网络的运行。他们的收入有多少来自每个来源？
 
 <Terminal>
 
@@ -423,7 +369,7 @@ ORDER BY 1;
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |fees                  |reward    |
@@ -431,36 +377,25 @@ time               |fees                  |reward    |
 2022-05-21 09:00:00|0.04665261666666666667|6.25000000|
 2022-05-21 10:00:00|0.18766334000000000000|6.25000000|
 2022-05-21 11:00:00|0.20398096333333333333|6.25000000|
-2022-05-21 12:00:00|0.07661607888888888889|6.25000000|
+2022-05-21 12:00:00|0.07661607888
+888888889|6.25000000|
 ```
 
 </tab>
 
 </Terminal>
 
-![Line graph with two lines showing the average fee and block reward, over the last five days](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/revenue_ratio.png)
+![最近五天平均矿工收入的折线图](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/revenue_ratio.png) 
 
-This chart analyzes the last five days of average miner revenue. The left
-axis shows the percentage of total revenue that
-comes from transaction fees (green) and block rewards (yellow). Most miner
-revenue actually comes from block rewards
-(6.25&nbsp;BTC at the moment). Fees never accounted for more than 3% in the
-last five days.
+这张图表分析了最近五天的平均矿工收入。左侧的轴显示了总收入中来自交易费用（绿色）和区块奖励（黄色）的百分比。实际上，大多数矿工收入来自区块奖励（目前是6.25 BTC）。在过去五天中，费用从未超过总收入的3%。
 
-This kind of analysis can start discussions around the long-term fading of
-block rewards and how on-chain fees need to rise to
-incentivize miners and sustain the network. (Note that the left axis is
-logarithmic-scale, so it's easier to see the green "fees" portion.)
+这种分析可以引发关于区块奖励长期减少以及链上费用需要上升以激励矿工和维持网络的讨论。（请注意，左侧的轴是对数刻度，这样可以更容易地看到绿色“费用”部分。）
 
-### How does block weight affect miner fees?
+### 区块重量如何影响矿工费用？
 
-You've already seen that more transactions in a block mean it's more expensive
-to mine. Is it the same with block weights? The more transactions a block has,
-the larger its size (or weight), so the block weight and mining fee should
-be tightly correlated.
+你已经看到区块中更多的交易意味着它更昂贵。区块重量呢？区块中的交易越多，它的大小（或重量）就越大，所以区块重量和挖矿费用应该是紧密相关的。
 
-This query uses a 12-hour moving average to calculate the block weight and
-block mining fee over time.
+这个查询使用12小时移动平均值来计算随时间变化的区块重量和区块挖矿费用。
 
 <Terminal>
 
@@ -485,7 +420,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |block weight      |mining fee          |
@@ -500,19 +435,13 @@ time               |block weight      |mining fee          |
 
 </Terminal>
 
-![block weight and fees](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/weight_fees.png)
+![区块重量和费用的图表](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/weight_fees.png) 
 
-You can see that the block weight and block mining fee are indeed tightly
-connected to each other. In practice, you can also see that four million
-weight units is the size limit introduced in the 2017 SegWit update.
-This means that, looking at this graph, there's still room to grow for
-individual blocks, and they could include even more transactions.
+你可以看到区块重量和区块挖矿费用确实是紧密相连的。实际上，你还可以看到这个图表上还有增长的空间，它们可以包含更多的交易。
 
-### What's the average miner revenue per block?
+### 每个区块的平均矿工收入是多少？
 
-Now, analyze how much revenue miners actually generate by mining a
-new block on the blockchain, including fees and block rewards. This query
-analyzes the last day with 12-hour moving averages.
+现在，分析矿工通过挖矿新区块在区块链上实际产生的收入，包括费用和区块奖励。这个查询分析了最近一天的数据，并使用了12小时移动平均值。
 
 <Terminal>
 
@@ -529,7 +458,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |revenue in BTC    |
@@ -544,10 +473,9 @@ time               |revenue in BTC    |
 
 </Terminal>
 
-![Average miner revenue per block, plotted over the last day](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/miner_revenue_per_block.png)
+![最近一天每个区块的平均矿工收入的图表](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/miner_revenue_per_block.png) 
 
-To make the chart more interesting, add the BTC-USD rate to the analysis
-and increase the time range:
+为了使图表更有趣，将BTC-USD汇率加入分析，并扩大时间范围：
 
 <Terminal>
 
@@ -565,7 +493,7 @@ ORDER BY 1
 
 </tab>
 
-<tab label="Data">
+<tab label="数据">
 
 ```
 time               |revenue in BTC    |revenue in USD    |
@@ -580,7 +508,7 @@ time               |revenue in BTC    |revenue in USD    |
 
 </Terminal>
 
-![Average miner revenue per block, plotted in BTC and USD, over the last five days](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/miner_revenue_per_block_with_btcusd.png)
+![最近五天每个区块的平均矿工收入的图表，以BTC和USD计](https://assets.timescale.com/docs/images/tutorials/bitcoin-blockchain/miner_revenue_per_block_with_btcusd.png)
 
 [docs-cagg]: /use-timescale/:currentVersion:/continuous-aggregates/
 [docs-hyperfunctions]: /use-timescale/:currentVersion:/hyperfunctions/
