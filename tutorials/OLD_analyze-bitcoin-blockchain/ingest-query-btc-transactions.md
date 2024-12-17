@@ -1,39 +1,36 @@
 ---
-title: Insert and query Bitcoin transactions
-excerpt: Ingest and store Bitcoin blockchain data in your database
-products: [cloud, mst, self_hosted]
-keywords: [crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Analyze the Bitcoin blockchain
+标题: 插入并查询比特币交易
+摘要: 在你的数据库中摄取并存储比特币区块链数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一篇 / 下一篇按钮]
+内容分组: 分析比特币区块链
 ---
 
-# Insert and query Bitcoin transactions
+# 插入和查询比特币交易
 
-This section of the tutorial provides an example database schema that you can
-use to ingest and store Bitcoin blockchain data in TimescaleDB. The schema
-consists of only one table called `transactions`.
+本教程的这一部分提供了一个示例数据库模式，你可以使用它在TimescaleDB中摄取和存储比特币区块链数据。该模式仅包含一个名为`transactions`的表。
 
-## Bitcoin transaction data fields
+## 比特币交易数据字段
 
-The sample Bitcoin dataset for this tutorial has the following fields:
+本教程的示例比特币数据集包含以下字段：
 
-| Field | Description |
+| 字段 | 描述 |
 |---|---|
-| time | Timestamp of the transaction |
-| block_id | Block ID |
-| hash | Hash ID of the transaction |
-| size | Size of the transaction in KB |
-| weight | Size of the transaction in weight units |
-| is_coinbase | Whether the transaction is the first transaction in a block, which includes the miner's reward |
-| output_total | Value of the transaction in Satoshi (sat) |
-| output_total_usd | Value of the transaction in USD |
-| fee | Transaction fee in Satoshi (sat) |
-| fee_usd | Transaction fee in USD |
+| time | 交易的时间戳 |
+| block_id | 区块ID |
+| hash | 交易的哈希ID |
+| size | 交易的大小，单位为KB |
+| weight | 交易的大小，单位为重量单位 |
+| is_coinbase | 交易是否为区块中的第一笔交易，包括矿工奖励 |
+| output_total | 交易的价值，单位为萨托希（sat） |
+| output_total_usd | 交易的价值，单位为美元 |
+| fee | 交易费用，单位为萨托希（sat） |
+| fee_usd | 交易费用，单位为美元 |
 
-## Table definition
+## 表定义
 
-Create a table named `transactions` to hold the Bitcoin data.
-Run the following query:
+创建一个名为`transactions`的表来保存比特币数据。运行以下查询：
 
 ```sql
 CREATE TABLE transactions (
@@ -51,80 +48,60 @@ CREATE TABLE transactions (
 );
 ```
 
-The table schema includes all the fields described above, plus an additional JSONB
-column named `details`. This column stores a JSONB string with extra
-information about each transaction. Data from this column isn't used in this
-tutorial, but you can explore the data and get inspired to perform your own
-analyses.
+表模式包括上述所有字段，以及一个额外的JSONB列名为`details`。此列存储有关每笔交易的额外信息的JSONB字符串。本教程中不使用此列的数据，但你可以探索这些数据，并受到启发进行自己的分析。
 
-Turn the table into a hypertable by using the
-[`create_hypertable()`][create_hypertable] function.
-A hypertable gives you performance improvements by using
-TimescaleDB's chunking feature behind the scenes.
-This function needs two
-parameters: the name of the table and the name of the TIMESTAMP
-column. In this case, the names are `transactions` and `time`.
+使用[`create_hypertable()`][create_hypertable]函数将表转换为超表。超表通过使用TimescaleDB的后台分块功能，为您提供性能提升。这个函数需要两个参数：表名和TIMESTAMP列的名称。在这种情况下，名称是`transactions`和`time`。
 
 ```sql
 SELECT create_hypertable('transactions', 'time');
 ```
 
-Next, create some additional indexes on
-the hypertable. This optimizes execution of later SQL queries.
+接下来，在超表上创建一些额外的索引。这优化了后续SQL查询的执行。
 
-## Create indexes
+## 创建索引
 
-When you create a hypertable, TimescaleDB automatically adds a B-tree index
-on the timestamp column. This improves queries
-where you filter by the time column.
+当你创建一个超表时，TimescaleDB会自动在时间戳列上添加一个B树索引。这提高了按时间列过滤的查询性能。
 
-To speed up queries where you search for
-individual transactions with the `hash` column, add a `HASH INDEX` to
-the column:
+为了加速使用`hash`列搜索单个交易的查询，向该列添加一个`HASH INDEX`：
 
 ```sql
 CREATE INDEX hash_idx ON public.transactions USING HASH (hash)
 ```
 
-Next, speed up block-level queries by adding an index on the `block_id` column:
+接下来，通过在`block_id`列上添加索引来加速区块级别的查询：
 
 ```sql
 CREATE INDEX block_idx ON public.transactions (block_id)
 ```
 
-To ensure that you don't accidentally insert duplicate records,
-add a `UNIQUE INDEX` on the `time` and `hash` columns.
+为确保你不会意外插入重复记录，在`time`和`hash`列上添加一个`UNIQUE INDEX`。
 
 ```sql
 CREATE UNIQUE INDEX time_hash_idx ON public.transactions (time, hash)
 ```
 
-## Ingest Bitcoin transactions
+## 摄取比特币交易
 
-You created the hypertable and added proper indexes.
-Next, ingest some Bitcoin transactions. The sample data file
-contains Bitcoin transactions from the past five days. This CSV file is
-updated daily so you always download recent Bitcoin transactions.
-Insert this dataset into your TimescaleDB instance.
+你已经创建了超表并添加了适当的索引。接下来，摄取一些比特币交易。样本数据文件包含过去五天的比特币交易。这个CSV文件每天更新，所以你总是可以下载最近的比特币交易。将这个数据集插入你的TimescaleDB实例。
 
 <Procedure>
 
-### Ingesting Bitcoin transactions
+### 摄取比特币交易
 
-1.  Download the sample `.csv` file: <Tag type="download">[tutorial_bitcoin_sample.csv](https://assets.timescale.com/docs/downloads/bitcoin-blockchain/bitcoin_sample.zip)</Tag>
+1. 下载样本`.csv`文件：<Tag type="download">[tutorial_bitcoin_sample.csv](https://assets.timescale.com/docs/downloads/bitcoin-blockchain/bitcoin_sample.zip)</Tag> 
 
     ```bash
-    wget https://assets.timescale.com/docs/downloads/bitcoin-blockchain/bitcoin_sample.zip
+    wget https://assets.timescale.com/docs/downloads/bitcoin-blockchain/bitcoin_sample.zip 
     ```
 
-1.  Unzip the file and change the directory if you need to:
+1. 解压文件并在需要时更改目录：
 
     ```bash
     unzip bitcoin_sample.zip
     cd bitcoin_sample
     ```
 
-1.  At the `psql` prompt, insert the content of the `.csv` file into the database.
+1. 在`psql`提示符下，将`.csv`文件的内容插入数据库。
 
     ```bash
     psql -x "postgres://tsdbadmin:<YOUR_PASSWORD_HERE>@<YOUR_HOSTNAME_HERE>:<YOUR_PORT_HERE>/tsdb?sslmode=require"
@@ -132,16 +109,15 @@ Insert this dataset into your TimescaleDB instance.
     \COPY transactions FROM 'tutorial_bitcoin_sample.csv' CSV HEADER;
     ```
 
-    The process should complete in 3-5 minutes.
+    这个过程应该在3-5分钟内完成。
 
 </Procedure>
 
-Once the ingestion finishes, your database contains around 1.5 million Bitcoin
-transactions. Now, you can make your first queries.
+一旦摄取完成，你的数据库将包含大约150万笔比特币交易。现在，你可以进行你的第一次查询。
 
-## Query Bitcoin transactions
+## 查询比特币交易
 
-Query for the five most recent non-coinbase transactions:
+查询最近的五笔非coinbase交易：
 
 ```sql
 SELECT time, hash, block_id, weight  FROM transactions
@@ -150,7 +126,7 @@ ORDER BY time DESC
 LIMIT 5
 ```
 
-The result looks something like this:
+结果看起来像这样：
 
 <!-- vale Google.Units = NO -->
 time               |hash                                                            |block_id|weight|
@@ -163,11 +139,10 @@ time               |hash                                                        
 <!-- vale Google.Units = YES -->
 
 <Highlight type="note">
-A coinbase transaction is the first transaction in each block. This transaction contains the miner's reward.
+coinbase交易是每个区块中的第一笔交易。这笔交易包含了矿工的奖励。
 </Highlight>
 
-Here's another example query that returns the five most recent blocks, with
-statistics such as block weight, transaction count, and value in USD:
+这是另一个示例查询，返回最近的五个区块，包括区块重量、交易计数和美元价值的统计信息：
 
 ```sql
 WITH recent_blocks AS (
@@ -186,7 +161,7 @@ WHERE is_coinbase IS NOT TRUE
 GROUP BY t.block_id
 ```
 
-Result:
+结果：
 
 block_id|transaction_count|block_weight|block_value_usd   |
 --------|-----------------|------------|------------------|
@@ -196,8 +171,9 @@ block_id|transaction_count|block_weight|block_value_usd   |
   738486|             2154|     3996197| 481098865.6260999|
   738485|             2602|     3991871| 761258578.3764017|
 
-At this point, you have Bitcoin blockchain data in your database and you've made
-your first SQL queries. In the next section, dig deeper into the blockchain and use
-TimescaleDB hyperfunctions to generate insights!
+此时，你的数据库中已经有了比特币区块链数据，并且你已经进行了第一次SQL查询。在下一节中，深入挖掘区块链并使用TimescaleDB超函数生成洞察！
 
 [create_hypertable]: /api/:currentVersion:/hypertable/create_hypertable/
+
+关于您提到的网页解析问题，可能是因为网络原因导致链接解析没有成功。这个问题可能与链接本身有关，也可能与网络环境有关。建议您检查网页链接的合法性，并在网络稳定的情况下适当重试。如果链接是正确的，并且问题仍然存在，可能需要进一步的技术支持来解决网络连接问题。如果您有其他问题或需要进一步的帮助，请随时告知。
+
