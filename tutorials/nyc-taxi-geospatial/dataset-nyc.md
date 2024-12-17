@@ -1,11 +1,11 @@
 ---
-title: Plot geospatial time-series data tutorial - set up dataset
-excerpt: Set up a dataset so you can query geospatial time-series data
-products: [cloud]
-keywords: [tutorials, GIS, geospatial, learn]
-tags: [tutorials, intermediate]
-layout_components: [next_prev_large]
-content_group: Plot geospatial NYC taxi cab data
+标题: 绘制地理空间时间序列数据教程 —— 设置数据集
+摘要: 设置数据集，以便能够查询地理空间时间序列数据。
+产品: [云服务]
+关键词: [教程，地理信息系统（GIS），地理空间，学习]
+标签: [教程，中级]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 绘制纽约市出租车地理空间数据
 ---
 
 import CreateAndConnect from "versionContent/_partials/_cloud-create-connect-tutorials.mdx";
@@ -13,23 +13,19 @@ import CreateHypertableNyc from "versionContent/_partials/_create-hypertable-nyc
 import AddDataNyc from "versionContent/_partials/_add-data-nyctaxis.mdx";
 import GrafanaConnect from "versionContent/_partials/_grafana-connect.mdx";
 
-# Set up the database
+# 设置数据库
 
-This tutorial uses a dataset that contains historical data from New York's
-yellow taxi network, in a hypertable named `rides`. It also includes a separate
-tables of payment types and rates, in a regular PostgreSQL table named
-`payment_types`, and `rates`.
+本教程使用的数据集包含了纽约黄色出租车网络的历史数据，存储在一个名为 `rides` 的超表中。它还包括一个单独的支付类型和费率表，分别存储在常规的 PostgreSQL 表中，名为 `payment_types` 和 `rates`。
 
-<Collapsible heading="Create a Timescale service and connect to your service" defaultExpanded={false}>
+<Collapsible heading="创建Timescale服务并连接到您的服务" defaultExpanded={false}>
 
 <CreateAndConnect/>
 
 </Collapsible>
 
-<Collapsible heading="The dataset" defaultExpanded={false}>
+<Collapsible heading="数据集" defaultExpanded={false}>
 
-This tutorial uses historical data from New York's yellow taxi network, provided
-by the New York City Taxi and Limousine Commission [NYC TLC][nyc-tlc].
+本教程使用的数据集由纽约市出租车和豪华轿车委员会 [NYC TLC][nyc-tlc] 提供，包含了纽约黄色出租车网络的历史数据。
 
 <CreateHypertableNyc />
 
@@ -37,11 +33,9 @@ by the New York City Taxi and Limousine Commission [NYC TLC][nyc-tlc].
 
 </Collapsible>
 
-<Collapsible heading="Connect to Grafana" defaultExpanded={false}>
+<Collapsible heading="连接到Grafana" defaultExpanded={false}>
 
-The queries in this tutorial are suitable for visualizing in Grafana. If you
-want to visualize the results of your queries, connect your Grafana account to
-the NYC taxi cab dataset.
+本教程中的查询适合在 Grafana 中可视化。如果您想要可视化查询结果，请将您的 Grafana 账户连接到纽约出租车数据集。
 
 <GrafanaConnect />
 
