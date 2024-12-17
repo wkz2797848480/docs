@@ -175,5 +175,4 @@ block_id|transaction_count|block_weight|block_value_usd   |
 
 [create_hypertable]: /api/:currentVersion:/hypertable/create_hypertable/
 
-关于您提到的网页解析问题，可能是因为网络原因导致链接解析没有成功。这个问题可能与链接本身有关，也可能与网络环境有关。建议您检查网页链接的合法性，并在网络稳定的情况下适当重试。如果链接是正确的，并且问题仍然存在，可能需要进一步的技术支持来解决网络连接问题。如果您有其他问题或需要进一步的帮助，请随时告知。
 
