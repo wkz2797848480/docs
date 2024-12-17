@@ -1,63 +1,48 @@
 ---
-title: Ingest real-time financial websocket data
-excerpt: Set up a data pipeline to get data from different financial APIs
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, websockets, data pipeline]
+标题: 摄取实时金融网络套接字数据
+摘要: 设置数据管道，以便从不同的金融应用程序编程接口获取数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，网络套接字，数据管道]
 ---
 
-# Ingest real-time financial websocket data
+# 摄入实时金融websocket数据
 
-This tutorial shows you how to ingest real-time time-series data into
-TimescaleDB using a websocket connection. The tutorial sets up a data pipeline to
-ingest real-time data from our data partner, [Twelve Data][twelve-data].
-Twelve Data provides a number of different financial APIs, including stock,
-crypto, forex, ETFs, and more. It also supports websocket connections in case
-you want to update your database frequently. With websockets, you need to
-connect to the server, subscribe to symbols, and you can start receiving data
-in real-time during market hours.
+本教程向您展示如何使用websocket连接将实时时间序列数据摄入到TimescaleDB中。教程设置了数据管道，从我们的数据中心合作伙伴[Twelve Data][twelve-data]摄入实时数据。Twelve Data提供了许多不同的金融API，包括股票、加密货币、外汇、ETF等。如果您希望频繁更新数据库，它还支持websocket连接。使用websockets，您需要连接到服务器，订阅符号，您就可以在市场交易时间内开始实时接收数据。
 
-When you complete this tutorial, you'll have a data pipeline set
-up that ingests real-time financial data into your TimescaleDB instance.
+完成本教程后，您将拥有一个设置好数据管道，将实时金融数据摄入到您的TimescaleDB实例中。
 
-This tutorial uses Python and the API
-[wrapper library][twelve-wrapper] provided by Twelve Data.
+本教程使用Python和Twelve Data提供的API[包装库][twelve-wrapper]。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+开始之前，请确保您已具备以下条件：
 
-*   A TimescaleDB instance running locally or on the cloud. For more information,
-   [see installation options][install-ts]
-*   Installed Python 3
-*   Signed up for [Twelve Data][twelve-signup]. The free tier is perfect for this tutorial.
+*   正在本地或云端运行的TimescaleDB实例。更多信息，请[查看安装选项][install-ts]。
+*   已安装Python 3。
+*   已注册[Twelve Data][twelve-signup]。免费层级非常适合本教程。
 
-## Set up a new Python environment
+## 设置新的Python环境
 
-Create a new Python virtual environment for this project and activate it. All
-the packages you need to complete for this tutorial are installed in this environment.
+为这个项目创建一个新的Python虚拟环境并激活它。完成本教程所需的所有包都安装在这个环境中。
 
 <Procedure>
 
-### Setting up a new Python environment
+### 设置新的Python环境
 
-1.  Create and activate a Python virtual environment:
+1. 创建并激活Python虚拟环境：
 
     ```bash
     virtualenv env
     source env/bin/activate
     ```
 
-1.  Install the Twelve Data Python
-    [wrapper library][twelve-wrapper]
-    with websocket support. This library makes it easy to make requests to the
-    API and maintain a stable websocket connection.
+2. 安装Twelve Data Python[包装库][twelve-wrapper]，支持websocket。这个库使您能够轻松地向API发送请求并保持稳定的websocket连接。
 
     ```bash
     pip install twelvedata websocket-client
     ```
 
-1.  Install [Psycopg2][psycopg2] so that you can connect the
-    TimescaleDB from your Python script:
+3. 安装[Psycopg2][psycopg2]，以便您可以从Python脚本连接TimescaleDB：
 
     ```bash
     pip install psycopg2-binary
@@ -65,51 +50,39 @@ the packages you need to complete for this tutorial are installed in this enviro
 
 </Procedure>
 
-## Create the websocket connection
+## 创建websocket连接
 
-When you connect to the Twelve Data API through a websocket, you create a
-persistent connection between your computer and the websocket server. This
-persistent connection can then be used to receive data for as long as the
-connection is maintained. You need to pass two arguments to create a
-websocket object and establish connection.
+当您通过websocket连接到Twelve Data API时，您在计算机和websocket服务器之间创建了一个持久连接。这个持久连接可以用来接收数据，只要连接保持，您就可以持续接收数据。您需要传递两个参数来创建websocket对象并建立连接。
 
-### Websocket arguments
+### Websocket参数
 
 *   `on_event`
 
-    This argument needs to be a function that is invoked whenever there's a
-    new data record is received from the websocket:
+    这个参数需要是一个函数，每当从websocket接收到新的数据记录时就调用它：
 
     ```python
     def on_event(event):
-        print(event) # prints out the data record (dictionary)
+        print(event) # 打印出数据记录（字典）
     ```
 
-    This is where you want to implement the ingestion logic so whenever
-    there's new data available you insert it into the database.
+    这就是您想要实现数据摄入逻辑的地方，所以每当有新数据可用时，您就将其插入数据库。
 
 *   `symbols`
 
-    This argument needs to be a list of stock ticker symbols (for example, `MSFT`) or
-    crypto trading pairs (for example, `BTC/USD`). When using a websocket connection you
-    always need to subscribe to the events you want to receive. You can do this
-    by using the `symbols` argument or if your connection is already
-    created you can also use the `subscribe()` function to get data for additional
-    symbols.
+    这个参数需要是一个股票代码列表（例如，`MSFT`）或加密货币交易对（例如，`BTC/USD`）。当使用websocket连接时，您总是需要订阅您想要接收的事件。您可以通过使用`symbols`参数来做到这一点，或者如果您的连接已经创建，您也可以使用`subscribe()`函数来获取额外符号的数据。
 
 <Procedure>
 
-### Connecting to the websocket server
+### 连接到websocket服务器
 
-1.  Create a new Python file called `websocket_test.py` and connect to the
-    Twelve Data servers using the wrapper library:
+1. 创建一个名为`websocket_test.py`的新Python文件，并使用包装库连接到Twelve Data服务器：
 
     ```python
     # websocket_test.py:
     from twelvedata import TDClient
     
     def on_event(event):
-     print(event) # prints out the data record (dictionary)
+     print(event) # 打印出数据记录（字典）
     
     td = TDClient(apikey="TWELVE_DATA_APIKEY")
     ws = td.websocket(symbols=["BTC/USD", "ETH/USD"], on_event=on_event)
@@ -117,16 +90,15 @@ websocket object and establish connection.
     ws.keep_alive()
     ```
 
-    Make sure to pass your API key as an argument for the `TDClient` object.
+    确保将您的API密钥作为参数传递给`TDClient`对象。
 
-1.  Now run the Python script:
+2. 现在运行Python脚本：
 
     ```bash
     python websocket_test.py
     ```
 
-1.  After running the script, you immediately get a response from the server
-    about the status of your connection:
+3. 运行脚本后，您会立即从服务器接收到关于您连接状态的响应：
 
     ```bash
     {'event': 'subscribe-status',
@@ -142,14 +114,10 @@ websocket object and establish connection.
 </Procedure>
 
 <Highlight type="note">
-To keep the websocket connection alive indefinitely, use the `keep_alive()`
-function of the wrapper library. It makes sure the connection will
-stay active until it gets terminated. If you don't add this line the
-connection might break instantly.
+为了无限期保持websocket连接活跃，请使用包装库的`keep_alive()`函数。它确保连接将保持活动状态，直到被终止。如果您不添加这行代码，连接可能会立即中断。
 </Highlight>
 
-When you have established a connection to the websocket server,
-wait a few seconds, and you can see actual data records, like this:
+当您与websocket服务器建立连接后，等待几秒钟，您就可以看到实际的数据记录，如下所示：
 
 ```bash
 {'event': 'price', 'symbol': 'BTC/USD', 'currency_base': 'Bitcoin', 'currency_quote': 'US Dollar', 'exchange': 'Coinbase Pro', 'type': 'Digital Currency', 'timestamp': 1652438893, 'price': 30361.2, 'bid': 30361.2, 'ask': 30361.2, 'day_volume': 49153}
@@ -159,50 +127,34 @@ wait a few seconds, and you can see actual data records, like this:
 {'event': 'price', 'symbol': 'BTC/USD', 'currency_base': 'Bitcoin', 'currency_quote': 'US Dollar', 'exchange': 'Coinbase Pro', 'type': 'Digital Currency', 'timestamp': 1652438900, 'price': 30346.0, 'bid': 30346.0, 'ask': 30346.0, 'day_volume': 49167}
 ```
 
-Each price event gives you multiple data points about the given trading pair
-such as the name of the exchange, and the current price. You can also
-occasionally see `heartbeat` events in the response; these events signal
-the health of the connection over time.
+每个价格事件都会给您提供关于给定交易对的多个数据点，例如交易所的名称和当前价格。您还可以偶尔在响应中看到`heartbeat`事件；这些事件随着时间的推移信号连接的健康状况。
 
-At this point the websocket connection works and data keeps flowing. You need
-to implement the `on_event` function so data gets ingested into TimescaleDB.
+此时，websocket连接工作正常，数据持续流动。您需要实现`on_event`函数，以便数据被摄入到TimescaleDB中。
 
-## Ingesting websocket data into TimescaleDB
+## 将websocket数据摄入到TimescaleDB中
 
-Now that the websocket connection is set up, you can use the `on_event` function
-to ingest data into the database.
+现在websocket连接已设置好，您可以使用`on_event`函数将数据摄入到数据库中。
 
-When you ingest data into a transactional database like TimescaleDB, it is more efficient to
-insert data in batches rather than inserting data row-by-row. Using one transaction to
-insert multiple rows can significantly increase the overall ingest capacity and speed
-of your TimescaleDB instance.
+当您将数据摄入到像TimescaleDB这样的事务数据库中时，批量插入数据比逐行插入数据更有效。使用一个事务插入多行可以显著提高您的TimescaleDB实例的整体摄入能力和速度。
 
-### Batching in memory
+### 内存中批处理
 
-A common practice to implement batching is to store new records in memory
-first, then after the batch reaches a certain size, insert all the records
-from memory into the database in one transaction. The perfect batch size isn't
-universal, but you can experiment with different batch sizes
-(for example, 100, 1000, 10000, and so on) and see which one fits your use case better.
-Using batching is a fairly common pattern when ingesting data into TimescaleDB
-from Kafka, Kinesis, or websocket connections.
+实现批处理的常见做法是先将新记录存储在内存中，然后当批处理达到一定大小时，一次性将所有记录从内存插入到数据库中。完美的批处理大小并不是通用的，但您可以尝试不同的批处理大小（例如，100、1000、10000等），看看哪个更适合您的用例。使用批处理是从一个Kafka、Kinesis或websocket连接摄入数据到TimescaleDB时的一个相当常见的模式。
 
-Now you can see
-how to implement a batching solution in Python with Psycopg2.
+现在您可以看到如何使用Psycopg2在Python中实现批处理解决方案。
 
-### Implement batching with Psycopg2
+### 使用Psycopg2实现批处理
 
-Remember to implement the ingestion logic within the `on_event` function that
-you can then pass over to the websocket object.
+记得在`on_event`函数中实现摄入逻辑，然后将其传递给websocket对象。
 
-This function needs to:
+这个函数需要：
 
-1.  Check if the item is a data item, and not some websocket metadata.
-1.  Adjust the data so that it fits the database schema, including the data types, and order of columns.
-1.  Add it to the in-memory batch, which is a list in Python.
-1.  If the batch reaches a certain size, insert the data and reset or empty the list.
+1.  检查项目是否是数据项，而不是websocket元数据。
+2.  调整数据，使其适应数据库模式，包括数据类型和列的顺序。
+3.  将其添加到内存批处理中，这是Python中的一个列表。
+4.  如果批处理达到一定大小，则插入数据并重置或清空列表。
 
-Here's the full implementation:
+以下是完整实现：
 
 ```python
 from psycopg2.extras import execute_values
@@ -216,14 +168,14 @@ current_batch = []
 MAX_BATCH_SIZE = 100
 def _on_event(self, event):
     if event["event"] == "price":
-        # data record
+        # 数据记录
         timestamp = datetime.utcfromtimestamp(event["timestamp"])
         data = (timestamp, event["symbol"], event["price"], event.get("day_volume"))
 
-        # add new data record to batch
+        # 将新数据记录添加到批处理
         current_batch.append(data)
             
-        # ingest data if max batch size is reached then reset the batch
+        # 摄入数据如果最大批处理大小已达到，则重置批处理
         if len(current_batch) == MAX_BATCH_SIZE:
             cursor = conn.cursor()
             sql = f"""
@@ -234,16 +186,13 @@ def _on_event(self, event):
             current_batch = []
 ```
 
-Make sure you use `execute_values()` or some other Psycopg2 function that
-allows inserting multiple records in one transaction.
+确保您使用`execute_values()`或Psycopg2中允许一次事务插入多条记录的其他函数。
 
-After you have implemented the `on_event` function, your Python script can connect to
-the websocket server and ingest data in real time.
+在您实现了`on_event`函数后，您的Python脚本可以连接到websocket服务器并实时摄入数据。
 
-## Full code example
+## 完整代码示例
 
-Cleaned-up version of the Python script that prints out the current batch size,
-so you can follow when data gets ingested from memory into TimescaleDB:
+清理过的Python脚本，打印出现批次大小，以便您可以看到数据何时从内存中被摄入到TimescaleDB中：
 
 ```python
 from twelvedata import TDClient
@@ -252,21 +201,21 @@ from psycopg2.extras import execute_values
 from datetime import datetime
 
 class WebsocketPipeline():
-    # name of the hypertable
+    # 超表的名称
     DB_TABLE = "prices_real_time"
 
-    # columns in the hypertable in the correct order
+    # 超表中按正确顺序的列
     DB_COLUMNS=["time", "symbol", "price", "day_volume"]
 
-    # batch size used to insert data in batches
+    # 用于批量插入数据的批处理大小
     MAX_BATCH_SIZE=100
     
     def __init__(self, conn):
-        """Connect to the Twelve Data web socket server and stream
-        data into the database.
+        """连接到Twelve Data websocket服务器并流式传输
+        数据到数据库。
         
-        Args:
-            conn: psycopg2 connection object
+        参数：
+            conn：psycopg2连接对象
         """
         self.conn = conn
         self.current_batch = []
@@ -282,22 +231,21 @@ class WebsocketPipeline():
             self.conn.commit()
         
     def _on_event(self, event):
-        """This function gets called whenever there's a new data record coming
-        back from the server.
+        """每当从服务器返回新的数据记录时，此函数被调用。
 
-        Args:
-            event (dict): data record
+        参数：
+            event（字典）：数据记录
         """
         if event["event"] == "price":
-            # data record
+            # 数据记录
             timestamp = datetime.utcfromtimestamp(event["timestamp"])
             data = (timestamp, event["symbol"], event["price"], event.get("day_volume"))
 
-            # add new data record to batch
+            # 将新数据记录添加到批处理
             self.current_batch.append(data)
             print(f"Current batch size: {len(self.current_batch)}")
             
-            # ingest data if max batch size is reached then reset the batch
+            # 摄入数据如果最大批处理大小已达到，则重置批处理
             if len(self.current_batch) == self.MAX_BATCH_SIZE:
                 self._insert_values(self.current_batch)
                 self.insert_counter += 1
@@ -306,11 +254,11 @@ class WebsocketPipeline():
     
 
     def start(self, symbols):
-        """Connect to the web socket server and start streaming real-time data 
-        into the database.
+        """连接到websocket服务器并开始流式传输实时数据
+        到数据库。
 
-        Args:
-            symbols (list of symbols): List of stock/crypto symbols
+        参数：
+            symbols（符号列表）：股票/加密货币符号列表
         """
         td = TDClient(apikey="TWELVE_DATA_APIKEY")
         ws = td.websocket(on_event=self._on_event)
@@ -329,29 +277,26 @@ websocket = WebsocketPipeline(conn)
 websocket.start(symbols=symbols)
 ```
 
-Run the script:
+运行脚本：
 
 ```python
 python websocket_test.py
 ```
 
-You can even create separate Python scripts to start multiple websocket
-connections for different types of symbols (for example, one for stock, and
-another one for crypto prices)
+您甚至可以创建单独的Python脚本来启动多个websocket连接，用于不同类型的符号（例如，一个用于股票，另一个用于加密货币价格）。
 
-If you see an error message similar to this:
+如果您看到类似这样的错误消息：
 
 ```bash
 2022-05-13 18:51:41,976 - ws-twelvedata - ERROR - TDWebSocket ERROR: Handshake status 200 OK
 ```
 
-Then check that you use a proper API key received from Twelve Data.
+那么请检查您是否使用了从Twelve Data获得的正确API密钥。
 
-Continue with one of our other tutorials that show you how to
-efficiently store and analyze your data after ingestion:
+继续进行我们的其他教程之一，了解如何在摄入后高效存储和分析您的数据：
 
-*   [Store financial tick data in TimescaleDB using the OHLCV (candlestick) format][candlestick-tutorial]
-*   [Getting started with TimescaleDB][get-started]
+*   [使用OHLCV（K线）格式在TimescaleDB中存储金融行情数据][candlestick-tutorial]
+*   [TimescaleDB入门][get-started]
 
 [candlestick-tutorial]: /tutorials/:currentVersion:/financial-tick-data/
 [get-started]: /getting-started/:currentVersion:/
