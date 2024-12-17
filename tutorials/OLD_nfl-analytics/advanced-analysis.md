@@ -1,29 +1,22 @@
 ---
-title: Advanced analysis using continuous aggregates and hyperfunctions
-excerpt: Use continuous aggregates and hyperfunctions to perform advanced analysis of NFL player activity
-products: [cloud, mst, self_hosted]
-keywords: [continuous aggregates, hyperfunctions, analytics]
+标题: 使用连续聚合和超级函数进行高级分析
+摘要: 利用连续聚合和超级函数对美国国家橄榄球联盟（NFL）球员活动开展高级分析。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [连续聚合，超级函数，分析]
 ---
 
-# Advanced analysis using continuous aggregates and hyperfunctions
+# 使用连续聚合和超函数进行高级分析
 
-So far in this tutorial, you have ingested the data and run an aggregate query.
-Then you improved the performance of your analysis with continuous aggregates.
+在本教程中，您已经摄入了数据并运行了聚合查询。然后，您使用连续聚合提高了分析的性能。
 
-Now, let's go over some ideas on analyzing the data using PostgreSQL and
-TimescaleDB, to help you understand more about player activity during the NFL
-season.
+现在，让我们探讨一些使用PostgreSQL和TimescaleDB分析数据的想法，以帮助您更深入地了解NFL赛季期间球员活动的情况。
 
 <Highlight type="tip">
-Some of this analysis includes visualizations to help you see the potential uses
-of this data. These are created using the [Matplotlib](https://matplotlib.org/)
-Python module, which is one of many great visualization tools.
-</Highlight>
+部分分析包括可视化，以帮助您看到这些数据的潜在用途。这些是使用[Matplotlib](https://matplotlib.org/) Python模块创建的，这是许多优秀可视化工具之一。</Highlight>
 
-### Average yards run for a player over a game
+### 球员每场比赛的平均跑码数
 
-This query uses a percentile approximation [hyperfunction][api-hyperfunctions]
-to find the mean yards run per game by a single player.
+此查询使用百分位近似[超函数][api-hyperfunctions]来查找单个球员每场比赛的平均跑码数。
 
 ```sql
 WITH sum_yards AS (
@@ -38,7 +31,7 @@ GROUP BY player_id, displayname
 ORDER BY yards DESC
 ```
 
-Your data should look like this:
+您的数据应该如下所示：
 
 |player_id|displayname|yards|
 |-|-|-|
@@ -48,32 +41,26 @@ Your data should look like this:
 |2543495|Davante Adams|971.6339999999967|
 |2543498|Brandin Cooks|969.3762499999964|
 
-When you run this query you might notice that the `player_id` and `displayname`
-are null for the first row. This row represents the average yard data for the
-football.
+运行此查询时，您可能会注意到第一行的`player_id`和`displayname`为null。这一行代表足球的平均码数数据。
 
-### Average and median yards run per game by type of player
+### 按球员类型计算每场比赛的平均和中位数跑码数
 
-For this query, you use another one of the TimescaleDB percentile functions
-called `percentile_agg`. You can use the `percentile_agg` function to find the
-fiftieth percentile, which is the approximate median.
+对于这个查询，您使用TimescaleDB的另一个百分位函数`percentile_agg`。您可以使用`percentile_agg`函数找到第五十百分位，即近似中位数。
 
 ```sql
 WITH sum_yards AS (
---Add position to the table to allow for grouping by it later
   SELECT a.player_id, displayname, SUM(yards) AS yards, p.position, gameid
   FROM player_yards_by_game a
   LEFT JOIN player p ON a.player_id = p.player_id
   GROUP BY a.player_id, displayname, p.position, gameid
 )
---Find the mean and median for each position type
 SELECT position, mean(percentile_agg(yards)) AS mean_yards, approx_percentile(0.5, percentile_agg(yards)) AS median_yards
 FROM sum_yards
 GROUP BY position
 ORDER BY mean_yards DESC
 ```
 
-If you scroll to the bottom of your results you should see this:
+如果您滚动到结果的底部，您应该看到：
 
 |position|mean_yards|median_yards|
 |-|-|-|
@@ -82,35 +69,24 @@ If you scroll to the bottom of your results you should see this:
 |FB|100.37912844036691|67.0876116670915|
 |DT|19.692499999999992|17.796475991050432|
 
-Notice how the Defensive End (DE) position has a large discrepancy between its
-mean and median values. The median data implies that most DE players do not run
-very much during passing plays. However, the mean data implies that some of the
-DE players must be running a significant amount.
+注意到防守端锋（DE）位置的平均值和中位数值之间有很大的差距。中位数数据意味着大多数DE球员在传球比赛中并没有跑很多。然而，平均数据意味着一些DE球员必须跑了很多。
 
-### Number of snap plays by player where they were on the offense
+### 球员在进攻时的快照比赛次数
 
-In this query, you are counting the number of passing events a player was
-involved in while playing offense. You might notice how much slower this
-query runs than the ones above which use continuous aggregates. The speed you
-see here is comparable to what you would get in the other queries without using
-continuous aggregates.
+在这个查询中，您计算了球员参与传球事件的次数。您可能会注意到这个查询比使用连续聚合的上述查询运行得慢得多。这里看到的速度与不使用连续聚合的其他查询相当。
 
 ```sql
 WITH snap_events AS (
--- Create a table that filters the play events to show only snap plays
--- and display the players team information
- SELECT DISTINCT player_id, t.event, t.gameid, t.playid,
-  CASE
-   WHEN t.team = 'away' THEN g.visitor_team
-   WHEN t.team = 'home' THEN g.home_team
-   ELSE NULL
-   END AS team_name
- FROM tracking t
- LEFT JOIN game g ON t.gameid = g.game_id
- WHERE t.event LIKE '%snap%'
+  SELECT DISTINCT player_id, t.event, t.gameid, t.playid,
+    CASE
+      WHEN t.team = 'away' THEN g.visitor_team
+      WHEN t.team = 'home' THEN g.home_team
+      ELSE NULL
+    END AS team_name
+  FROM tracking t
+  LEFT JOIN game g ON t.gameid = g.game_id
+  WHERE t.event LIKE '%snap%'
 )
--- Count these events and filter results to only display data when the player was
--- on the offensive
 SELECT a.player_id, pl.displayname, COUNT(a.event) AS play_count, a.team_name
 FROM snap_events a
 LEFT JOIN play p ON a.gameid = p.gameid AND a.playid = p.playid
@@ -120,9 +96,7 @@ GROUP BY a.player_id, pl.displayname, a.team_name
 ORDER BY play_count DESC
 ```
 
-Notice that the two highest passing plays are for Ben Roethlisberger and JuJu
-Smith-Schuster, a Quarterback and Wide Receiver, respectively, for the
-Pittsburgh Steelers.
+注意到两次最高传球比赛是本·罗斯里斯伯格（Ben Roethlisberger）和朱朱·史密斯-舒斯特（JuJu Smith-Schuster）的，分别是匹兹堡钢人队的四分卫和外接手。
 
 |player_id|displayname|play_count|team|
 |-|-|-|-|
@@ -130,85 +104,61 @@ Pittsburgh Steelers.
 |2558149|JuJu Smith-Schuster|691|PIT|
 |2533031|Andrew Luck|683|IND|
 
-### Number of plays vs points scored
+### 比赛次数与得分对比
 
-Use this query to get data on the number of plays and final score for each game
-during the 2018 season. This data is separated by team so that we can compare
-the number of plays with a team's win or loss.
+使用此查询获取2018赛季每场比赛的进攻次数和最终得分数据。这些数据按球队分开，以便我们可以比较球队的进攻次数与胜利或失败。
 
 ```sql
 WITH play_count AS (
--- Count distinct plays, join on the stadium and game tables for team names and game date
-    SELECT gameid, COUNT(playdescription) AS plays, p.possessionteam as team_name, g.game_date
-    FROM play p
-    LEFT JOIN game g ON p.gameid = g.game_id
-    GROUP BY gameid, team_name, game_date
+  SELECT gameid, COUNT(playdescription) AS plays, p.possessionteam as team_name, g.game_date
+  FROM play p
+  LEFT JOIN game g ON p.gameid = g.game_id
+  GROUP BY gameid, team_name, game_date
 ), visiting_games AS (
--- Join on scores to grab only the visting team's data
-    SELECT gameid, plays, s.visitor_team as team_name, s.visitor_score AS team_score FROM play_count p
-    INNER JOIN scores s ON p.team_name = s.visitor_team_abb
-    AND p.game_date = s."date"
+  SELECT gameid, plays, s.visitor_team as team_name, s.visitor_score AS team_score FROM play_count p
+  INNER JOIN scores s ON p.team_name = s.visitor_team_abb
+  AND p.game_date = s."date"
 ), home_games AS (
--- Join on scores to grab only the home team's data
-    SELECT gameid, plays, s.home_team AS team_name , s.home_score AS team_score FROM play_count p
-    INNER JOIN scores s ON p.team_name = s.home_team_abb
-    AND p.game_date = s."date"
+  SELECT gameid, plays, s.home_team AS team_name , s.home_score AS team_score FROM play_count p
+  INNER JOIN scores s ON p.team_name = s.home_team_abb
+  AND p.game_date = s."date"
 )
--- union the two resulting tables together
 SELECT * FROM visiting_games
 UNION ALL
 SELECT * FROM home_games
 ORDER BY gameid ASC, team_score DESC
 ```
 
-This image is an example of a visualization that you could create with the
-results from this query. The scatter plot is grouped, showing the winning team's
-plays and scores as gold, and the losing team's plays and scores as brown.
+这张图片是您可以使用此查询结果创建的可视化示例。散点图按组显示，获胜球队的进攻次数和得分为金色，失利球队的进攻次数和得分为棕色。
 
-<img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/wins_vs_plays.png" alt="Wins vs Plays"/>
+![胜利与进攻次数对比](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/wins_vs_plays.png)
 
-The y-axis, or the number of plays for one team during a single game, shows that
-more _passing_ plays do not always imply a guaranteed win. In fact, the top
-three teams with the highest number of plays for a single game all appeared to
-have lost. In football, this makes logical sense, as teams that are behind late
-in the game tend to pass more. There are many interesting facts which you could
-glean from this type of query, this scatter plot is just one possibility.
+y轴，或一支球队在单场比赛中的进攻次数，显示更多的《传球》进攻并不总是意味着保证胜利。事实上，单场比赛进攻次数最多的前三支球队似乎都输了。在足球中，这在逻辑上是合理的，因为落后的球队在比赛后期往往会传球更多。您可以从这类查询中了解到许多有趣的事实，这个散点图只是其中一种可能性。
 
-### Average yards per game for top three players of each position
+### 每个位置前三名球员每场比赛的平均码数
 
-You can use this PostgreSQL query to extract the average yards run by an individual
-player over one game. This query only includes the top three highest players'
-average yard values per position type. The data is ordered by the average yards
-run across all players for each position. This becomes important later on.
+您可以使用此PostgreSQL查询提取个人球员在单场比赛中跑的平均码数。此查询仅包括每个位置类型中平均码数最高的前三名球员。数据按所有球员的平均码数排序。这在稍后变得重要。
 
 <Highlight type="note">
-This query excludes some position types from the list due to such low average
-yard values, the excluded positions are Kicker, Punter, Nose Tackle, Long Snapper,
-and Defensive Tackle
-</Highlight>
+由于平均码数过低，此查询排除了一些位置类型，被排除的位置有踢球手、弃踢手、鼻截锋、长开球手和防守截锋。</Highlight>
 
 ```sql
 WITH total_yards AS (
--- This table sums the yards a player runs over each game
- SELECT t.player_id, SUM(yards) AS yards, t.gameid
- FROM player_yards_by_game t
- GROUP BY t.player_id, t.gameid
+  SELECT t.player_id, SUM(yards) AS yards, t.gameid
+  FROM player_yards_by_game t
+  GROUP BY t.player_id, t.gameid
 ), avg_yards AS (
--- This table takes the average of the yards run by each player and calls out thier position
- SELECT p.player_id, p.displayname, AVG(yards) AS avg_yards, p."position"
- FROM total_yards t
- LEFT JOIN player p ON t.player_id = p.player_id
- GROUP BY p.player_id, p.displayname, p."position"
+  SELECT p.player_id, p.displayname, AVG(yards) AS avg_yards, p."position"
+  FROM total_yards t
+  LEFT JOIN player p ON t.player_id = p.player_id
+  GROUP BY p.player_id, p.displayname, p."position"
 ), ranked_vals AS (
-    -- This table ranks each player by the average yards they run per game
-    SELECT a.*, RANK() OVER (PARTITION BY a."position" ORDER BY avg_yards DESC)
-    FROM avg_yards AS a
+  SELECT a.*, RANK() OVER (PARTITION BY a."position" ORDER BY avg_yards DESC)
+  FROM avg_yards AS a
 ), ranked_positions AS (
--- This table takes the average of the average yards run for each player so that we can order
--- the positions by this average of averages
-    SELECT v."position", AVG(v.avg_yards) AS avg_yards_positions
-    FROM ranked_vals v
-    GROUP BY v."position"
+  SELECT v."position", AVG(v.avg_yards) AS avg_yards_positions
+  FROM ranked_vals v
+  GROUP BY v."position"
 )
 SELECT v.*, p.avg_yards_positions FROM ranked_vals v
 LEFT JOIN ranked_positions p ON v.position = p.position
@@ -216,21 +166,9 @@ WHERE v.rank <= 3 AND v.position != 'null' AND v.position NOT IN ('K', 'P', 'NT'
 ORDER BY p.avg_yards_positions DESC, v.rank ASC
 ```
 
-This is one possible visualization that you could create with this data:
+这是您可以使用这些数据创建的一种可能的可视化：
 
-<img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png" alt="Top Three Players by Position"/>
+![每个位置前三名球员](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png)
 
-Notice that the average yards overall for Free Safety players is higher than that
-of Wide Receivers (this is because of how we ordered the data, noted above).
-However, individual Wide Receivers run more yards on average per game. Also, notice
-that Kyle Juszczyk runs far more on average than other Fullback players.
+注意到自由安全卫球员的平均码数总体上高于外接手（这是因为我们如上所述对数据进行了排序）。然而，个别外接手平均每场比赛跑的码数更多。同时，注意到凯尔·朱希乔克（Kyle Juszczyk）平均每场比赛
 
-## It's only halftime!
-
-These example queries are just the beginning examples of the analysis you can
-perform on any time-series data with regular SQL and helpful features like continuous
-aggregates. Consider joining in stadium data that we provided to see if teams
-tend to score or run less at Mile High Stadium. Does natural or artificial turf
-affect any teams consistently?
-
-[api-hyperfunctions]: /api/:currentVersion:/hyperfunctions/percentile-approximation/uddsketch/
