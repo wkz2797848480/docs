@@ -1,56 +1,41 @@
 ---
-title: Using Tableau to visualize data in TimescaleDB
-excerpt: Use Tableau to plot and visualize your data
-products: [cloud, mst, self_hosted]
-keywords: [visualizations, analytics, Tableau]
+标题: 使用 Tableau 可视化 TimescaleDB 中的数据
+摘要: 使用 Tableau 绘制图表并对数据进行可视化展示。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [可视化，分析，Tableau]
 ---
 
-# Using Tableau to visualize data in TimescaleDB
+# 使用Tableau可视化TimescaleDB中的数据
 
-[Tableau][get-tableau] is a popular analytics platform that enables you to gain
-greater intelligence about your business. It is an ideal tool for visualizing
-data stored in [TimescaleDB][timescale-products].
+[Tableau][get-tableau]是一个流行的分析平台，使您能够深入了解您的业务。它是可视化存储在[TimescaleDB][timescale-products]中的数据的理想工具。
 
-This tutorial covers:
+本教程涵盖：
 
-*   Setting up Tableau to work with TimescaleDB
-*   Running queries on TimescaleDB from within Tableau
-*   Visualize data in Tableau
+*   设置Tableau以与TimescaleDB配合使用
+*   从Tableau运行TimescaleDB查询
+*   在Tableau中可视化数据
 
-### Prerequisites
+### 前提条件
 
-To complete this tutorial, you need a cursory knowledge of the Structured Query
-Language (SQL). The tutorial walks you through each SQL command, but it is
-helpful if you've seen SQL before.
+要完成本教程，您需要对结构化查询语言（SQL）有基本了解。虽然教程会逐步引导您了解每个SQL命令，但如果您之前接触过SQL，将会有所帮助。
 
-To start, [install TimescaleDB][install-timescale]. When your installation is
-complete, you can proceed to ingesting or creating sample data and finishing the
-tutorial.
+首先，[安装TimescaleDB][install-timescale]。安装完成后，您可以继续导入或创建样本数据并完成教程。
 
-Also, [get a copy or license of Tableau][get-tableau].
+另外，[获取Tableau的副本或许可证][get-tableau]。
 
-You also want to [complete the Cryptocurrency tutorial][crypto-tutorial], as it
-sets up and configures the data you need to complete the remainder of this
-tutorial. You can visualize many of the queries found at the end of the
-Cryptocurrency tutorial.
+您还希望[完成加密货币教程][crypto-tutorial]，因为它设置并配置了您需要完成本教程其余部分的数据。您可以可视化在加密货币教程末尾找到的许多查询。
 
-### Step 1: Setup Tableau to connect to TimescaleDB
+### 第1步：设置Tableau以连接到TimescaleDB
 
-Locate the `host`, `port`, and `password` of your TimescaleDB instance.
+找到您的TimescaleDB实例的`host`、`port`和`password`。
 
-Connecting your TimescaleDB instance to Tableau takes just a few clicks, thanks
-to Tableau's  built-in Postgres connector. To connect to your database add a new
-connection and under the  'to a server' section, select PostgreSQL as the
-connection type. Then enter your database  credentials.
+将您的TimescaleDB实例连接到Tableau只需几次点击，这要归功于Tableau内置的Postgres连接器。要连接到您的数据库，请添加一个新连接，在“连接到服务器”部分选择PostgreSQL作为连接类型。然后输入您的数据库凭据。
 
-### Step 2: Run a simple query in Tableau
+### 第2步：在Tableau中运行简单查询
 
-Let's use the built-in SQL editor in Tableau. To run a query, add custom SQL to your data source
-by dragging and dropping the "New Custom SQL" button (in the bottom left of the Tableau desktop
-user interface) to the place that says 'Drag tables here'.
+让我们使用Tableau中的内置SQL编辑器。要运行查询，通过拖放“新自定义SQL”按钮（在Tableau桌面用户界面的左下角）到“在此处拖动表”位置，添加自定义SQL到数据源。
 
-Type a query in the dialog box. In this case, use the first
-query from the [Cryptocurrency Tutorial][crypto-tutorial]:
+在对话框中输入查询。在这种情况下，使用[加密货币教程][crypto-tutorial]中的第一个查询：
 
 ```sql
 SELECT time_bucket('7 days', time) AS period,
@@ -61,54 +46,36 @@ GROUP BY period
 ORDER BY period
 ```
 
-You should see the same results in Tableau that you see when you run the query in the
-`psql` command line.
+您应该在Tableau中看到与在`psql`命令行中运行查询时相同的结果。
 
-Let's also name our data source 'btc_7_days', which you can see below.
+我们还将数据源命名为`btc_7_days`，如下所示。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-simple-query-results.png" alt="Using Tableau to view time-series data"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-simple-query-results.png" alt="使用Tableau查看时间序列数据"/>
 
-### Step 3: Visualize data in Tableau
+### 第3步：在Tableau中可视化数据
 
-Results in a table are only so useful, graphs are much better! So in our final
-step, let's take our output from the previous step and turn it into an interactive
-graph in Tableau.
+表格中的结果仅有一定的用处，图形效果更佳！因此，在最后一步中，让我们将前一步的输出转换为Tableau中的交互式图形。
 
-To do this, create a new worksheet (or dashboard) and then select your desired data source
-(in our case 'btc_7_days'), as shown below.
+为此，创建一个新的工作表（或仪表板），然后选择您想要的数据源（在我们的例子中是`btc_7_days`），如下所示。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-new-worksheet.png" alt="New worksheet in Tableau to examine time-series data"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-new-worksheet.png" alt="在Tableau中检查时间序列数据的新工作表"/>
 
-In the far left pane, you'll see a section Tableau calls 'Dimensions' and 'Measures'.
-Whenever you use Tableau, it classifies your fields as either dimensions or
-measures. A measure is a field that is a dependent variable, meaning its value is a
-function of one or more dimensions. For example, the price of an item on a given day
-is a measure based on which day is in question. A dimension, therefore, is an
-independent variable. In our example, the given day does not change based on
-any other value in our database.
+在最左侧的窗格中，您将看到Tableau称之为“维度”和“度量”的部分。每当您使用Tableau时，它会将您的字段分类为维度或度量。度量是一个依赖变量，意味着其值是一个或多个维度的函数。例如，某一天某个项目的价格是基于那一天的度量。因此，给定的日期不会根据我们数据库中的任何其他值而改变。
 
-To put it in more direct terms, July 4, 1776 is still July 4, 1776, even if the
-price of tea skyrockets. However, the price of tea may change, depending on which
-day you are looking into.
+更直接地说，1776年7月4日仍然是1776年7月4日，即使茶的价格飙升。然而，茶的价格可能会变化，具体取决于你查看的日期。
 
-So, in this case, move the dimension `period` into the Columns section of
-your worksheet, and examine the `last_closing_price` measure depending
-on a given `period`. In Tableau, you can drag and drop these elements into the
-proper place, like this:
+因此，在这种情况下，将维度`period`移动到工作表的列部分，并检查`last_closing_price`度量，取决于给定的`period`。在Tableau中，您可以将这些元素拖放到适当的位置，如下所示：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-dimension-measure-setup.png" alt="New dimensions and measures in Tableau to examine time-series data"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-dimension-measure-setup.png" alt="在Tableau中检查时间序列数据的新维度和度量"/>
 
-Now this graph doesn't quite have the level of fidelity you want because
-the data points are being grouped by year. To fix this, click on the drop down
-arrow on period and select 'exact date'.
+现在，这个图形的精度不足，因为数据点按年分组。要修复此问题，单击`period`上的下拉箭头并选择“确切日期”。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-granular.png" alt="Analyze granular data in Tableau to examine time-series data"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tableau-tutorial/tableau-granular.png" alt="在Tableau中分析详细数据以检查时间序列数据"/>
 
-Tableau is a powerful business intelligence tool and an ideal companion to data
-stored in TimescaleDB. This tutorial only scratched the surface of the kinds of
-data you can visualize using Tableau.
+Tableau是一个强大的商业智能工具，是存储在TimescaleDB中的数据的理想伴侣。本教程仅触及了使用Tableau可视化数据的表面。
 
 [crypto-tutorial]: /tutorials/:currentVersion:/blockchain-analyze/
-[get-tableau]: https://www.tableau.com/products/trial
+[get-tableau]: https://www.tableau.com/products/trial 
 [install-timescale]: /getting-started/latest/
 [timescale-products]: https://www.timescale.com/products/
+
