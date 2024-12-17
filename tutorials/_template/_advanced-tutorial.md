@@ -1,30 +1,25 @@
 ---
-title: Verb the widget tutorial - Advanced steps
-excerpt: Advanced steps to verb your widgets to achieve an outcome using the tool
-keywords: [noun, verb, tutorial]
-tags: [noun, noun]
+标题: 动词部件教程 —— 进阶步骤
+摘要: 使用该工具对部件进行动词化以达成结果的进阶步骤。
+关键词: [名词，动词，教程]
+标签: [名词，名词]
 ---
 
 <!-- markdown-link-check-disable -->
 
-# Advanced steps
+# 高级步骤
 
-Use this section to provide additional or extra things that readers can try with
-the dataset to further their understanding of the underlying topic.
+使用本节为读者提供额外或更多的操作，他们可以尝试使用数据集来进一步加深对主题的理解。
 
-## The first advanced step
+## 第一个高级步骤
 
-This should be the simplest of the advanced steps. Start by explaining which
-question the query answers. Then explain how the query is constructed, then
-provide the query in a code block.
+这应该是最简单的高级步骤。首先解释查询回答的问题，然后解释查询是如何构建的，最后提供代码块中的查询。
 
-Provide example results of the query, using either a code block or, if more
-appropriate, an image.
+使用代码块或更适当的图片提供查询的示例结果。
 
-## The second advanced step
+## 第二个高级步骤
 
-Continue to build on the first query you presented, providing more information,
-explaining the query, and continuing to explain which questions are being
-answered. Repeat as required.
+继续构建您提出的查询，提供更多信息，解释查询，并继续解释正在回答的问题。根据需要重复。
 
-Include any reference-style links at the bottom of the page.
+在页面底部包含任何参考风格的链接。
+
