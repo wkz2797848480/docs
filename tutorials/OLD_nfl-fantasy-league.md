@@ -421,7 +421,7 @@ ORDER BY p.avg_yards_positions DESC, v.rank ASC
 这是你可以用这些数据创建的一种可能的可视化：
 
 <img 
-src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png;" alt="Top Three Players by Position">
+src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png" alt="Top Three Players by Position">
 注意，自由安全卫球员的平均码数总体上高于外接手（这是因为我们如上所述对数据进行了排序）。然而，个别外接手平均每场比赛跑的码数更多。同时，注意凯尔·朱斯奇克比其他全卫球员平均跑的码数多得多。
 
 ## 可视化开球前位置和球员移动
