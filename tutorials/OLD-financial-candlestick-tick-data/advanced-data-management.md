@@ -1,143 +1,78 @@
 ---
-title: Advanced data management
-excerpt: Learn advanced techniques for managing your tick and candlestick data long-term
-keywords: [finance, analytics]
-tags: [candlestick]
+标题: 高级数据管理
+摘要: 学习用于长期管理你的逐笔交易数据和 K 线数据的高级技巧。
+关键词: [金融，分析]
+标签: [K 线]
 ---
 
-# Advanced data management
+# 高级数据管理
 
-The final part of this tutorial shows you some more advanced techniques
-to efficiently manage your tick and candlestick data long-term. TimescaleDB
-is equipped with multiple features that help you manage your data lifecycle
-and reduce your disk storage needs as your data grows.
+本教程的最后部分向您展示了一些更高级的技术，以高效地长期管理您的tick数据和K线数据。TimescaleDB配备了多项功能，帮助您管理数据生命周期，并随着数据增长减少您的磁盘存储需求。
 
-This section contains four examples of how you can set up automation policies on your
-tick data hypertable and your candlestick continuous aggregates. This can help you
-save on disk storage and improve the performance of long-range analytical queries by
-automatically:
+本节包含四个示例，展示如何在您的tick数据 hypertable 和 K线连续聚合上设置自动化策略。这可以帮助您通过自动执行以下操作来节省磁盘存储空间并提高远程分析查询的性能：
 <!-- vale Google.LyHyphens = NO -->
-*   [Deleting older tick data](#automatically-delete-older-tick-data)
-*   [Deleting older candlestick data](#automatically-delete-older-candlestick-data)
-*   [Compressing tick data](#automatically-compress-tick-data)
-*   [Compressing candlestick data](#automatically-compress-candlestick-data)
+*   [删除旧的tick数据](#自动删除旧的tick数据)
+*   [删除旧的K线数据](#自动删除旧的K线数据)
+*   [压缩tick数据](#自动压缩tick数据)
+*   [压缩K线数据](#自动压缩K线数据)
 <!-- vale Google.LyHyphens = YES -->
 
-Before you implement any of these automation policies, it's important to have
-a high-level understanding of chunk time intervals in TimescaleDB
-hypertables and continuous aggregates. The chunk time interval you set
-for your tick data table directly affects how these automation policies
-work. For more information, see the
-[hypertables and chunks][chunks] section.
+在实施这些自动化策略之前，重要的是要对TimescaleDB hypertables 和连续聚合中的块时间间隔有一个高层次的理解。您为tick数据表设置的块时间间隔直接影响这些自动化策略的工作方式。更多信息，请参见[hypertables和chunks][chunks]部分。
 
-## Hypertable chunk time intervals and automation policies
+## Hypertable块时间间隔和自动化策略
 
-TimescaleDB uses hypertables to provide a high-level and familiar abstraction
-layer to interact with PostgreSQL tables. You just need to access one
-hypertable to access all of your time-series data.
+TimescaleDB使用hypertables提供高层次且熟悉的抽象层，与PostgreSQL表进行交互。您只需要访问一个hypertable就可以访问您的所有时间序列数据。
 
-Under the hood, TimescaleDB creates chunks based on the timestamp column.
-Each chunk size is determined by the [`chunk_time_interval`][interval]
-parameter. You can provide this parameter when creating the hypertable, or you can change
-it afterwards. If you don't provide this optional parameter, the
-chunk time interval defaults to 7 days. This means that each of the
-chunks in the hypertable contains 7 days' worth of data.
+在底层，TimescaleDB根据时间戳列创建块。每个块的大小由[`chunk_time_interval`][interval]参数决定。您可以在创建hypertable时提供此参数，也可以之后更改它。如果您不提供此可选参数，块时间间隔默认为7天。这意味着hypertable中的每个块包含7天的数据。
 
-Knowing your chunk time interval is important. All of the TimescaleDB automation
-policies described in this section depend on this information, and the chunk
-time interval fundamentally affects how these policies impact your data.
+了解您的块时间间隔非常重要。本节描述的所有TimescaleDB自动化策略都依赖于此信息，块时间间隔从根本上影响这些策略对您的数据的影响。
 
-In this section, learn about these automation policies and how they work in the
-context of financial tick data.
+在本节中，了解这些自动化策略以及它们在金融tick数据的上下文中如何工作。
 
-## Automatically delete older tick data
+## 自动删除旧的tick数据
 
-Usually, the older your time-series data, the less relevant and useful it is.
-This is often the case with tick data as well. As time passes, you might not
-need the raw tick data any more, because you only want to query the candlestick
-aggregations. In this scenario, you can decide to remove tick data
-automatically from your hypertable after it gets older than a certain time
-interval.
+通常，您的时间序列数据越旧，其相关性和实用性就越低。这通常也适用于tick数据。随着时间的推移，您可能不再需要原始tick数据，因为您只想查询K线聚合。在这种情况下，您可以决定在tick数据超过一定时间间隔后自动从hypertable中删除。
 
-TimescaleDB has a built-in way to automatically remove raw data after a
-specific time. You can set up this automation using a
-[data retention policy][retention]:
+TimescaleDB有内置的方法在特定时间后自动删除原始数据。您可以使用[data retention policy][retention]设置此自动化：
 
 ```sql
 SELECT add_retention_policy('crypto_ticks', INTERVAL '7 days');
 ```
 
-When you run this, it adds a data retention policy to the `crypto_ticks`
-hypertable that removes a chunk after all the data in the chunk becomes
-older than 7 days. All records in the chunk need to be
-older than 7 days before the chunk is dropped.
+当您运行此操作时，它会向`crypto_ticks` hypertable添加一个数据保留策略，该策略在块中的所有数据超过7天后删除该块。块中的所有记录都需要超过7天才能删除该块。
 
-Knowledge of your hypertable's chunk time interval
-is crucial here. If you were to set a data retention policy with
-`INTERVAL '3 days'`, the policy would not remove any data after three days, because your chunk time interval is seven days. Even after three
-days have passed, the most recent chunk still contains data that is newer than three
-days, and so cannot be removed by the data retention policy.
+了解您的hypertable的块时间间隔至关重要。如果您设置了一个`INTERVAL '3 days'`的数据保留策略，该策略在三天后不会删除任何数据，因为您的块时间间隔是七天。即使已经过去了三天，最近的块仍然包含超过三天的新数据，因此不能被数据保留策略删除。
 
-If you want to change this behavior, and drop chunks more often and
-sooner, experiment with different chunk time intervals. For example, if you
-set the chunk time interval to be two days only, you could create a retention
-policy with a 2-day interval that would drop a chunk every other day
-(assuming you're ingesting data in the meantime).
+如果您想改变这种行为，并更频繁、更早地删除块，请尝试使用不同的块时间间隔。例如，如果您将块时间间隔设置为仅两天，您可以创建一个2天间隔的保留策略，每两天删除一个块（假设您在此期间正在摄取数据）。
 
-For more information, see the [data retention][retention] section.
+更多信息，请参见[data retention][retention]部分。
 
 <Highlight type="important">
-Make sure none of the continuous aggregate policies intersect with a data
-retention policy. It's possible to keep the candlestick data in the continuous
-aggregate and drop tick data from the underlying hypertable, but only if you
-materialize data in the continuous aggregate first, before the data is dropped
-from the underlying hypertable.
+确保没有任何连续聚合策略与数据保留策略相交。只有先将数据在连续聚合中物化，然后才能从底层hypertable中删除数据，才能保留连续聚合中的K线数据并从底层hypertable中删除tick数据。
 </Highlight>
 
-## Automatically delete older candlestick data
+## 自动删除旧的K线数据
 
-Deleting older raw tick data from your hypertable while retaining aggregate
-views for longer periods is a common way of minimizing disk utilization.
-However, deleting older candlestick data from the continuous aggregates can
-provide another method for further control over long-term disk use.
-TimescaleDB allows you to create data retention policies on continuous
-aggregates as well.
+从您的hypertable中删除旧的原始tick数据，同时保留聚合视图的时间更长，是最小化磁盘使用的一种常见方式。然而，从连续聚合中删除旧的K线数据可以提供另一种方法，进一步控制长期磁盘使用。
+TimescaleDB也允许您在连续聚合上创建数据保留策略。
 
 <Highlight type="note">
-Continuous aggregates also have chunk time intervals because they use
-hypertables in the background. By default, the continuous aggregate's chunk
-time interval is 10 times what the original hypertable's chunk time interval is.
-For example, if the original hypertable's chunk time interval is 7 days, the
-continuous aggregates that are on top of it will have a 70 day chunk time
-interval.
+连续聚合也有块时间间隔，因为它们在后台使用hypertables。默认情况下，连续聚合的块时间间隔是原始hypertable的块时间间隔的10倍。例如，如果原始hypertable的块时间间隔是7天，那么上面的连续聚合将有70天的块时间间隔。
 </Highlight>
 
-You can set up a data retention policy to remove old data from
-your `one_min_candle` continuous aggregate:
+您可以设置数据保留策略以从`one_min_candle`连续聚合中删除旧数据：
 
 ```sql
 SELECT add_retention_policy('one_min_candle', INTERVAL '70 days');
 ```
 
-This data retention policy removes chunks from the continuous aggregate
-that are older than 70 days. In TimescaleDB, this is determined by the
-`range_end` property of a hypertable, or in the case of a continuous
-aggregate, the materialized hypertable. In practice, this means that if
-you were to
-define a data retention policy of 30 days for a continuous aggregate that has
-a `chunk_time_interval` of 70 days, data would not be removed from the
-continuous aggregates until the `range_end` of a chunk is at least 70
-days older than the current time, due to the chunk time interval of the
-original hypertable.
+此数据保留策略删除连续聚合中超过70天的块。在TimescaleDB中，这是由hypertable的`range_end`属性决定的，或者在连续聚合的情况下，是物化的hypertable。实际上，这意味着如果您为具有70天`chunk_time_interval`的连续聚合定义了30天的数据保留策略，数据将不会从连续聚合中删除，直到块的`range_end`至少比当前时间早70天，这是由于原始hypertable的块时间间隔。
 
-## Automatically compress tick data
+## 自动压缩tick数据
 
-TimescaleDB allows you to keep your tick data in the hypertable
-but still save on storage costs with TimescaleDB's native compression.
-You need to enable compression on the hypertable and set up a compression
-policy to automatically compress old data.
+TimescaleDB允许您保留hypertable中的tick数据，但仍然可以通过TimescaleDB的本地压缩节省存储成本。您需要在hypertable上启用压缩并设置压缩策略以自动压缩旧数据。
 
-Enable compression on `crypto_ticks` hypertable:
+在`crypto_ticks` hypertable上启用压缩：
 
 ```sql
 ALTER TABLE crypto_ticks SET (
@@ -146,47 +81,42 @@ ALTER TABLE crypto_ticks SET (
 );
 ```
 
-Set up compression policy to compress data that's older than 7 days:
+设置压缩策略以压缩超过7天的数据：
 
 ```sql
 SELECT add_compression_policy('crypto_ticks', INTERVAL '7 days');
 ```
 
-Executing these two SQL scripts compresses chunks that are
-older than 7 days.
+执行这两个SQL脚本将压缩超过7天的块。
 
-For more information, see the [compression][compression] section.
+更多信息，请参见[compression][compression]部分。
 
-## Automatically compress candlestick data
+## 自动压缩K线数据
 
-Beginning with [TimescaleDB 2.6][release-blog], you can also set up a
-compression policy on your continuous aggregates. This is a useful feature
-if you store a lot of historical candlestick data that consumes significant
-disk space, but you still want to retain it for longer periods.
+从[TimescaleDB 2.6][release-blog]开始，您也可以在您的连续聚合上设置压缩策略。如果您存储了大量的历史K线数据，这将是一个有用的功能，这些数据消耗了大量的磁盘空间，但您仍然希望长期保留它们。
 
-Enable compression on the `one_min_candle` view:
+在`one_min_candle`视图上启用压缩：
 
 ```sql
 ALTER MATERIALIZED VIEW one_min_candle set (timescaledb.compress = true);
 ```
 
-Add a compression policy to compress data after 70 days:
+添加压缩策略以在70天后压缩数据：
 
 ```sql
 SELECT add_compression_policy('one_min_candle', compress_after=> INTERVAL '70 days');
 ```
 
 <Highlight type="important">
-Before setting a compression policy on any of the candlestick views,
-set a refresh policy first. The compression policy interval should
-be set so that actively refreshed time intervals are not compressed.
+在设置任何K线视图的压缩策略之前，请先设置刷新策略。压缩策略间隔应设置为不压缩积极刷新的时间间隔。
 </Highlight>
 
-[Read more about compressing continuous aggregates.][caggs-compress]
+[阅读更多关于压缩连续聚合的信息。][caggs-compress]
 
 [caggs-compress]: /use-timescale/:currentVersion:/continuous-aggregates/compression-on-continuous-aggregates/
 [chunks]: /use-timescale/:currentVersion:/hypertables/about-hypertables/
 [compression]: /use-timescale/:currentVersion:/compression/
 [interval]: /api/:currentVersion:/hypertable/set_chunk_time_interval/
-[release-blog]: https://www.timescale.com/blog/increase-your-storage-savings-with-timescaledb-2-6-introducing-compression-for-continuous-aggregates/
+[release-blog]: https://www.timescale.com/blog/increase-your-storage-savings-with-timescaledb-2-6-introducing-compression-for-continuous-aggregates/ 
 [retention]: /use-timescale/:currentVersion:/data-retention/create-a-retention-policy/
+
