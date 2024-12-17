@@ -1,67 +1,43 @@
 ---
-title: Time-series forecasting
-excerpt: Predict likely future values of a dataset based on historical data
-products: [cloud, mst, self_hosted]
-keywords: [forecast, analytics]
+标题: 时间序列预测
+摘要: 基于历史数据预测数据集未来可能的值。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [预测，分析]
 ---
 
-# Time-series forecasting
+# 时间序列预测
 
-Time-series forecasting enables us to predict likely
-future values for a dataset based on historical time-series
-data. Time-series data collectively represents how a system,
-process, or behavior changes over time. When you accumulate
-millions of data points over a time period, you can build models
-to predict the next set of values likely to occur.
+时间序列预测使我们能够基于历史时间序列数据预测数据集可能的未来值。时间序列数据共同表示了系统、过程或行为随时间的变化。当您在一段时间内累积了数百万数据点时，您可以构建模型来预测接下来可能发生的一组值。
 
-Time-series predictions can be used to:
+时间序列预测可用于：
 
-*   Forecast cloud infrastructure expenses next quarter
-*   Forecast the value of a given stock in the future
-*   Forecast the number of units of a product likely to be sold next quarter
-*   Forecast the remaining lifespan of an IoT device
-*   Forecast the number of taxi or ride share drivers necessary for a big
-    holiday evening
+*   预测下个季度的云基础设施支出
+*   预测将来给定股票的价值
+*   预测下个季度可能销售的产品单位数
+*   预测物联网设备的剩余寿命
+*   预测大型假日晚上所需的出租车或拼车司机数量
 
-Time-series forecasting alone is a powerful tool. But time-series
-data joined with business data can be a competitive advantage for
-any developer. TimescaleDB is PostgreSQL for time-series data and
-as such, time-series data stored in TimescaleDB can be easily
-joined with business data in another relational database in order
-to develop an even more insightful forecast into how your data
-(and business) changes over time.
+仅时间序列预测本身就是一个强大的工具。但时间序列数据与商业数据结合可以为任何开发人员带来竞争优势。TimescaleDB 是 PostgreSQL 的时间序列数据库，因此存储在 TimescaleDB 中的时间序列数据可以轻松与另一个关系数据库中的商业数据结合，以便开发更具洞察力的预测，了解您的数据（和业务）随时间的变化。
 
-This time-series forecasting example demonstrates how to integrate
-TimescaleDB with R, Apache MADlib, and Python to perform various time-series
-forecasting methods. It uses New York City taxicab data that is also
-used in the Hello Timescale Tutorial. The dataset contains
-information about all yellow cab trips in New York City in January 2016,
-including pickup and dropoff times, GPS coordinates, and total price of a trip.
-You can extract some interesting insights from this rich dataset, build a
-time-series forecasting model, and explore the use of various forecasting
-and machine learning tools.
+这个时间序列预测示例展示了如何将 TimescaleDB 与 R、Apache MADlib 和 Python 集成以执行各种时间序列预测方法。它使用了 Hello Timescale 教程中也使用过的纽约市出租车数据。数据集包含了 2016 年 1 月纽约市所有黄色出租车行程的信息，包括接送和下车时间、GPS 坐标和行程的总价格。您可以从这个丰富的数据集中提取一些有趣的洞察，构建时间序列预测模型，并探索各种预测和机器学习工具的使用。
 
-### Setting up
+### 设置
 
-Prerequisites:
+先决条件：
 
-*   [Installed TimescaleDB][install]
-*   Downloaded and loaded dataset from Hello Timescale Tutorial
-*   Installed and set up PostGIS in database
-*   [Installed R][install_r]
-*   [Installed Python][install_python]
+*   [安装 TimescaleDB][install]
+*   从 Hello Timescale 教程下载并加载数据集
+*   在数据库中安装并设置 PostGIS
+*   [安装 R][install_r]
+*   [安装 Python][install_python]
 
-First, let's create the schema and populate the tables. Download the file
-[`forecast.sql`][forecast-sql] and execute the following command:
+首先，让我们创建模式并填充表。下载文件 [`forecast.sql`][forecast-sql] 并执行以下命令：
 
 ```bash
 psql -U postgres -d tsdb -h localhost -f forecast.sql
 ```
 
-The `forecast.sql` file contains SQL statements that create three
-TimescaleDB hypertables `rides_count`, `rides_length` and `rides_price`.
-Let's look at how to create the `rides_count` table as an example.
-Here is a portion of the code taken from `forecast.sql`:
+`forecast.sql` 文件包含创建三个 TimescaleDB 超表 `rides_count`、`rides_length` 和 `rides_price` 的 SQL 语句。让我们以如何创建 `rides_count` 表为例。以下是从 `forecast.sql` 中取出的代码片段：
 
 ```sql
 CREATE TABLE rides_count(
@@ -80,21 +56,11 @@ INSERT INTO rides_count
   ORDER BY one_hour;
 ```
 
-Notice that you have made the `rides_count` table a TimescaleDB hypertable.
-This allows you to take advantage of TimescaleDB's faster insert and query
-performance with time-series data. Here, you can see how PostgreSQL aggregate
-functions such as `COUNT` and various PostGIS functions all work as usual
-with TimescaleDB. You can use PostGIS to select data points from the original
-`rides` table where the pickup location is less than 400m from the GPS location
-(40.7589, -73.9851), which is Times Square.
+请注意，您已将 `rides_count` 表设置为 TimescaleDB 超表。这使您能够利用 TimescaleDB 在时间序列数据上更快的插入和查询性能。在这里，您可以看到 PostgreSQL 聚合函数（如 `COUNT`）和各种 PostGIS 函数都像往常一样与 TimescaleDB 一起工作。您可以使用 PostGIS 从原始 `rides` 表中选择接送地点距离 GPS 位置（40.7589, -73.9851）不到 400 米的数据中心点。
 
-The data comes from the [NYC Taxi and Limousine Commission][NYCTLC]. It is
-missing data points for certain hours. You can gapfill the missing values with
-0. To learn more, see the [gap filling][gap_filling] documentation. A similar
-method is used to create `rides_length` and `rides_price`.
+数据来自 [NYC Taxi and Limousine Commission][NYCTLC]。对于某些小时缺少数据点。您可以用 0 填补缺失值。要了解更多信息，请参阅 [填补空白][gap_filling] 文档。创建 `rides_length` 和 `rides_price` 也采用了类似的方法。
 
-Before you move onto the next few sections, check that the following tables
-are in your database.
+在您进入接下来的几个部分之前，请检查以下表格是否在您的数据库中。
 
 ```sql
 \dt
@@ -112,26 +78,13 @@ are in your database.
 (7 rows)
 ```
 
-### Seasonal ARIMA with R
+### 使用 R 进行季节性 ARIMA
 
-The [ARIMA (Autoregressive Integrated Moving Average) model][arima] is a
-tool that is often used in time-series analysis to better understand a
-dataset and make predictions on future values. The ARIMA model can be
-broadly categorized as seasonal and non-seasonal. Seasonal ARIMA models
-are used for datasets that have characteristics that repeat over fixed
-periods of time. For example, a dataset of hourly temperature values over
-a week has a seasonal component with a period of 1 day, since the temperature
-goes up during the day and down over night every day. In contrast, the price
-of Bitcoin over time is (probably) non-seasonal since there is no clear
-observable pattern that recurs in fixed time periods.
+[ARIMA（自回归积分滑动平均）模型][arima] 是时间序列分析中常用的工具，用于更好地了解数据集并预测未来值。ARIMA 模型可以大致分为季节性和非季节性。季节性 ARIMA 模型用于具有固定周期内重复特征的数据集。例如，一周内每小时温度值的数据集具有周期为 1 天的季节性成分，因为温度每天都会在白天上升，晚上下降。相比之下，比特币的价格随时间变化（可能）是非季节性的，因为没有清晰的可观察模式在固定时间段内重复。
 
-This tutorial uses R to analyze the seasonality of the number of taxicab pickups
-at Times Square over a week.
+本教程使用 R 来分析一周内时代广场出租车接送数量的季节性。
 
-The table `rides_count` contains the data needed for this section of the tutorial.
-`rides_count` has two columns `one_hour` and `count`. The `one_hour` column is
-a TimescaleDB `time_bucket` for every hour from January 1 to January 31.
-The `count` column is the number of pickups from Times Square during each hourly period.
+表 `rides_count` 包含了本教程部分所需的数据。`rides_count` 有两个列 `one_hour` 和 `count`。`one_hour` 列是 1 月 1 日至 1 月 31 日每小时的 TimescaleDB `time_bucket`。`count` 列是每个小时期间时代广场的接送数量。
 
 ```sql
 SELECT * FROM rides_count;
@@ -164,48 +117,41 @@ SELECT * FROM rides_count;
  ...
 ```
 
-Create two PostgreSQL views, `rides_count_train` and `rides_count_test`  for
-the training and testing datasets.
+创建两个 PostgreSQL 视图 `rides_count_train` 和 `rides_count_test` 用于训练和测试数据集。
 
 ```sql
--- Make the training dataset
+-- 制作训练数据集
 CREATE VIEW rides_count_train AS
 SELECT * FROM rides_count
 WHERE one_hour <= '2016-01-21 23:59:59';
 
--- Make the testing dataset
+-- 制作测试数据集
 CREATE VIEW rides_count_test AS
 SELECT * FROM rides_count
 WHERE one_hour >= '2016-01-22 00:00:00';
 ```
 
-R has an [RPostgres][rpostgres] package which allows you to connect to your
-database from R. The code below establishes a connection to the PostgreSQL
-database `nyc_data`. You can connect to a different database simply by changing
-the parameters of `dbConnect`. The final line of code should print out a list of
-all tables in your database. This means that you have successfully connected and
-are ready to query the database from R.
+R 有一个 [RPostgres][rpostgres] 包，允许您从 R 连接到数据库。下面的代码建立了与 PostgreSQL 数据库 `nyc_data` 的连接。您可以通过更改 `dbConnect` 的参数连接到不同的数据库。代码的最后一行应该打印出您数据库中的所有表的列表。这意味着您已成功连接，准备从 R 查询数据库。
 
 ```r
-# Install and load RPostgres package
+# 安装并加载 RPostgres 包
 install.packages("RPostgres")
 library("DBI")
 
-# creates a connection to the postgres database
+# 创建与 postgres 数据库的连接
 con <- dbConnect(RPostgres::Postgres(), dbname = "nyc_data",
       host = "localhost",
       user = "postgres")
 
-# list tables in database to verify connection
+# 列出数据库中的表以验证连接
 dbListTables(con)
 ```
 
-You can query the database with SQL code inside R. Putting the query result
-in an R data frame allows you to analyze the data using tools provided by R.
+您可以在 R 中使用 SQL 代码查询数据库。将查询结果放入 R 数据框中，允许您使用 R 提供的工具分析数据。
 
 ```r
-# query the database and input the result into an R data frame
-# training dataset with data 2016/01/01 - 2016/01/21
+# 查询数据库并将结果输入到 R 数据框中
+# 2016/01/01 - 2016/01/21 的训练数据集
 count_rides_train_query <- dbSendQuery(con, "SELECT * FROM rides_count_train;")
 count_rides_train <- dbFetch(count_rides_train_query)
 dbClearResult(count_rides_train_query)
@@ -218,7 +164,7 @@ head(count_rides_train)
 5 2016-01-01 04:00:00   397
 6 2016-01-01 05:00:00   269
 
-# testing dataset with data 2016/01/22 - 2016/01/31
+# 2016/01/22 - 2016/01/31 的测试数据集
 count_rides_test_query <- dbSendQuery(con, "SELECT * FROM rides_count_test")
 count_rides_test <- dbFetch(count_rides_test_query)
 dbClearResult(count_rides_test_query)
@@ -232,44 +178,31 @@ head(count_rides_test)
 6 2016-01-22 05:00:00   100
 ```
 
-In order to feed the data into an ARIMA model, you must first convert the
-data frame into a time-series object in R. [`xts`][r-xts] is a package that allows
-you to do this easily. You can also set the frequency of the time-series object
-to 168. This is because the number of pickups is expected to fluctuate with
-a fixed pattern every week, and there are 168 hours in a week, or in other
-words, 168 data points in each seasonal period. If you want to model
-the data as having a seasonality of 1 day, you can change the frequency
-parameter to 24.
+为了将数据输入到 ARIMA 模型中，您必须先将数据框转换为 R 中的时间序列对象。[`xts`][r-xts] 是一个包，允许您轻松地进行此操作。您还可以将时间序列对象的频率设置为 168。这是因为预计接送数量将以每周固定的模式波动，一周有 168 小时，换句话说，每个季节周期有 168 个数据点。如果您想将数据建模为每天 1 天的季节性，可以将频率参数更改为 24。
 
 ```r
-# Install and load xts package
+# 安装并加载 xts 包
 install.packages("xts")
 library("xts")
 
-# convert the data frame into time-series
+# 将数据框转换为时间序列
 xts_count_rides <- xts(count_rides_train$count, order.by = as.POSIXct(count_rides_train$one_hour, format = "%Y-%m-%d %H:%M:%S"))
 
-# set the frequency of series as weekly 24 * 7
+# 将系列的频率设置为每周 24 * 7
 attr(xts_count_rides, 'frequency') <- 168
 ```
 
-The [`forecast`][r-forecast] package in R provides a useful function
-`auto.arima`, which automatically finds the best ARIMA parameters for the
-dataset. Set the parameter D, which captures the seasonality of the model,  to 1
-to force the function to find a seasonal model. This calculation can take a
-while to compute (in this dataset, around five minutes). Once the computation is
-complete, you can save the output of the `auto.arima` function into `fit` and
-get a summary of the ARIMA model that has been created.
+R 中的 [`forecast`][r-forecast] 包提供了一个有用的函数 `auto.arima`，它自动为数据集找到最佳的 ARIMA 参数。将参数 D 设置为 1，捕捉模型的季节性，以强制函数找到季节性模型。这个计算可能需要一段时间（在这个数据集中，大约需要五分钟）。一旦计算完成，您可以将 `auto.arima` 函数的输出保存到 `fit` 中，并获取已创建的 ARIMA 模型的摘要。
 
 ```r
-# Install and load the forecast package needed for ARIMA
+# 安装并加载预测包所需的 ARIMA
 install.packages("forecast")
 library("forecast")
 
-# use auto.arima to automatically get the arima model parameters with best fit
+# 使用 auto.arima 自动获取最佳拟合的 arima 模型参数
 fit <- auto.arima(xts_count_rides[,1], D = 1, seasonal = TRUE)
 
-# see the summary of the fit
+# 查看拟合的摘要
 summary(fit)
 Series: xts_count_rides[, 1]
 ARIMA(4,0,2)(0,1,0)[168] with drift
@@ -289,11 +222,10 @@ Training set -0.2800571 58.22306 33.15943 -1.783649 7.868031 0.4257707
 Training set -0.02641353
 ```
 
-Finally, the ARIMA model can be used to forecast future values.
-The `h` parameter specifies the number of steps to forecast.
+最后，ARIMA 模型可以用来预测未来的值。`h` 参数指定了预测的步数。
 
 ```r
-# forecast future values using the arima model, h specifies the number of readings to forecast
+# 使用 arima 模型预测未来值，h 指定了要预测的读数数量
 fcast <- forecast(fit, h=168)
 fcast
          Point Forecast      Lo 80     Hi 80         Lo 95     Hi 95
@@ -310,94 +242,55 @@ fcast
 ...
 ```
 
-The output of `forecast` can be hard to decipher. You can plot the
-forecasted values with the code below:
+`forecast` 的输出可能难以解读。您可以使用以下代码绘制预测值：
 
 ```r
-# plot the values forecasted
-plot(fcast, include = 168, main="Taxicab Pickup Count in Times Square by Time", xlab="Date", ylab="Pickup Count", xaxt="n", col="red", fcol="blue")
+# 绘制预测值
+plot(fcast, include = 168, main="时代广场出租车接送数量随时间变化", xlab="日期", ylab="接送数量", xaxt="n", col="red", fcol="blue")
 ticks <- seq(3, 5, 1/7)
 dates <- seq(as.Date("2016-01-15"), as.Date("2016-01-29"), by="days")
 dates <- format(dates, "%m-%d %H:%M")
 axis(1, at=ticks, labels=dates)
 legend('topleft', legend=c("Observed Value", "Predicted Value"), col=c("red", "blue"), lwd=c(2.5,2.5))
 
-# plot the observed values from the testing dataset
+# 绘制测试数据集中观察到的值
 count_rides_test$x <- seq(4, 4 + 239 * 1/168, 1/168)
 count_rides_test <- subset(count_rides_test, count_rides_test$one_hour < as.POSIXct("2016-01-29"))
 lines(count_rides_test$x, count_rides_test$count, col="red")
 ```
 
-<img class="main-content__illustration" src="http://assets.iobeam.com/images/docs/rides_count.png" alt="Rides Count Graph" />
+<img class="main-content__illustration" src="http://assets.iobeam.com/images/docs/rides_count.png"  alt="Rides Count Graph" />
 
-In the graphing of this data, the grey area around the prediction line in blue
-is the prediction interval, or the uncertainty of the prediction, while the
-red line is the actual observed pickup count. The number of pickups on Saturday
-January 23 is zero because the data is missing for this period of time.
+在这些数据的图形化中，围绕预测线（蓝色）的灰色区域是预测区间，或预测的不确定性，而红线是实际观察到的接送数量。1 月 23 日星期六的接送数量为零，因为这段时间缺少数据。
 
-You might find that the prediction for January 22 matches impressively with the
-observed values, but the prediction overestimates for the following days. It is
-clear that the model has captured the seasonality of the data, as you can see
-the forecasted values of the number of pickups drop dramatically overnight from
-1&nbsp;AM, before rising again from around 6&nbsp;AM. There is a noticeable
-increase in the number of pickups in the afternoon compared to the morning, with
-a slight dip around lunchtime and a sharp peak around 6&nbsp;PM when presumably people
-take cabs to return home after work.
+您可能会发现 1 月 22 日的预测与观测值惊人地匹配，但随后几天的预测高估了。显然，模型已经捕捉到了数据的季节性，因为您可以看到预测的接送数量在凌晨 1 点急剧下降，然后从大约早上 6 点再次上升。与早晨相比，下午的接送数量显著增加，午餐时间左右有轻微的下降，下午 6 点左右有一个明显的高峰，人们可能在下班后乘坐出租车回家。
 
-While these findings do not reveal anything completely unexpected, it is still
-valuable to have the analysis verify your expectations. It must be noted that the
-ARIMA model is not perfect and this is evident from the anomalous prediction
-made for January 25. The ARIMA model created uses the previous week's data to
-make predictions. January 18 2016 was Martin Luther King day, and so the
-distribution of ride pickups throughout the day is slightly different from that
-of a standard Monday. Also, the holiday probably affected riders' behavior on
-the surrounding days too. The model does not pick up such anomalous data that
-arise from various holidays and this must be noted before reaching a conclusion.
-Simply taking out such anomalous data, by only using the first two weeks of
-January for example, may have led to a more accurate prediction. This
-demonstrates the importance of understanding the context behind your data.
+虽然这些发现没有揭示任何完全出乎意料的事情，但分析结果验证了您的预期仍然是有价值的。必须指出的是，ARIMA 模型并不完美，这从 1 月 25 日的异常预测中可以看出。创建的 ARIMA 模型使用前一周的数据进行预测。2016 年 1 月 18 日是马丁·路德·金日，因此当天的接送分布与标准星期一略有不同。此外，假期可能也影响了周围几天的乘客行为。模型没有捕捉到由各种假期引起的这种异常数据，这在得出结论之前必须注意。简单地删除这种异常数据，例如只使用 1 月份的前两周，可能会导致更准确的预测。这表明了解数据背后的上下文的重要性。
 
-Although R offers a rich library of statistical models, it requires importing the
-data into R before performing calculations. With a larger dataset, this can
-become a bottleneck to marshal and transfer all the data to the R process (which
-itself might run out of memory and start swapping). So, let's look into an
-alternative method that allows you to move computations to the database and
-improve this performance.
+尽管 R 提供了丰富的统计模型库，但在执行计算之前需要将数据导入 R。对于更大的数据集，这可能成为将所有数据传输到 R 进程的瓶颈（R 进程本身可能会耗尽内存并开始交换）。因此，让我们看看一种将计算转移到数据库并提高性能的替代方法。
 
-### Non-Seasonal ARIMA with Apache MADlib
+### 使用 Apache MADlib 的非季节性 ARIMA
 
-[MADlib][madlib] is an open source library for in-database data analytics that
-provides a wide collection of popular machine learning methods and various
-supplementary statistical tools.
+[MADlib][madlib] 是一个开源的数据库内数据分析库，提供了广泛的流行机器学习方法和各种补充统计工具。
 
-MADlib supports many machine learning algorithms that are available in R and
-Python. And by executing these machine learning algorithms within the database,
-it may be efficient enough to process them against an entire dataset rather than
-pulling a much smaller sample to an external program.
+MADlib 支持许多在 R 和 Python 中可用的机器学习算法。通过在数据库内执行这些机器学习算法，可能足以高效地处理整个数据集，而不是将较小的样本拉到外部程序中。
 
-Install MADlib following the steps outlined in their documentation:
-[MADlib Installation Guide][madlib_install].
+按照他们的文档中概述的步骤安装 MADlib：
+[MADlib 安装指南][madlib_install]。
 
-Set up MADlib in the `nyc_data` database:
+在 `nyc_data` 数据库中设置 MADlib：
 
 ```bash
 /usr/local/madlib/bin/madpack -s madlib -p postgres -c postgres@localhost/nyc_data install
 ```
 
 <Highlight type="warning">
-This command might differ depending on the directory in which you installed
-MADlib and the names of your PostgreSQL user, host and database.
+此命令可能因您安装 MADlib 的目录以及您的 PostgreSQL 用户、主机和数据库的名称而有所不同。
 </Highlight>
 
-Now you can make use of MADlib's library to analyze the taxicab dataset. Here,
-you can train an ARIMA model to predict the price of a ride from JFK to Times
-Square at a given time.
+现在您可以使用 MADlib 的库来分析出租车数据集。在这里，您可以训练一个 ARIMA 模型来预测在给定时间从肯尼迪机场到时代广场的行程价格。
 
-Let's look at the `rides_price` table. The `trip_price` column is the
-average price of a trip from JFK to Times Square during each hourly period. Data
-points that are missing due to no rides being taken during a certain hourly
-period are filled with the previous value. This is done by
-[gap filling][gap_filling], mentioned earlier in this tutorial.
+让我们看看 `rides_price` 表。`trip_price` 列是在每个小时期间从肯尼迪机场到时代广场的行程的平均价格。由于在某个小时期间没有行程而被遗漏的数据点用前一个值填充。这是通过本教程前面提到的 [gap filling][gap_filling] 完成的。
 
 ```sql
 SELECT * FROM rides_price;
@@ -429,49 +322,42 @@ SELECT * FROM rides_price;
  2016-01-01 23:00:00 | 57.9088888888889
 ```
 
-You can also create two tables for the training and testing datasets.
-You can create tables instead of views here because you need to add columns
-to these datasets later in the time-series forecast analysis.
+您也可以为训练和测试数据集创建两个表。您可以在这里创建表而不是视图，因为您需要在稍后的时间序列预测分析中向这些数据集添加列。
 
 ```sql
--- Make the training dataset
+-- 制作训练数据集
 SELECT * INTO rides_price_train FROM rides_price
 WHERE one_hour <= '2016-01-21 23:59:59';
 
--- Make the testing dataset
+-- 制作测试数据集
 SELECT * INTO rides_price_test FROM rides_price
 WHERE one_hour >= '2016-01-22 00:00:00';
 ```
 
-Now you can use [MADlib's ARIMA][madlib_arima] library to make forecasts
-on your dataset.
+现在您可以使用 [MADlib 的 ARIMA][madlib_arima] 库来对您的数据集进行预测。
 
-MADlib does not yet offer a method that automatically finds the best
-parameters of the ARIMA model. So, the non-seasonal orders of the
-ARIMA model are obtained by using R's `auto.arima` function in the same
-way you obtained them in the previous section with seasonal ARIMA.
-Here is the R code:
+MADlib 尚未提供自动寻找 ARIMA 模型最佳参数的方法。因此，ARIMA 模型的非季节性阶数是使用 R 的 `auto.arima` 函数获得的，就像您在前一节中使用季节性 ARIMA 获得的那样。以下是 R 代码：
 
 ```r
-# Connect to database and fetch records
+# 连接数据库并获取记录
 library("DBI")
 con <- dbConnect(RPostgres::Postgres(), dbname = "nyc_data",
       host = "localhost",
       user = "postgres")
 rides_price_train_query <- dbSendQuery(con, "SELECT * FROM rides_price_train;")
 rides_price_train <- dbFetch(rides_price_train_query)
-dbClearResult(rides_price_train_query)
+dbClearResult(rides_price_train_query_query)
 
-# convert the dataframe into a time-series
+# 将数据框转换为时间序列
 library("xts")
 xts_rides_price <- xts(rides_price_train$trip_price, order.by = as.POSIXct(rides_price_train$one_hour, format = "%Y-%m-%d %H:%M:%S"))
 attr(xts_rides_price, 'frequency') <- 168
 
-# use auto.arima() to calculate the orders
+# 使用 auto.arima() 计算阶数
 library("forecast")
 fit <- auto.arima(xts_rides_price[,1])
 
-# see the summary of the fit
+# 查看拟合的摘要
 summary(fit)
 Series: xts_rides_price[, 1]
 ARIMA(2,1,3)
@@ -491,43 +377,35 @@ Training set 0.1319955 3.30592 2.186295 -0.04371788 3.47929 0.6510487
 Training set -0.002262549
 ```
 
-Of course, you can continue the analysis with R by following the same steps in
-the previous seasonal ARIMA section. Unfortunately, MADlib does not yet offer a
-way to automatically find the orders of the ARIMA model.
+当然，您可以继续按照上一节季节性 ARIMA 的步骤使用 R 进行分析。不幸的是，MADlib 尚未提供自动寻找 ARIMA 模型阶数的方法。
 
-However with a larger dataset, you could take the approach of loading
-a subset of the data to calculate the model's parameters in R and
-then train the model using MADlib. You can use a combination of the
-options outlined in this tutorial to take advantage of the strengths
-and work around weaknesses of the different tools.
+然而，对于更大的数据集，您可以采取加载数据子集到 R 中以计算模型参数的方法，然后使用 MADlib 训练模型。您可以使用本教程中概述的选项组合，利用不同工具的优势并弥补弱点。
 
-Using the parameters ARIMA(2,1,3) found using R, you can use MADlib's
-`arima_train` and `arima_forecast` functions.
+使用 R 找到的 ARIMA(2,1,3) 参数，您可以使用 MADlib 的 `arima_train` 和 `arima_forecast` 函数。
 
 ```sql
--- train arima model and forecast the price of a ride from JFK to Times Square
+-- 训练 arima 模型并预测从肯尼迪机场到时代广场的行程价格
 DROP TABLE IF EXISTS rides_price_output;
 DROP TABLE IF EXISTS rides_price_output_residual;
 DROP TABLE IF EXISTS rides_price_output_summary;
 DROP TABLE IF EXISTS rides_price_forecast_output;
 
-SELECT madlib.arima_train('rides_price_train', -- input table
-      'rides_price_output', -- output table
-      'one_hour', -- timestamp column
-      'trip_price', -- time-series column
-      NULL, -- grouping columns
-      TRUE, -- include_mean
-      ARRAY[2,1,3] -- non-seasonal orders
+SELECT madlib.arima_train('rides_price_train', -- 输入表
+      'rides_price_output', -- 输出表
+      'one_hour', -- 时间戳列
+      'trip_price', -- 时间序列列
+      NULL, -- 分组列
+      TRUE, -- 包含均值
+      ARRAY[2,1,3] -- 非季节性阶数
       );
 
-SELECT madlib.arima_forecast('rides_price_output', -- model table
-                        'rides_price_forecast_output', -- output table
-                        240 -- steps_ahead (10 days)
+SELECT madlib.arima_forecast('rides_price_output', -- 模型表
+                        'rides_price_forecast_output', -- 输出表
+                        240 -- 步数（10 天）
                         );
 ```
 
-Let's examine what values the trained ARIMA model forecasted for
-the next day.
+让我们检查训练有素的 ARIMA 模型为第二天预测了哪些值。
 
 ```sql
 SELECT * FROM rides_price_forecast_output;
@@ -546,9 +424,7 @@ SELECT * FROM rides_price_forecast_output;
 ...
 ```
 
-The model seems to suggest that the price of a ride from JFK to
-Times Square remains pretty much constant on a day-to-day basis.
-MADlib also provides various statistical functions to evaluate the model.
+模型似乎表明，从肯尼迪机场到时代广场的行程价格在一天之内保持相对恒定。MADlib 还提供了各种统计函数来评估模型。
 
 ```sql
 ALTER TABLE rides_price_test ADD COLUMN id SERIAL PRIMARY KEY;
@@ -568,41 +444,19 @@ SELECT * FROM rides_price_mean_abs_perc_error;
 (1 row)
 ```
 
-Earlier, you had to set up the columns of the `rides_price_test` table to
-fit the format of MADlib's `mean_abs_perc_error` function. There
-are multiple ways to evaluate the quality of a model's forecast
-values. In this case, you calculated the mean absolute percentage
-error and got 4.24%.
+之前，您必须设置 `rides_price_test` 表的列以适应 MADlib 的 `mean_abs_perc_error` 函数的格式。有多种方法可以评估模型预测值的质量。在这种情况下，您计算了平均绝对百分比误差，得到了 4.24%。
 
-What can you take away from this? The non-seasonal ARIMA model
-predicts that the price of a trip from the airport to Manhattan
-remains constant at $62 and performs well against the testing
-dataset. Unlike some ride hailing apps such as Uber that have
-surge pricing during rush hours, yellow taxicab prices stay
-pretty much constant all day.
+您从中学到了什么？非季节性 ARIMA 模型预测从机场到曼哈顿的行程价格保持恒定在 62 美元，并且在测试数据集上表现良好。与一些在高峰时段有高峰定价的拼车应用（如 Uber）不同，黄色出租车的价格几乎整天保持恒定。
 
-From a technical standpoint, you have seen how TimescaleDB integrates
-seamlessly with other PostgreSQL extensions PostGIS and MADlib.
-This means that TimescaleDB users can easily take advantage of
-the vast PostgreSQL ecosystem.
+从技术角度来看，您已经看到了 TimescaleDB 如何与 PostGIS 和 MADlib 等其他 PostgreSQL 扩展无缝集成。这意味着 TimescaleDB 用户可以轻松利用 PostgreSQL 生态系统的强大功能。
 
-### Holt-Winters with Python
+### 使用 Python 的 Holt-Winters
 
-The [Holt-Winters][holt-winters] model is another widely used tool in time-series
-analysis and forecasting. It can only be used for seasonal time-series data.
-The Holt-Winters model uses simple exponential smoothing to make
-future predictions. So with time-series data, the forecast is
-calculated from taking a weighted average of past values, with more
-recent data points having greater weight than previous points.
-Holt-Winters is considered to be simpler than ARIMA, but there is
-no clear answer as to which time-series prediction model is superior
-in time-series forecasting. It is advised to create both models for
-a particular dataset and compare the performance to find out which is
-more suitable.
+[Holt-Winters][holt-winters] 模型是时间序列分析和预测中另一个广泛使用的工具。它只能用于季节性时间序列数据。Holt-Winters 模型使用简单指数平滑来做出未来预测。因此，对于时间序列数据，预测是通过取过去值的加权平均值来计算的，更近的数据点比之前的点具有更大的权重。Holt-Winters 被认为是比 ARIMA 更简单的模型，但在时间序列预测中哪个模型更优越没有明确的答案。建议为特定数据集创建两种模型并比较性能，以找出哪个更适合。
 
-You can use Python to analyze how long it takes from the Financial
-District to Times Square at different time periods during the day.
-You need to install these Python packages:
+您可以使用 Python 分析一天中不同时间段从金融区到时代广场所需的时间。
+
+您需要安装这些 Python 包：
 
 ```bash
 pip install psycopg2
@@ -611,10 +465,7 @@ pip install numpy
 pip install statsmodels
 ```
 
-The format of the data is very similar to the previous two sections.
-The `trip_length` column in the `rides_length` table is the average
-length of a ride from the Financial District to Times Square in the
-given time period.
+数据的格式与前两节非常相似。`rides_length` 表中的 `trip_length` 列是在给定时间段内从金融区到时代广场的平均行程长度。
 
 ```sql
 SELECT * FROM rides_length;
@@ -639,147 +490,117 @@ SELECT * FROM rides_length;
 ...
 ```
 
-You can also create two PostgreSQL views for the training
-and testing datasets.
+您也可以为训练和测试数据集创建两个 PostgreSQL 视图。
 
 ```sql
--- Make the training dataset
+-- 制作训练数据集
 CREATE VIEW rides_length_train AS
 SELECT * FROM rides_length
 WHERE three_hour <= '2016-01-21 23:59:59';
 
--- Make the testing dataset
+-- 制作测试数据集
 CREATE VIEW rides_length_test AS
 SELECT * FROM rides_length
 WHERE three_hour >= '2016-01-22 00:00:00';
 ```
 
-Python has a [`psycopg2`][python-psycopg2] package that allows you to query the
-database in Python:
+Python 有一个 [`psycopg2`][python-psycopg2] 包，允许您在 Python 中查询数据库：
 
 ```python
 import psycopg2
 import psycopg2.extras
 
-# establish connection
+# 建立连接
 conn = psycopg2.connect(dbname='nyc_data', user='postgres', host='localhost')
 
-# cursor object allows querying of database
-# server-side cursor is created to prevent records to be downloaded until explicitly fetched
+# 游标对象允许查询数据库
+# 创建服务器端游标以防止记录在显式提取之前被下载
 cursor_train = conn.cursor('train', cursor_factory=psycopg2.extras.DictCursor)
 cursor_test = conn.cursor('test', cursor_factory=psycopg2.extras.DictCursor)
 
-# execute SQL query
+# 执行 SQL 查询
 cursor_train.execute('SELECT * FROM rides_length_train')
 cursor_test.execute('SELECT * FROM rides_length_test')
 
-# fetch records from database
+# 从数据库获取记录
 ride_length_train = cursor_train.fetchall()
 ride_length_test = cursor_test.fetchall()
 ```
 
-You can now manipulate the data to feed it into the Holt-Winters model.
+您现在可以操纵数据以输入 Holt-Winters 模型。
 
 ```python
 import pandas as pd
 import numpy as np
 
-# make records into a pandas dataframe
+# 将记录变成 pandas 数据框
 ride_length_train = pd.DataFrame(np.array(ride_length_train), columns = ['time', 'trip_length'])
 ride_length_test = pd.DataFrame(np.array(ride_length_test), columns = ['time', 'trip_length'])
 
-# convert the type of columns of dataframe to datetime and timedelta
+# 将数据框列的类型转换为 datetime 和 timedelta
 ride_length_train['time'] = pd.to_datetime(ride_length_train['time'], format = '%Y-%m-%d %H:%M:%S')
 ride_length_test['time'] = pd.to_datetime(ride_length_test['time'], format = '%Y-%m-%d %H:%M:%S')
 ride_length_train['trip_length'] = pd.to_timedelta(ride_length_train['trip_length'])
 ride_length_test['trip_length'] = pd.to_timedelta(ride_length_test['trip_length'])
 
-# set the index of dataframes to the timestamp
+# 将数据框的索引设置为时间戳
 ride_length_train.set_index('time', inplace = True)
 ride_length_test.set_index('time', inplace = True)
 
-# convert trip_length into a numeric value in seconds
+# 将 trip_length 转换为秒的数值
 ride_length_train['trip_length'] = ride_length_train['trip_length']/np.timedelta64(1, 's')
 ride_length_test['trip_length'] = ride_length_test['trip_length']/np.timedelta64(1, 's')
 ```
 
-This data can now be used to train a Holt-Winters model that is imported from
-the [`statsmodels`][python-statsmodels] package. You can expect the pattern to
-repeat weekly, and therefore set the `seasonal_periods` parameter to 56 (there
-are eight 3-hour periods in a day, seven days in a week). Since the seasonal
-variations are likely to be fairly constant over time, you can use the additive
-method rather than the multiplicative method, which is specified by the `trend`
-and `seasonal` parameters.
+现在这些数据可以用来训练从 [`statsmodels`][python-statsmodels] 包导入的 Holt-Winters 模型。您可以预期模式每周重复一次，因此将 `seasonal_periods` 参数设置为 56（一天有八个 3 小时期，一周有七天）。由于季节性变化可能随时间相对恒定，您可以使用加法方法而不是乘法方法，这由 `trend` 和 `seasonal` 参数指定。
 
 ```python
 from statsmodels.tsa.api import ExponentialSmoothing
 fit = ExponentialSmoothing(np.asarray(ride_length_train['trip_length']), seasonal_periods = 56, trend = 'add', seasonal = 'add').fit()
 ```
 
-You use the model that has been trained to make a forecast and compare
-with the testing dataset.
+您可以使用已训练的模型进行预测并与测试数据集进行比较。
 
 ```python
 ride_length_test['forecast'] = fit.forecast(len(ride_length_test))
 ```
 
-Now `ride_length_test` has a column with the observed values and
-predicted values from January 22 to January 31. You can plot
-these values on top of each other to make a visual comparison:
+
+现在 `ride_length_test` 有一个列，包含从 1 月 22 日到 1 月 31 日的观测值和预测值。您可以将这些值绘制在一起进行视觉比较：
 
 ```python
 import matplotlib.pyplot as plt
 plt.plot(ride_length_test)
-plt.title('Taxicab Ride Length from Financial District to Times Square by Time')
-plt.xlabel('Date')
-plt.ylabel('Ride Length (seconds)')
-plt.legend(['Observed', 'Predicted'])
+plt.title('从金融区到时代广场的出租车行程长度随时间变化')
+plt.xlabel('日期')
+plt.ylabel('行程长度（秒）')
+plt.legend(['观测', '预测'])
 plt.show()
 ```
 
-<img class="main-content__illustration" src="http://assets.iobeam.com/images/docs/rides_length.png" alt="Rides Length Graph" />
+<img class="main-content__illustration" src="http://assets.iobeam.com/images/docs/rides_length.png"  alt="Rides Length Graph" />
 
-The model predicts that the length of a trip from the Financial
-District to Times Square fluctuates roughly between 16 minutes
-and 38 minutes, with high points midday and low points overnight.
-The trip length is notably longer during weekdays than it is
-during weekends (January 23, 24, 30, 31).
+模型预测从金融区到时代广场的行程长度大致在 16 分钟到 38 分钟之间波动，中午高点，夜间低点。工作日的行程长度明显长于周末（1 月 23、24、30、31）。
 
-The initial reaction from the plotted graph is that the model
-does a relatively good job in capturing the overall trend, but at
-times has quite a large margin of error. This can be due to the
-inherent irregularity of Manhattan's traffic situation with
-frequent roadblocks, accidents, and unexpected weather conditions.
-Moreover, as it was the case with taxi pickup counts in your analysis
-with R using the seasonal ARIMA model, the Holt-Winters model was
-also thrown off by the anomalous data points on Martin Luther King
-day on the previous Monday.
+从绘制的图形的初始反应是，模型在捕捉总体趋势方面做得相对较好，但有时误差幅度相当大。这可能是由于曼哈顿交通状况的固有不规则性，频繁的道路堵塞、事故和意外的天气条件。此外，正如您使用 R 对季节性 ARIMA 模型进行分析时的情况一样，Holt-Winters 模型也被前一个星期一的马丁·路德·金日的异常数据点所干扰。
 
-### Takeaways from analysis
+### 分析要点
 
-This tutorial looked at different ways you can build statistical models to
-analyze time-series data and how you can leverage the full power of the
-PostgreSQL ecosystem with TimescaleDB. This tutorial also looked at integrating
-TimescaleDB with R, Apache MADlib, and Python. You can simply choose the option
-you are most familiar with from a vast number of choices that TimescaleDB
-inherits from PostgreSQL. ARIMA and Holt-Winters are just a couple from a wide
-variety of statistical models and machine learning algorithms that you can use
-to analyze and make predictions on time-series data in your TimescaleDB
-database.
+本教程探讨了您可以构建统计模型来分析时间序列数据的不同方法，以及您如何利用 TimescaleDB 与 PostgreSQL 生态系统的全部力量。本教程还探讨了将 TimescaleDB 与 R、Apache MADlib 和 Python 集成。您可以选择您最熟悉的选项，从 TimescaleDB 继承自 PostgreSQL 的众多选择中。ARIMA 和 Holt-Winters 只是您可以用于分析和预测 TimescaleDB 数据库中时间序列数据的众多统计模型和机器学习算法中的两个。
 
-[NYCTLC]: http://www.nyc.gov/html/tlc/html/about/trip_record_data.shtml
-[arima]: https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average
-[forecast-sql]: http://assets.iobeam.com/sql/forecast.sql
+[NYCTLC]: http://www.nyc.gov/html/tlc/html/about/trip_record_data.shtml 
+[arima]: https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average 
+[forecast-sql]: http://assets.iobeam.com/sql/forecast.sql 
 [gap_filling]: /use-timescale/:currentVersion:/query-data/advanced-analytic-queries/#gap-filling
-[holt-winters]: https://otexts.org/fpp2/holt-winters.html
+[holt-winters]: https://otexts.org/fpp2/holt-winters.html 
 [install]: /getting-started/latest/
-[install_python]: https://www.python.org/downloads/
-[install_r]: https://www.r-project.org/
-[madlib]: http://madlib.apache.org/
-[madlib_arima]: http://madlib.apache.org/docs/latest/group__grp__arima.html
-[madlib_install]: https://cwiki.apache.org/confluence/display/MADLIB/Installation+Guide
-[python-psycopg2]: https://pypi.org/project/psycopg2/
-[python-statsmodels]: http://www.statsmodels.org/dev/tsa.html
-[r-forecast]: https://cran.r-project.org/web/packages/forecast/forecast.pdf
-[r-xts]: https://cran.r-project.org/web/packages/xts/xts.pdf
+[install_python]: https://www.python.org/downloads/ 
+[install_r]: https://www.r-project.org/ 
+[madlib]: http://madlib.apache.org/ 
+[madlib_arima]: http://madlib.apache.org/docs/latest/group__grp__arima.html 
+[madlib_install]: https://cwiki.apache.org/confluence/display/MADLIB/Installation+Guide 
+[python-psycopg2]: https://pypi.org/project/psycopg2/ 
+[python-statsmodels]: http://www.statsmodels.org/dev/tsa.html 
+[r-forecast]: https://cran.r-project.org/web/packages/forecast/forecast.pdf 
+[r-xts]: https://cran.r-project.org/web/packages/xts/xts.pdf 
 [rpostgres]: https://cran.r-project.org/web/packages/RPostgres/index.html
