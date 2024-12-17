@@ -1,69 +1,56 @@
 ---
-title: Analyze financial tick data with TimescaleDB
-excerpt: Learn how to store financial tick data and create candlestick views to analyze price changes
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, finance, learn]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze financial tick data
+标题: 使用 TimescaleDB 分析金融逐笔数据
+摘要: 学习如何存储金融逐笔数据并创建蜡烛图视图以分析价格变化。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，金融，学习]
+标签: [教程，初学者]
+布局_components: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析金融逐笔数据
 ---
 
 import CandlestickIntro from "versionContent/_partials/_candlestick_intro.mdx";
 
-# Analyze financial tick data with TimescaleDB
+# 使用TimescaleDB分析金融行情数据
 
-To analyze financial data, you can chart the open, high, low, close, and volume
-(OHLCV) information for a financial asset. Using this data, you can create
-candlestick charts that make it easier to analyze the price changes of financial
-assets over time. You can use candlestick charts to examine trends in stock,
-cryptocurrency, or NFT prices.
+要分析金融数据，您可以为金融资产绘制开盘、最高、最低、收盘和成交量（OHLCV）信息。利用这些数据，您可以创建K线图，这有助于分析金融资产随时间变化的价格变动。您可以使用K线图检查股票、加密货币或NFT价格的趋势。
 
-In this tutorial, you use real raw financial data provided by
-[Twelve Data][twelve-data], create an aggregated candlestick view, query the
-aggregated data, and visualize the data in Grafana.
+在本教程中，您将使用由[Twelve Data][twelve-data]提供的原始金融数据，创建一个聚合的K线视图，查询聚合数据，并在Grafana中可视化数据。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+开始之前，请确保您已具备以下条件：
 
-*   Signed up for a [free Timescale account][cloud-install].
+*   注册了[免费Timescale账户][cloud-install]。
 
-## Steps in this tutorial
+## 本教程的步骤
 
-This tutorial covers:
+本教程包括：
 
-1.  [Setting up your dataset][financial-tick-dataset]: Load data from
-    [Twelve Data][twelve-data] into your TimescaleDB database.
-1.  [Querying your dataset][financial-tick-query]: Create candlestick views, query
-    the aggregated data, and visualize the data in Grafana.
-1.  [Bonus: Store data efficiently][financial-tick-compress]: Learn how to store and query
-your financial tick data more efficiently using compression feature of Timescale.
+1.  [设置您的数据集][financial-tick-dataset]：将数据从[Twelve Data][twelve-data]加载到您的TimescaleDB数据库中。
+2.  [查询您的数据集][financial-tick-query]：创建K线视图，查询聚合数据，并在Grafana中可视化数据。
+3.  [附加：高效存储数据][financial-tick-compress]：学习如何使用Timescale的压缩功能更高效地存储和查询您的金融行情数据。
 
-    This tutorial shows you how to ingest real-time time-series data into a Timescale
-    database. To create candlestick views, query the
-    aggregated data, and visualize the data in Grafana, see the
-    [ingest real-time websocket data section][advanced-websocket].
+    本教程向您展示如何将实时时间序列数据摄入到Timescale数据库中。要创建K线视图，查询聚合数据，并在Grafana中可视化数据，请参阅[实时websocket数据摄入部分][advanced-websocket]。
 
-## About OHLCV data and candlestick charts
+## 关于OHLCV数据和K线图
 
 <CandlestickIntro />
 
-![candlestick](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick_fig.png)
+![candlestick](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick_fig.png) 
 
-TimescaleDB is well suited to storing and analyzing financial candlestick data,
-and many Timescale community members use it for exactly this purpose. Check out
-these stories from some Timescale community members:
+TimescaleDB非常适合存储和分析金融K线数据，许多Timescale社区成员正是出于这个目的使用它。查看一些Timescale社区成员的故事：
 
-*   [How Trading Strategy built a data stack for crypto quant trading][trading-strategy]
-*   [How Messari uses data to open the cryptoeconomy to everyone][messari]
-*   [How I power a (successful) crypto trading bot with TimescaleDB][bot]
+*   [Trading Strategy如何为加密货币量化交易构建数据堆栈][trading-strategy]
+*   [Messari如何使用数据向所有人开放加密经济][messari]
+*   [我如何使用TimescaleDB为（成功的）加密货币交易机器人提供动力][bot]
 
 [advanced-websocket]: /tutorials/:currentVersion:/financial-ingest-real-time/
 [cloud-install]: /getting-started/:currentVersion:/#create-your-timescale-account
 [financial-tick-dataset]: /tutorials/:currentVersion:/financial-tick-data/financial-tick-dataset/
 [financial-tick-query]: /tutorials/:currentVersion:/financial-tick-data/financial-tick-query/
 [financial-tick-compress]: /tutorials/:currentVersion:/financial-tick-data/financial-tick-compress/
-[twelve-data]: https://twelvedata.com/
-[trading-strategy]: https://www.timescale.com/blog/how-trading-strategy-built-a-data-stack-for-crypto-quant-trading/
-[messari]: https://www.timescale.com/blog/how-messari-uses-data-to-open-the-cryptoeconomy-to-everyone/
+[twelve-data]: https://twelvedata.com/ 
+[trading-strategy]: https://www.timescale.com/blog/how-trading-strategy-built-a-data-stack-for-crypto-quant-trading/ 
+[messari]: https://www.timescale.com/blog/how-messari-uses-data-to-open-the-cryptoeconomy-to-everyone/ 
 [bot]: https://www.timescale.com/blog/how-i-power-a-successful-crypto-trading-bot-with-timescaledb/
+
