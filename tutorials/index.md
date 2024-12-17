@@ -1,21 +1,17 @@
 ---
-title: Tutorials
-excerpt: Learn how to use TimescaleDB in different scenarios with these step-by-step tutorials
-products: [cloud, mst, self_hosted]
+标题: 教程
+摘要: 通过这些循序渐进的教程，学习如何在不同场景下使用 TimescaleDB。
+产品: [云服务，管理服务技术（MST），自托管]
 ---
 
-# Tutorials
+# 教程
 
-Timescale tutorials are designed to help you get up and running with Timescale
-fast. They walk you through a variety of scenarios using example datasets, to
-teach you how to construct interesting queries, find out what information your
-database has hidden in it, and even gives you options for visualizing and
-graphing your results.
+Timescale 教程旨在帮助您快速上手 Timescale。它们通过使用示例数据集引导您完成各种场景，教您如何构建有趣的查询，发现数据库中隐藏的信息，甚至为您提供可视化和绘图结果的选项。
 
-|&#x1F510; Cryptocurrency|&#x1F50B; Energy|&#x1F4B0; Finance|&#x1F698; Transport| &#x1F4A1; IoT                                              |
+|🔏 加密货币 |🔋 能源 |💼 金融 |🚖 交通 |🔧 物联网 |
 |-|-|-|-|------------------------------------------------------------|
-|&#x1F7E2; [Part 1][beginner-crypto]<br/>Do your own research on the Bitcoin blockchain|&#x1F7E2; [Part 1][beginner-energy]<br/>Optimize your energy consumption for a rooftop solar PV system|&#x1F7E2; [Part 1][beginner-finance]<br/>Chart the trading highs and lows for your favorite stock|&#x1F7E2; [Part 1][beginner-fleet]<br/>Find out about taxi rides taken in and around NYC| &#x1F7E2; [Part 1][iot]<br/>Simulate an IoT sensor dataset |
-|&#x2B50; [Part 2][intermediate-crypto] <br/>Discover the relationship between transactions, blocks, fees, and miner revenue|&#x2B50; *Coming Soon!*|&#x2B50; [Part 2][advanced-finance]<br/>Use a websocket connection to visualize the trading highs and lows for your favorite stock|&#x2B50; [Part 2][intermediate-fleet]<br/>Map the longest taxi rides in NYC|                                                            |
+|📘 [第一部分][beginner-crypto]<br/>在比特币区块链上进行自己的研究 |📘 [第一部分][beginner-energy]<br/>为您的屋顶太阳能光伏系统优化能源消耗 |📘 [第一部分][beginner-finance]<br/>为您最喜欢的股票绘制交易高点和低点 |📘 [第一部分][beginner-fleet]<br/>了解在纽约市及其周边的出租车行程 |📘 [第一部分][iot]<br/>模拟物联网传感器数据集 |
+|⭐ [第二部分][intermediate-crypto] <br/>发现交易、区块、费用和矿工收入之间的关系 |⭐ *即将推出！* |⭐ [第二部分][advanced-finance]<br/>使用 websocket 连接可视化您最喜欢的股票的交易高点和低点 |⭐ [第二部分][intermediate-fleet]<br/>在纽约市绘制最长的出租车行程 |                                                            |
 
 [beginner-fleet]: /tutorials/:currentVersion:/nyc-taxi-cab/
 [beginner-finance]: /tutorials/:currentVersion:/financial-tick-data/
@@ -25,3 +21,4 @@ graphing your results.
 [intermediate-crypto]: /tutorials/:currentVersion:/blockchain-analyze/
 [advanced-finance]: /tutorials/:currentVersion:/financial-ingest-real-time/
 [iot]: /tutorials/:currentVersion:/simulate-iot-sensor-data/
+
