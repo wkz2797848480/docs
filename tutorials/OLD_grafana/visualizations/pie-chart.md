@@ -53,7 +53,7 @@ import GrafanaVizPrereqs from 'versionContent/_partials/_grafana-viz-prereqs.mdx
 
 2.  使用以下查询从[入门教程][gsg-data]的数据集中获取所有公司符号：
 
-   ```sql
+    ```sql
     SELECT
         DISTINCT symbol FROM company ORDER BY symbol ASC;
     ```
