@@ -1,18 +1,16 @@
 ---
-title: Grafana visualizations
-excerpt: Learn how to create Grafana visualizations of time-series data
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualization, analytics]
+标题: 格拉法纳（Grafana）可视化
+摘要: 学习如何创建时间序列数据的格拉法纳（Grafana）可视化。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
 ---
 
-# Grafana visualizations
+# Grafana可视化
 
-Learn how to create Grafana visualizations of time-series data.
+学习如何创建时间序列数据的Grafana可视化。
 
-*   Use time-series to graph data points in timed order.
-*   Use histograms to graph the distribution of values in a set of
-    data.
-*   Use candlesticks to graph the open, high, low, and close
-    values of financial assets.
-*   Use bar charts to compare datasets between different categories.
-*   Use pie charts to compare groups or categorized data.
+*   使用时间序列按时间顺序绘制数据点。
+*   使用直方图绘制一组数据中值的分布。
+*   使用K线图绘制金融资产的开盘、最高、最低和收盘价值。
+*   使用条形图比较不同类别之间的数据集。
+*   使用饼图比较组或分类数据。
