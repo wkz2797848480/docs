@@ -1,60 +1,46 @@
 ---
-title: Plot geospatial time-series data tutorial - query the data
-excerpt: Query geospatial time-series data
-products: [cloud]
-keywords: [tutorials, GIS, geospatial, learn]
-tags: [tutorials, intermediate]
-layout_components: [next_prev_large]
-content_group: Plot geospatial NYC taxi cab data
+标题: 绘制地理空间时间序列数据教程 —— 查询数据
+摘要: 查询地理空间时间序列数据。
+产品: [云服务]
+关键词: [教程，地理信息系统（GIS），地理空间，学习]
+标签: [教程，中级]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 绘制纽约市出租车地理空间数据
 ---
 
-# Query the data
+# 查询数据
 
-When you have your dataset loaded, you can start constructing some queries to
-discover what your data tells you. In this section, you learn how to combine the
-data in the NYC taxi dataset with geospatial data from [PostGIS][postgis], to
-answer these questions:
+当您的数据集加载完成后，您可以开始构建一些查询来发现数据背后的含义。在本节中，您将学习如何将纽约出租车数据集与[PostGIS][postgis]的地理空间数据结合起来，以回答以下问题：
 
-*   [How many rides on New Year's Day 2016 originated from Times Square?](#how-many-rides-on-new-years-day-2016-originated-from-times-square)
-*   [Which rides traveled more than 5 miles in Manhattan?](#which-rides-traveled-more-than-5-miles-in-manhattan).
+*   [2016年元旦有多少行程是从时代广场出发的？](#2016年元旦有多少行程是从时代广场出发的)
+*   [在曼哈顿，哪些行程行驶了超过5英里？](#在曼哈顿，哪些行程行驶了超过5英里)
 
-## Set up your dataset for PostGIS
+## 为PostGIS设置您的数据集
 
-To answer these geospatial questions, you need the ride count data from the NYC
-taxi dataset, but you also need some geospatial data to work out which trips
-originated where. Timescale is compatible with all other PostgreSQL extensions
-so you can use the [PostGIS][postgis] extension to slice the data by time and
-location.
+要回答这些地理空间问题，您需要纽约出租车数据集中的行程计数数据，但您还需要一些地理空间数据来确定哪些行程是从哪里出发的。Timescale与所有其他PostgreSQL扩展兼容，因此您可以使用[PostGIS][postgis]扩展按时间和地点切片数据。
 
-With the extension loaded, you alter your hypertable so it's ready for geospatial
-queries. The `rides` table contains columns for pickup latitude and longitude,
-but it needs to be converted into geometry coordinates so that it works well
-with PostGIS.
+加载扩展后，您需要修改超表，使其准备好进行地理空间查询。`rides`表包含接客纬度和经度的列，但需要将其转换为几何坐标，以便与PostGIS良好协作。
 
 <Procedure>
 
-### Setting up your dataset for PostGIS
+### 为PostGIS设置您的数据集
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, add the PostGIS extension:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，添加PostGIS扩展：
 
     ```sql
     CREATE EXTENSION postgis;
     ```
 
-    You can check that PostGIS is installed properly by checking that it appears
-    in the extension list when you run the `\dx` command.
-1.  Alter the hypertable to add geometry columns for ride pick up and drop off
-    locations:
+    您可以通过运行`\dx`命令检查PostGIS是否正确安装，它会出现在扩展列表中。
+3. 修改超表，添加用于接客和落客位置的几何列：
 
     ```sql
     ALTER TABLE rides ADD COLUMN pickup_geom geometry(POINT,2163);
     ALTER TABLE rides ADD COLUMN dropoff_geom geometry(POINT,2163);
     ```
 
-1.  Convert the latitude and longitude points into geometry coordinates, so that
-    they work well with PostGIS. This could take a while, as it needs to update
-    all the data in both columns:
+4. 将纬度和经度点转换为几何坐标，以便与PostGIS良好协作。这可能需要一些时间，因为它需要更新这两个列中的所有数据：
 
     ```sql
     UPDATE rides SET pickup_geom = ST_Transform(ST_SetSRID(ST_MakePoint(pickup_longitude,pickup_latitude),4326),2163),
@@ -63,24 +49,20 @@ with PostGIS.
 
 </Procedure>
 
-## How many rides on New Year's Day 2016 originated from Times Square?
+## 2016年元旦有多少行程是从时代广场出发的？
 
-When you have your database set up for PostGIS data, you can construct a query
-to return the number of rides on New Year's Day that originated in Times Square,
-in 30-minute buckets.
+当您的数据库为PostGIS数据设置好后，您可以构建一个查询，返回2016年元旦从时代广场出发的行程数量，以30分钟为间隔。
 
 <Procedure>
 
-### Finding how many rides on New Year's Day 2016 originated from Times Square
+### 找出2016年元旦从时代广场出发的行程数量
 
 <Highlight type="note">
-Times Square is located at (40.7589,-73.9851).
+时代广场位于(40.7589,-73.9851)。
 </Highlight>
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, use this query to select all rides taken in the first
-    day of January 2016 that picked up within 400m of Times Square, and return a
-    count of rides for each 30 minute interval:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月1日从时代广场400米范围内接客的所有行程，并返回每30分钟的行程计数：
 
     ```sql
     SELECT time_bucket('30 minutes', pickup_datetime) AS thirty_min,
@@ -92,7 +74,7 @@ Times Square is located at (40.7589,-73.9851).
     ORDER BY thirty_min;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
          thirty_min      | near_times_sq
@@ -106,25 +88,18 @@ Times Square is located at (40.7589,-73.9851).
 
 </Procedure>
 
-## Which rides traveled more than 5 miles in Manhattan?
+## 在曼哈顿，哪些行程行驶了超过5英里？
 
-This query is especially well suited to plot on a map. It looks at
-rides that were longer than 5 miles, within the city of Manhattan.
+这个查询非常适合在地图上绘制。它查看了在曼哈顿城市内行驶超过5英里的行程。
 
-In this query, you want to return rides longer than 5 miles, but also include
-the distance, so that you can visualize longer distances with different visual
-treatments. The query also includes a `WHERE` clause to apply a geospatial
-boundary, looking for trips within 2 km of Times Square. Finally, in the
-`GROUP BY` clause, supply the `trip_distance` and location variables so that
-Grafana can plot the data properly.
+在这个查询中，您希望返回超过5英里的行程，但还包括距离，以便您可以使用不同的视觉效果来可视化更长的距离。查询还包括一个`WHERE`子句来应用地理空间边界，寻找在时代广场2公里范围内的行程。最后，在`GROUP BY`子句中，提供`trip_distance`和位置变量，以便Grafana可以正确地绘制数据。
 
 <Procedure>
 
-### Finding rides that traveled more than 5 miles in Manhattan
+### 找出在曼哈顿行驶超过5英里的行程
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, use this query to find rides longer than 5 miles in
-    Manhattan:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询在曼哈顿找到超过5英里的行程：
 
     ```sql
     SELECT time_bucket('5m', rides.pickup_datetime) AS time,
@@ -144,11 +119,11 @@ Grafana can plot the data properly.
     LIMIT 500;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
             time         | value |      latitude      |      longitude
-    ---------------------+-------+--------------------+---------------------
+    ---------------------+-------+--------------------+-------------------
      2016-01-01 01:40:00 |  0.00 | 40.752281188964844 | -73.975021362304688
      2016-01-01 01:40:00 |  0.09 | 40.755722045898437 | -73.967872619628906
      2016-01-01 01:40:00 |  0.15 | 40.752742767333984 | -73.977737426757813
@@ -157,25 +132,15 @@ Grafana can plot the data properly.
      ...
     ```
 
-1.  [](#)<Optional /> To visualize this in Grafana, create a new panel, and select the
-    `Geomap` visualization. Select the NYC taxis dataset as your data source,
-    and type the query from the previous step. In the `Format as` section,
-    select `Table`. Your world map now shows a dot over New York, zoom in
-    to see the visualization.
-1.  [](#)<Optional /> To make this visualization more useful, change the way that the
-    rides are displayed. In the options panel, under `Data layer`, add a layer
-    called `Distance traveled` and select the `markers` option. In the `Color`
-    section, select `value`. You can also adjust the symbol and size here.
-1.  [](#)<Optional /> Select a color scheme so that different ride lengths are shown
-    in different colors. In the options panel, under `Standard options`, change
-    the `Color scheme` to a useful `by value` range. This example uses the
-    `Blue-Yellow-Red (by value)` option.
+4. [](#)<Optional /> 在Grafana中可视化这一点，创建一个新的面板，并选择`Geomap`可视化。选择纽约出租车数据集作为您的数据源，并输入前一步的查询。在`Format as`部分，选择`Table`。您的世界地图现在在纽约上方显示一个点，放大以查看可视化效果。
+5. [](#)<Optional /> 要使这个可视化更有用，改变行程显示的方式。在选项面板中，`Data layer`下，添加一个名为`Distance traveled`的图层，并选择`markers`选项。在`Color`部分，选择`value`。您还可以在这里调整符号和大小。
+6. [](#)<Optional /> 选择一个颜色方案，以便不同行程长度以不同颜色显示。在选项面板中，`Standard options`下，将`Color scheme`更改为有用的`by value`范围。这个例子使用了`Blue-Yellow-Red (by value)`选项。
 
     <img
     class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-postgis.webp"
+    src="https://assets.timescale.com/docs/images/grafana-postgis.webp" 
     width={1375} height={944}
-    alt="Visualizing taxi journeys by distance in Grafana"
+    alt="在Grafana中按距离可视化出租车行程"
     />
 
 </Procedure>
