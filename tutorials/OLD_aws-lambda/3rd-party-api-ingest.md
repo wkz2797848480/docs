@@ -240,9 +240,11 @@ aws lambda create-function --region us-east-1 \
 如果您收到错误消息`Parameter ScheduleExpression is not valid`，您可能在cron表达式中犯了一个错误。请检查[cron表达式示例](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions)文档。
 </Highlight>
 
-您可以在AWS控制台中检查规则是否正确连接到Lambda函数。导航到Amazon EventBridge → Events → Rules，然后点击您创建的规则。Lambda函数的名称列在`Target(s)`下：
+您可以在 AWS 控制台中检查规则是否正确连接到 Lambda 函数：
+- 导航至 Amazon EventBridge → Events → Rules。
+- 点击您创建的规则，Lambda 函数名称列于 `Target(s)` 之下。
 
-<img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/targets.png&#34;  alt="Lamdba function target in AWS Console"/>
+![Lambda 函数目标在 AWS 控制台](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/targets.png) 
 
 [aws-lambda-docs]: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html 
 [cron-examples]: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions 
