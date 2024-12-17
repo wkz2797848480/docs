@@ -1,11 +1,11 @@
 ---
-title: Energy time-series data tutorial - set up dataset
-excerpt: Set up a dataset so you can query time-series data
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, create, dataset]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze energy consumption data
+标题: 能源时间序列数据教程 —— 设置数据集
+摘要: 设置数据集，以便能够查询时间序列数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，创建，数据集]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析能源消耗数据
 ---
 
 import CreateAndConnect from "versionContent/_partials/_cloud-create-connect-tutorials.mdx";
@@ -14,21 +14,19 @@ import AddDataEnergy from "versionContent/_partials/_add-data-energy.mdx";
 import GrafanaConnect from "versionContent/_partials/_grafana-connect.mdx";
 import CreateCaggs from "versionContent/_partials/_caggs-intro.mdx";
 
-# Set up the database
+# 设置数据库
 
-This tutorial uses the energy consumption data for over a year in a
-hypertable named `metrics`.
+本教程使用名为`metrics`的超表中一年多的能耗数据。
 
-<Collapsible heading="Create a Timescale service and connect to your service" defaultExpanded={false}>
+<Collapsible heading="创建Timescale服务并连接到您的服务" defaultExpanded={false}>
 
 <CreateAndConnect/>
 
 </Collapsible>
 
-<Collapsible heading="The dataset" defaultExpanded={false}>
+<Collapsible heading="数据集" defaultExpanded={false}>
 
-This tutorial uses the energy consumption data for over a year in a typical
-household. You can use this data to analyze the energy consumption pattern.
+本教程使用了典型家庭一年多的能耗数据。您可以使用这些数据来分析能耗模式。
 
 <CreateHypertableEnergy />
 
@@ -36,18 +34,17 @@ household. You can use this data to analyze the energy consumption pattern.
 
 </Collapsible>
 
-<Collapsible heading="Downsampling the data" defaultExpanded={false}>
+<Collapsible heading="数据降采样" defaultExpanded={false}>
 
 <CreateCaggs />
 
-## Create continuous aggregates
+## 创建连续聚合
 
 <Procedure>
 
-### Creating continuous aggregates for energy consumption by day and hour
+### 为每日和每小时的能耗创建连续聚合
 
-1.  Create a continuous aggregate `kwh_day_by_day` for energy consumption on a
-    day to day basis:
+1.  创建一个连续聚合`kwh_day_by_day`，用于按日计算能耗：
 
     ```sql
     CREATE MATERIALIZED VIEW kwh_day_by_day(time, value)
@@ -59,7 +56,7 @@ household. You can use this data to analyze the energy consumption pattern.
     GROUP BY 1;
     ```
 
-1.  Add a refresh policy to keep the continuous aggregate up-to-date:
+2.  添加刷新策略以保持连续聚合最新：
 
      ```sql
      SELECT add_continuous_aggregate_policy('kwh_day_by_day',
@@ -68,8 +65,7 @@ household. You can use this data to analyze the energy consumption pattern.
         schedule_interval => INTERVAL '1 hour');
      ```
 
-1.  Create a continuous aggregate `kwh_hour_by_hour` for energy consumption on
-    an hourly basis:
+3.  创建一个连续聚合`kwh_hour_by_hour`，用于按小时计算能耗：
 
     ```sql
     CREATE MATERIALIZED VIEW kwh_hour_by_hour(time, value)
@@ -81,7 +77,7 @@ household. You can use this data to analyze the energy consumption pattern.
     GROUP BY 1;
     ```
 
-1.  Add a refresh policy to keep the continuous aggregate up-to-date:
+4.  添加刷新策略以保持连续聚合最新：
 
      ```sql
      SELECT add_continuous_aggregate_policy('kwh_hour_by_hour',
@@ -90,14 +86,14 @@ household. You can use this data to analyze the energy consumption pattern.
         schedule_interval => INTERVAL '1 hour');
      ```
 
-1.  You can confirm that the continuous aggregates were created:
+5.  您可以确认连续聚合已创建：
 
     ```sql
     SELECT view_name, format('%I.%I', materialization_hypertable_schema,materialization_hypertable_name) AS materialization_hypertable
     FROM timescaledb_information.continuous_aggregates;
     ```
 
-    You should see this:
+    您应该看到以下内容：
 
     ```sql
      view_name     |            materialization_hypertable
@@ -111,12 +107,13 @@ household. You can use this data to analyze the energy consumption pattern.
 
 </Collapsible>
 
-<Collapsible heading="Connect to Grafana" defaultExpanded={false}>
+<Collapsible heading="连接到Grafana" defaultExpanded={false}>
 
-The queries in this tutorial are suitable for visualizing in Grafana. If you
-want to visualize the results of your queries, connect your Grafana account to
-the energy consumption dataset.
+本教程中的查询适合在Grafana中进行可视化。如果您想可视化查询结果，请将您的Grafana账户连接到能耗数据集。
 
 <GrafanaConnect />
+
+</Collapsible>
+
 
 </Collapsible>
