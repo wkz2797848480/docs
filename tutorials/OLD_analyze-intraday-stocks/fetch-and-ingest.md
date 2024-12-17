@@ -1,29 +1,25 @@
 ---
-title: Fetch and ingest intraday stock data
-excerpt: Ingest intraday stock data into a TimescaleDB database
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, psycopg2, pandas, plotly]
-tags: [candlestick]
+标题: 获取并摄取盘中股票数据
+摘要: 将盘中股票数据摄取到 TimescaleDB 数据库中。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，psycopg2，Pandas，Plotly]
+标签: [K 线]
 ---
 
-# Fetch and ingest intraday stock data
+# 获取并导入日内股票数据
 
-In this step:
+在这一步中：
 
-*   create a configuration file (optional)
-*   fetch stock data
-*   ingest the data into TimescaleDB
+*   创建配置文件（可选）
+*   获取股票数据
+*   将数据导入到TimescaleDB中
 
-## Create a configuration file
+## 创建配置文件
 
-This is an optional step, but it is highly recommended that you do not store
-your password or other sensitive information
-directly in your code. Instead, create a configuration file, for example
-`config.py`, and include your
-database connection details and Alpha Vantage API key in it:
+这是一个可选步骤，但强烈建议您不要将密码或其他敏感信息直接存储在代码中。相反，创建一个配置文件，例如`config.py`，并在其中包含您的数据库连接详情和Alpha Vantage API密钥：
 
 ```python
-# example content of config.py:
+# config.py的示例内容：
 DB_USER = 'tsdbadmin'
 DB_PASS = 'passwd'
 DB_HOST = 'xxxxxxx.xxxxxxx.tsdb.cloud.timescale.com'
@@ -32,7 +28,7 @@ DB_NAME = 'tsdb'
 APIKEY = 'alpha_vantage_apikey'
 ```
 
-Later, whenever you need to reference any of the information from this configuration file, you need to import it:
+稍后，每当您需要引用此配置文件中的任何信息时，您需要导入它：
 
 ```python
 import config
@@ -40,26 +36,21 @@ apikey = config.APIKEY
 ...
 ```
 
-## Collect ticker symbols
+## 收集股票代码
 
-In order to fetch intraday stock data, you need to know which ticker symbols you want to analyze.
-First, let's collect a list of symbols so that we can fetch their data later.
-In general, you have a few options to gather a list of ticker symbols dynamically:
+为了获取日内股票数据，您需要知道您想要分析哪些股票代码。首先，我们来收集一个代码列表，以便我们稍后可以获取它们的数据。通常，您有几个选项可以动态收集股票代码列表：
 
-*   Scrape it from a public website ([example code here][scraping-example])
-*   Use an API that has this functionality
-*   Download it from an open repository
+*   从一个公共网站抓取（[示例代码在这里][scraping-example]）
+*   使用具有此功能的API
+*   从一个开放仓库下载
 
-To make things easier, download this CSV file to get started:
+为了简化事情，下载这个CSV文件开始：
 
-*   [Download top 100 US ticker symbols (based on market capitalization)][symbols-csv]
+*   [下载前100个美国股票代码（基于市值）][symbols-csv]
 
-## Read symbols from CSV file
+## 从CSV文件中读取代码
 
-After downloading the CSV file into the project folder, create a new
-Python file called `ingest_stock_data.py`. Make sure to add this file in the
-same folder as the `symbols.csv` file. Add the following code in this file
-that reads the `symbols.csv` file into a list:
+将CSV文件下载到项目文件夹后，创建一个名为`ingest_stock_data.py`的新Python文件。确保将此文件添加到与`symbols.csv`文件相同的文件夹中。在此文件中添加以下代码，将`symbols.csv`文件读取到一个列表中：
 
 ```python
 # ingest_stock_data.py:
@@ -70,113 +61,98 @@ with open('symbols.csv') as f:
     print(symbols)
 ```
 
-Run this code:
+运行此代码：
 
 ```bash
 python ingest_stock_data.py
 ```
 
-You should see a list of symbols printed out:
+您应该看到打印出的代码列表：
 
 ```bash
 ['AAPL', 'MSFT', 'AMZN', 'GOOG', 'FB']
 ```
 
-Now you have a list of ticker symbols that you can use later to make requests
-to the Alpha Vantage API.
+现在您有了一个股票代码列表，稍后可以使用它向Alpha Vantage API发出请求。
 
-## Fetching intraday stock data
+## 获取日内股票数据
 
-### About the API
+### 关于API
 
-Alpha Vantage API provides 2 year historical intraday stock data in 1, 5, 15, or 30 minute
-intervals. The API outputs a lot of data in a CSV file (around 2200 rows per symbol per
-day, for a 1 minute interval), so it slices the dataset into one month buckets. This means
-that for one request for a single symbol, the most amount of data you can get is one month.
- The maximum amount of historical intraday data is 24 months. To fetch the maximum
- amount, you need to slice up your requests by month. For example, `year1month1`,
- `year1month2`, and so on. Keep in mind that each request can only fetch data for one
- symbol at a time.
+Alpha Vantage API提供2年的历史日内股票数据，间隔为1、5、15或30分钟。API输出大量数据到CSV文件中（大约每个代码每天2200行，对于1分钟间隔），因此它将数据集分割成一个月的桶。这意味着对于单个代码的一个请求，您可以获得的最大数据量是一个月。最大历史日内数据量为24个月。要获取最大数量的数据，您需要按月分割您的请求。例如，`year1month1`，`year1month2`等。请注意，每个请求一次只能获取一个代码的数据。
 
-Here's an example API endpoint:
+这里有一个示例API端点：
 
 ```
-https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&symbol=IBM&interval=1min&slice=year1month1&apikey=your_apikey
+https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&symbol=IBM&interval=1min&slice=year1month1&apikey=your_apikey 
 ```
 
-Check out the [Alpha Vantage API](https://www.alphavantage.co/documentation/) docs for more information.
+查看[Alpha Vantage API](https://www.alphavantage.co/documentation/) 文档了解更多信息。
 
-### Create the function
+### 创建函数
 
-Let's start by creating a function in the Python script called
-`ingest_stock_data.py` that you created in an earlier step.
-This function fetches data for one symbol and one month. The function takes
-these two values as parameters:
+让我们首先在您之前创建的Python脚本`ingest_stock_data.py`中创建一个函数。这个函数获取一个代码和一个月份的数据。该函数以这两个值为参数：
 
-*   `symbol`: the ticker symbol you want to fetch data for (for example, "AMZN" for Amazon).
-*   `month`: an integer value between 1-24 indicating which month you want to fetch data from.
+*   `symbol`：您想要获取数据的股票代码（例如，亚马逊的"AMZN"）。
+*   `month`：一个介于1-24之间的整数值，表示您想要获取哪个月份的数据。
 
-Add the following piece of code to the `ingest_stock_data.py` file:
+将以下代码添加到`ingest_stock_data.py`文件中：
 
 ```python
 import config
 import pandas as pd
 
 def fetch_stock_data(symbol, month):
-    """Fetches historical intraday data for one ticker symbol (1-min interval)
+    """获取单个股票代码（1分钟间隔）的历史日内数据
 
-    Args:
-        symbol (string): ticker symbol
+    参数：
+        symbol (string)：股票代码
 
-    Returns:
-        candlestick data (list of tuples)
+    返回：
+        蜡烛图数据（元组列表）
     """
     interval = '1min'
 
-    # the API requires you to slice up your requests (per month)
-    # like "year1month1", "year1month2", ..., "year2month1" etc...
+    # API要求您按月分割请求
+    # 如"year1month1"，"year1month2"，...，"year2month1"等...
     slice = "year1month" + str(month) if month <= 12 else "year2month1" + str(month)
 
     apikey = config.APIKEY
 
-    # formulate the correct API endpoint with symbol, slice, interval and apikey
-    CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&' \
-              'symbol={symbol}&interval={interval}&slice={slice}&apikey={apikey}' \
-              .format(symbol=symbol, slice=slice, interval=interval,apikey=apikey)
+    # 用代码、切片、间隔和API密钥制定正确的API端点
+    CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&symbol={symbol}&interval={interval}&slice={slice}&apikey={apikey}'.format(symbol=symbol, slice=slice, interval=interval, apikey=apikey)
 
-    # read CSV file directly into a pandas dataframe
+    # 直接将CSV文件读取到pandas dataframe中
     df = pd.read_csv(CSV_URL)
 
-    # add a new symbol column to the dataframe
-    # this is needed as the API doesn't return the symbol value
+    # 在dataframe中添加一个新的代码列
+    # 这是必要的，因为API不返回代码值
     df['symbol'] = symbol
 
-    # convert the time column to datetime object
-    # this is needed so we can seamlessly insert the data into the database later
+    # 将时间列转换为datetime对象
+    # 这是必要的，以便我们稍后可以无缝地将数据插入数据库
     df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S')
 
-    # rename and reorder columns to match database schema
+    # 重命名和重新排序列以匹配数据库模式
     df = df.rename(columns={'time': 'time',
                             'open': 'price_open',
                             'high': 'price_high',
-                            'low': 'price_low'
+                            'low': 'price_low',
                             'close': 'price_close',
                             'volume': 'trading_volume'})
     df = df[['time', 'symbol', 'price_open', 'price_close', 'price_low', 'price_high', 'trading_volume']]
 
-    # convert the dataframe into a list of tuples ready to be ingested
+    # 将dataframe转换为准备导入的元组列表
     return [row for row in df.itertuples(index=False, name=None)]
 ```
 
-Run this script:
+运行此脚本：
 
 ```bash
 python ingest_stock_data.py
 ```
 
-This function downloads data from the Alpha Vantage API and prepares it for
-database ingestion. Add this piece of code after the function definition to
-test if it works:
+这个函数从Alpha Vantage API下载数据并为其准备数据库导入。在函数定义后添加这段代码以测试其工作情况：
 
 ```python
 def test_stock_download():
@@ -185,14 +161,13 @@ def test_stock_download():
 test_stock_download()
 ```
 
-Run the script:
+运行脚本：
 
 ```bash
 python ingest_stock_data.py
 ```
 
-You should see a huge list of tuples printed out, each containing the
-timestamp value and the price data (candlestick):
+您应该看到一个巨大的元组列表打印出来，每个元组包含时间戳值和价格数据（蜡烛图）：
 
 ```text
 [
@@ -202,79 +177,76 @@ timestamp value and the price data (candlestick):
 ]
 ```
 
-Remove the `test_stock_download()` so it doesn't get invoked unnecessarily
-when you run the script in the future.
+将来运行脚本时，如果不需要调用`test_stock_download()`，则将其移除。
 
-## Ingest data into TimescaleDB
+## 将数据导入到TimescaleDB
 
-When you have the `fetch_stock_data` function working, and you can fetch the candlestick from the API, you can insert it into the database.
+当您的`fetch_stock_data`函数工作正常，并且您可以从API获取蜡烛图时，您可以将其插入数据库。
 
-To make the ingestion faster, use [pgcopy][pgcopy-docs] instead of ingesting
-data row by row. TimescaleDB is packaged as an extension to PostgreSQL, meaning all the PostgreSQL tools you know and
-love already work with TimescaleDB.
+为了加快导入速度，请使用[pgcopy][pgcopy-docs]而不是逐行导入数据。TimescaleDB作为PostgreSQL的扩展包，这意味着所有您熟悉和喜爱的PostgreSQL工具已经可以与TimescaleDB一起工作。
 
-### Ingest data fast with pgcopy
+### 使用pgcopy快速导入数据
 
-Install psycopg2 and pgcopy so you can connect to the database and ingest data.
+安装psycopg2和pgcopy，以便您可以连接到数据库并导入数据。
 
-**Install psycopg2**
+**安装psycopg2**
 
 ```bash
 pip install psycopg2-binary
 ```
 
-**Install pgcopy**
+**安装pgcopy**
 
 ```bash
 pip install pgcopy
 ```
 
-Add the following code at the bottom of the `ingest_stock_data.py` script:
+在`ingest_stock_data.py`脚本底部添加以下代码：
 
-**Ingest with pgcopy**
+**使用pgcopy导入**
 
 ```python
 from pgcopy import CopyManager
 import config, psycopg2
 
-# establish database connection
+# 建立数据库连接
 conn = psycopg2.connect(database=config.DB_NAME,
                         host=config.DB_HOST,
                         user=config.DB_USER,
                         password=config.DB_PASS,
                         port=config.DB_PORT)
 
-# column names in the database (pgcopy needs it as a parameter)
+# 数据库中的列名（pgcopy需要它作为参数）
 COLUMNS = ('time', 'symbol', 'price_open', 'price_close', 'price_low', 'price_high', 'trading_volume')
 
-# iterate over the symbols list
+# 遍历代码列表
 for symbol in symbols:
 
-    # specify a time range (max 24 months)
-    time_range = range(1, 2) # (last 1 months)
+    # 指定一个时间范围（最多24个月）
+    time_range = range(1, 2) # （最后1个月）
 
-    # iterate over the specified time range
+    # 遍历指定的时间范围
     for month in time_range:
 
-        # fetch stock data for the given symbol and month
-        # using the function you created before
+        # 获取给定代码和月份的股票数据
+        # 使用您之前创建的函数
         stock_data = fetch_stock_data(symbol, month)
 
-        # create a copy manager instance
+        # 创建一个复制管理器实例
         mgr = CopyManager(conn, 'stocks_intraday', COLUMNS)
 
-        # insert data and commit transaction
+        # 插入数据并提交事务
         mgr.copy(stock_data)
         conn.commit()
 ```
 
-This starts ingesting data for each symbol, one month at a time. You can
-modify the `time_range` if you want to download more data.
+这将开始逐个代码，逐月导入数据。如果您想要下载更多数据，可以修改`time_range`。
 
 ```
 time               |symbol|price_open|price_close|price_low|price_high|trading_volume|
 -------------------+------+----------+-----------+---------+----------+--------------+
-2022-06-21 22:00:00|AAPL  |    135.66|      135.6|   135.55|    135.69|         14871|
+2022
+-06-21 22:00:00|AAPL  |    135.66|      135.6|   135.55|    135.69|         14871|
 2022-06-21 21:59:00|AAPL  |    135.64|     135.64|   135.64|    135.64|           567|
 2022-06-21 21:58:00|AAPL  |    135.67|     135.67|   135.67|    135.67|          1611|
 2022-06-21 21:57:00|AAPL  |    135.66|      135.7|   135.66|     135.7|           972|
@@ -291,11 +263,10 @@ time               |symbol|price_open|price_close|price_low|price_high|trading_v
 ```
 
 <Highlight type="tip">
-Fetching and ingesting intraday data can take a while, so if you want to see results quickly,
-reduce the number of months, or limit the number of symbols.
+获取和导入日内数据可能需要一段时间，所以如果您想快速看到结果，可以减少月份数量，或限制代码数量。
 </Highlight>
 
-This is what the final version of `ingest_stock_data.py` looks like:
+这是`ingest_stock_data.py`的最终版本：
 
 ```python
 # ingest_stock_data.py:
@@ -311,83 +282,80 @@ with open('symbols.csv') as f:
     print(symbols)
     
 def fetch_stock_data(symbol, month):
-    """Fetches historical intraday data for one ticker symbol (1-min interval)
+    """获取单个股票代码（1分钟间隔）的历史日内数据
 
-    Args:
-        symbol (string): ticker symbol
+    参数：
+        symbol (string)：股票代码
 
-    Returns:
-        candlestick data (list of tuples)
+    返回：
+        蜡烛图数据（元组列表）
     """
     interval = '1min'
 
-    # the API requires you to slice up your requests (per month)
-    # like "year1month1", "year1month2", ..., "year2month1" etc...
+    # API要求您按月分割请求
+    # 如"year1month1"，"year1month2"，...，"year2month1"等...
     slice = "year1month" + str(month) if month <= 12 else "year2month1" + str(month)
 
     apikey = config.APIKEY
 
-    # formulate the correct API endpoint with symbol, slice, interval and apikey
-    CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&' \
-              'symbol={symbol}&interval={interval}&slice={slice}&apikey={apikey}' \
-              .format(symbol=symbol, slice=slice, interval=interval,apikey=apikey)
+    # 用代码、切片、间隔和API密钥制定正确的API端点
+    CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&symbol={symbol}&interval={interval}&slice={slice}&apikey={apikey}'.format(symbol=symbol, slice=slice, interval=interval, apikey=apikey)
 
-    # read CSV file directly into a pandas dataframe
+    # 直接将CSV文件读取到pandas dataframe中
     df = pd.read_csv(CSV_URL)
 
-    # add a new symbol column to the dataframe
-    # this is needed as the API doesn't return the symbol value
+    # 在dataframe中添加一个新的代码列
+    # 这是必要的，因为API不返回代码值
     df['symbol'] = symbol
 
-    # convert the time column to datetime object
-    # this is needed so we can seamlessly insert the data into the database later
+    # 将时间列转换为datetime对象
+    # 这是必要的，以便我们稍后可以无缝地将数据插入数据库
     df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S')
 
-    # rename and reorder columns to match database schema    
+    # 重命名和重新排序列以匹配数据库模式    
     df = df.rename(columns={'open': 'price_open',
                             'high': 'price_high',
                             'low': 'price_low',
                             'close': 'price_close',
-                            'volume': 'trading_volume'}
-                   )
+                            'volume': 'trading_volume'})
     df = df[['time', 'symbol', 'price_open', 'price_close', 'price_low', 'price_high', 'trading_volume']]
     
-    # convert the dataframe into a list of tuples ready to be ingested
+    # 将dataframe转换为准备导入的元组列表
     return [row for row in df.itertuples(index=False, name=None)]
 
-# establish database connection
+# 建立数据库连接
 conn = psycopg2.connect(database=config.DB_NAME,
                         host=config.DB_HOST,
                         user=config.DB_USER,
                         password=config.DB_PASS,
                         port=config.DB_PORT)
 
-# column names in the database (pgcopy needs it as a parameter)
+# 数据库中的列名（pgcopy需要它作为参数）
 COLUMNS = ('time', 'symbol', 'price_open', 'price_close', 'price_low', 'price_high', 'trading_volume')
 
-# iterate over the symbols list
+# 遍历代码列表
 for symbol in symbols:
 
-    # specify a time range (max 24 months)
-    time_range = range(1, 2) # (last 1 months)
+    # 指定一个时间范围（最多24个月）
+    time_range = range(1, 2) # （最后1个月）
 
-    # iterate over the specified time range
+    # 遍历指定的时间范围
     for month in time_range:
 
-        # fetch stock data for the given symbol and month
-        # using the function you created before
+        # 获取给定代码和月份的股票数据
+        # 使用您之前创建的函数
         stock_data = fetch_stock_data(symbol, month)
         print(stock_data)
 
-        # create a copy manager instance
+        # 创建一个复制管理器实例
         mgr = CopyManager(conn, 'stocks_intraday', COLUMNS)
 
-        # insert data and commit transaction
+        # 插入数据并提交事务
         mgr.copy(stock_data)
         conn.commit()
 
 ```
 
-[pgcopy-docs]: https://pgcopy.readthedocs.io/en/latest/
-[scraping-example]: https://github.com/timescale/examples/blob/master/
+[pgcopy-docs]: https://pgcopy.readthedocs.io/en/latest/ 
+[scraping-example]: https://github.com/timescale/examples/blob/master/ 
 [symbols-csv]: https://assets.timescale.com/docs/downloads/symbols.csv
