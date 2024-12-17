@@ -1,126 +1,97 @@
 ---
-title: Set up Grafana alerts
-excerpt: Use Grafana to get alerted when a problem occurs
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, alert, integration]
+标题: 设置格拉法纳（Grafana）警报
+摘要: 使用格拉法纳（Grafana）在出现问题时接收警报。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），警报，集成]
 ---
 
-# Set up Grafana alerts
+# 设置Grafana警报
 
-Alerts are an important aspect of monitoring because they proactively
-inform us when things go wrong and need our attention. This could be:
+警报是监控的重要组成部分，因为它们在出现问题并需要我们关注时主动通知我们。这可能包括：
 
-*   When something crashes
-*   You're consuming too many resources (for example, memory, CPU)
-*   There's an outage
-*   Users report performance degradation, via support tickets
+*   当某物崩溃时
+*   您消耗了太多资源（例如，内存，CPU）
+*   出现中断
+*   用户通过支持票报告性能下降
 
-In this tutorial, you'll learn how to setup Grafana to alert you when
-something goes wrong using many of the communication channels you already
-use.
+在本教程中，您将学习如何设置Grafana以在出现问题时通过您已经使用的许多通信渠道提醒您。
 
-### Prerequisites
+### 前提条件
 
-To complete this tutorial, you need a cursory knowledge of the Structured Query
-Language (SQL). The tutorial walks you through each SQL command, but it is
-helpful if you've seen SQL before.
+要完成本教程，您需要对结构化查询语言（SQL）有初步了解。教程将指导您完成每个SQL命令，但如果您之前见过SQL将会有所帮助。
 
-*   To start, [install TimescaleDB][install-timescale].
-*   Next setup Grafana.
+*   首先，[安装TimescaleDB][install-timescale]。
+*   接下来设置Grafana。
 
-Once your installation of TimescaleDB and Grafana are complete, configure
-Grafana to connect to that database. Be sure to follow the full tutorial if
-you're interested in background on how to use TimescaleDB.
+安装TimescaleDB和Grafana完成后，配置Grafana以连接到该数据库。如果您对如何使用TimescaleDB的背景感兴趣，请务必遵循完整的教程。
 
-For this tutorial, you need to first create various Grafana visualizations before
-setting up alerts. Use our full set of Grafana tutorials to
-obtain the necessary background on Grafana. In this tutorial, we'll simply
-inform you of which Grafana visualization to create and the query to use.
+对于本教程，您需要先创建各种Grafana可视化，然后设置警报。使用我们的全套Grafana教程获取有关Grafana的必要背景。在本教程中，我们将简单地通知您创建哪个Grafana可视化以及使用哪个查询。
 
-### Alerting principles
+### 警报原则
 
-When setting up alerts for your system, consider the following:
+在为您的系统设置警报时，请考虑以下事项：
 
-*   You should only use alerts when you require human input
-*   Be careful not to overuse alerts. If an engineer gets an alert too frequently, it can cease to be useful or serve its purpose.
-*   Use alerts that are directly relevant to your scenario: if you're monitoring a SaaS product, set up alerts for site uptime and latency. If you're monitoring infrastructure, set up alerts for disk usage, high CPU or memory usage, and API errors.
+*   仅在需要人为输入时使用警报
+*   小心不要过度使用警报。如果工程师过于频繁地收到警报，它可能会失去作用或无法达到其目的。
+*   使用与您的场景直接相关的警报：如果您正在监控SaaS产品，请设置站点正常运行时间和延迟的警报。如果您正在监控基础设施，请设置磁盘使用率、高CPU或内存使用率以及API错误的警报。
 
-### Introduction to alerts in Grafana
+### Grafana中警报的介绍
 
-Beyond data visualization, Grafana also provides alerting functionality
-to keep you notified of anomalies. By using Grafana, you don't have the
-overhead of learning how to use another piece of software. Nor do you
-have to integrate services on your back-end. You simply use your dashboard.
+除了数据可视化之外，Grafana还提供警报功能，以保持您对异常情况的了解。通过使用Grafana，您无需学习如何使用另一款软件，也无需在后端集成服务。您只需使用您的仪表板。
 
-#### Pros and cons of using Grafana alerts
+#### 使用Grafana警报的优缺点
 
-There are some downsides to using Grafana for alerts:
+使用Grafana进行警报有一些缺点：
 
-*   You can only set up alerts on graph visualizations with time-series output
-*   Thus, you can't use table output or anything else that is not time-series data
+*   您只能在具有时间序列输出的图形可视化上设置警报
+*   因此，您不能使用表格输出或任何非时间序列数据
 
-Ultimately, for most cases, this is okay because:
+最终，对于大多数情况，这是可以的，因为：
+*   您主要处理时间序列数据进行警报
+*   您通常可以将任何其他可视化（例如，Gauge或Single Stat）转换为时间序列图
 
-*   You're mainly dealing with time-series data for alerts
-*   You can usually turn any other visualization (for example, a Gauge or a Single Stat) into a time-series graph
+#### Grafana警报的可用数据源
 
-#### Available data soruces for Grafana alerts
+只有某些数据源支持Grafana警报：PostgreSQL、Prometheus和Cloudwatch。TimescaleDB基于PostgreSQL，是Grafana警报的有效数据源。
 
-Only certain data sources are supported for Grafana alerts: PostgreSQL,
-Prometheus, and Cloudwatch. TimescaleDB is, of course, based on PostgreSQL,
-and is a valid data source for Grafana alerts.
+Grafana警报有两个部分：**警报规则**和**通知渠道**。
 
-There are two parts of alerting in Grafana: **Alert Rules** and
-**Notification channels**.
+#### 警报规则
 
-#### Alert rules
+警报规则是Grafana警报中最重要的部分。规则是您定义的触发警报的条件。Grafana根据计划评估规则，您需要指定评估规则的频率。
 
-Alert Rules are the most important part of Grafana alerts. Rules are
-conditions that you define for when an alert gets triggered. Grafana
-evaluates rules according to a scheduler and you need to specify
-how often rules are evaluated.
+用简单的语言来说，规则的例子可能包括：
 
-In plain language, examples of rules could be:
+*   当磁盘使用率超过90%时
+*   当平均内存使用率在5分钟内超过90%时（这是一个基于间隔的规则的例子）
+*   当设备的温度超出给定范围时（这是一个具有许多不同条件的规则的例子）
 
-*   When disk usage is greater than 90%
-*   When the average memory usage is greater than 90% for 5 minutes (this is an example of an interval-based rule)
-*   When the temperatore of a device is outside a given range (this is an example of a rule with many different conditions)
+#### 通知渠道
 
-#### Notification channels
+通知渠道是一旦触发警报规则就会发送警报的地方。如果您没有通知渠道，那么您的警报只会在Grafana上显示。
 
-Notification channels are where alerts get sent once alert rules are triggered.
-If you have no notification channels, then your alerts only show up on Grafana.
-
-Examples of channels include tools your team may already use:
+包括您的团队可能已经使用的工具：
 
 *   Slack
-*   Email
+*   电子邮件
 *   OpsGenie
 *   PagerDuty
 
-Grafana provides integration with webhooks, email, and more than a
-dozen external services.
+Grafana提供与webhooks、电子邮件以及十多个外部服务的集成。
 
-Whenever we create an alert, we assign it to a notification channel,
-along with a message. In our tutorial, we'll set up two common notification
-channels: Slack and PagerDuty.
+每当我们创建一个警报时，我们都会将其分配给一个通知渠道，并附带一条消息。在我们的教程中，我们将设置两个常见的通知渠道：Slack和PagerDuty。
 
-#### Lifecycle of an alert
+#### 警报的生命周期
 
-You can think of alerts as objects that move through different states depending
-on the rule associated with them. Possible states are: OK, PENDING, ALERTING,
-NO DATA.
+您可以将警报视为根据与之相关的规则通过不同状态的对象。可能的状态包括：OK、PENDING、ALERTING、NO DATA。
 
-### Alert 1: Integrating TimescaleDB, Grafana, and Slack
+### 警报1：集成TimescaleDB、Grafana和Slack
 
-Our goal in this first alert is to proactively notify us in Slack when we
-have sustained high memory usage over time. You can connect Grafana to
-Slack using webhooks.
+我们在这个第一个警报中的目标是在Slack中主动通知我们，当我们长时间持续高内存使用时。您可以使用webhooks将Grafana连接到Slack。
 
-#### Step 0: Set up your Grafana visualization
+#### 第0步：设置您的Grafana可视化
 
-Create a new Graph visualization. In the query, connect to an existing
-Prometheus data source and enter this query:
+创建一个新的图形可视化。在查询中，连接到现有的Prometheus数据源并输入此查询：
 
 ```sql
 SELECT
@@ -134,92 +105,59 @@ GROUP BY 1
 ORDER BY 1
 ```
 
-Your graph should look like this:
+您的图表应该像这样：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_query_results_5m.png" alt="Visualizing memory used percentage as time-series data in Grafana"/>
+![在Grafana中将内存使用百分比可视化为时间序列数据](https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_query_results_5m.png)
 
-#### Step 1: Define the Grafana alert rule
+#### 第1步：定义Grafana警报规则
 
-Click the 'Bell' icon on your visualization to navigate to the Alert section.
-We'll define our alert so that we are notified when average memory consumption
-is greater than 90% for 5 consecutive minutes.
+点击可视化中的'Bell'图标以导航到警报部分。我们将定义我们的警报，以便在平均内存消耗连续5分钟超过90%时通知我们。
 
-Set the frequency for the rule to be evaluated at one minute. This means that the
-graph is polled every minute to determine whether or not an alert should
-be sent.
+将规则的频率设置为每分钟评估一次。这意味着图表每分钟被轮询一次，以确定是否应该发送警报。
 
-Then set the evaluation period for five minutes. This configures Grafana to look
-at the alert in five minute windows.
+然后将评估周期设置为五分钟。这配置Grafana以五分钟的窗口查看警报。
 
-You won't be able to change the 'When' portion of the query, but you can
-set the 'Is Above' threshold to 90. In other words, you receive an alert whenever
-the memory used is above 90%.
+您无法更改查询的'When'部分，但您可以将'Is Above'阈值设置为90。换句话说，当内存使用率超过90%时，您将收到警报。
 
-Use the defaults for the remainder of the configuration. Your configuration should
-look like this:
+使用其余配置的默认值。您的配置应该像这样：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_alert_configuration.png" alt="Define Grafana alert for memory used percentage in PostgreSQL"/>
+![在PostgreSQL中为内存使用百分比定义Grafana警报](https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_alert_configuration.png)
 
-#### Step 2: Configure Slack for Grafana alerts
+#### 第2步：为Grafana警报配置Slack
 
-In most cases, you want to build a tiered alert system where less critical
-alerts go to less intrusive channels (such as Slack), while more critical
-alerts go to high attention channels (such as calling or texting someone).
+在大多数情况下，您希望构建一个分层警报系统，其中较不严重的警报发送到较不侵入的渠道（例如Slack），而更关键的警报发送到高注意力渠道（例如打电话或发短信给某人）。
 
-Let's start by configuring Slack. To setup Slack, you need your Slack
-Administrator to give you the webhook URL to post to a channel. You can
-[follow these instructions][slack-webhook-instructions] to obtain this
-information.
+让我们从配置Slack开始。要设置Slack，您需要您的Slack管理员为您提供发布到频道的webhook URL。您可以[按照这些说明][slack-webhook-instructions]获取此信息。
 
-To configure a notification channel, go to the 'Bell' icon in your main
-dashboard. It is on the far left of the screen. Click on the 'Notification
-Channels' option. In the Notification Channels screen, click 'Add channel'.
+要配置通知渠道，请转到主仪表板中的'Bell'图标。它位于屏幕的最左侧。点击'Notification Channels'选项。在通知渠道屏幕上，点击'Add channel'。
 
-In the resulting form, set up the name of your Slack Channel. This
-shows up in drop-downs throughout your Grafana instance, so choose
-something descriptive that other users of your Grafana instance can
-immediately identify with.
+在结果表单中，设置您的Slack频道的名称。这在您的Grafana实例的下拉菜单中显示，因此选择一些描述性的内容，其他Grafana实例的用户可以立即识别。
 
-Choose 'Slack' as the type and toggle 'Include image' and 'Send reminders'
-on. Enter the Webhook URL supplied by your Slack Admin and choose a
-Username that is descriptive to users of your Slack instance. If you
-want to @-mention someone or a group with your alert post in Slack, you can
-do so in the 'Mention' field.
+选择'Slack'作为类型，并切换'Include image'和'Send reminders'。输入您的Slack管理员提供的Webhook URL，并选择一个对您的Slack实例用户描述性的用户名。如果您想在Slack中的警报帖子中@提及某人或某个组，您可以在'Mention'字段中这样做。
 
-Your configuration should look like this:
+您的配置应该像这样：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_setup_slack.png" alt="Set up Slack and Grafana for Alerts"/>
+![为警报设置Slack和Grafana](https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_setup_slack.png)
 
-And, you should be able to send a test message to your Slack instance.
+而且，您应该能够向您的Slack实例发送测试消息。
 
-#### Step 3: Connect your Grafana alert to Slack
+#### 第3步：将您的Grafana警报连接到Slack
 
-Now go back to your Graph Visualization and select the 'Alert' tab. In the
-'Notifications' section, click on the '+' icon next to 'Send to' and choose
-the Slack notification channel you just created. Supply a message for your
-Slack post as well.
+现在回到您的图形可视化，并选择'Alert'标签。在'Notifications'部分，点击'Send to'旁边的'+'图标，并选择您刚刚创建的Slack通知渠道。同时为您的Slack帖子提供一个消息。
 
-At this point, your alert is configured. If you'd like to test it, feel free
-to change the "90" value you entered for the 'Is Above' field and change it to
-something below the current threshold. It should trigger a notification like
-this within five minutes or so:
+此时，您的警报已配置完成。如果您想测试它，随时更改您输入的'Is Above'字段中的“90”值，并将其更改为低于当前阈值的值。它应该在大约五分钟内触发类似这样的通知：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_slack_messages.png" alt="Set up Slack and Grafana for Alerts"/>
+![为警报设置Slack和Grafana](https://assets.iobeam.com/images/docs/screenshots-for-grafana-alerts-tutorial/alert1_slack_messages.png)
 
-### Alert 2: Integrating TimescaleDB, Grafana, and PagerDuty
+### 警报2：集成TimescaleDB、Grafana和PagerDuty
 
-PagerDuty is a popular choice for managing support and incident responses for
-medium-large teams. Many of the steps in this section are similar to the steps
-in the Slack section. With PagerDuty, you need to set up alerts using direct
-integration with the PagerDuty API.
+PagerDuty是管理中型大型团队的支持和事件响应的流行选择。本节中的许多步骤与Slack部分的步骤相似。使用PagerDuty，您需要使用PagerDuty API的直接集成来设置警报。
 
-#### Step 0: Set up your Grafana visualization
+#### 第0步：设置您的Grafana可视化
 
-In this section, you monitor the database in case you run out of disk space
-unexpectedly. This is the kind of alert where you'd want to notify someone
-immediately.
+在本节中，您监控数据库，以防您意外地用完磁盘空间。这是您希望立即通知某人的警报类型。
 
-The query for our Graph visualization looks like this:
+我们的图形可视化的查询如下：
 
 ```sql
 SELECT
@@ -233,35 +171,28 @@ GROUP BY 1
 ORDER BY 1
 ```
 
-#### Step 1: Configure PagerDuty for Grafana alerts
+#### 第1步：为Grafana警报配置PagerDuty
 
-To connect PagerDuty to Grafana, you'll need an [integration key][pagerduty-integration-key]
-for the service that you're monitoring. Note this is different from what PagerDuty
-refers to as the PagerDuty API key.
+要将PagerDuty连接到Grafana，您将需要[集成密钥][pagerduty-integration-key]来监控您正在监控的服务。请注意，这与PagerDuty所称的PagerDuty API密钥不同。
 
-Once again, go to your main dashboard and select the 'Bell' icon and select
-'Notification channels'. Add a channel, enter a descriptive name, and choose the
-'Pager Duty' type. Supply your integration key.
+再次前往主仪表板，选择'Bell'图标并选择'Notification channels'。添加一个渠道，输入一个描述性的名称，并选择'Pager Duty'类型。提供您的集成密钥。
 
-#### Step 2: Define the Grafana alert rule
+#### 第2步：定义Grafana警报规则
 
-Creating a rule on disk usage is similar to the rule we created earlier about memory usage,
-except disk usage can only increase. Therefore, we do not need to supply a 'For' time period
-as we did with Slack. So, in this case, set up your alert to check 'Every' one minute for a
-period of zero minutes.
+创建关于磁盘使用的规则与我们之前关于内存使用的规则
+类似，只是磁盘使用只能增加。因此，我们不需要像我们对Slack那样提供'For'时间段。所以，在这种情况下，将您的警报设置为每分钟检查一次，持续时间为零分钟。
 
-In the 'When' clause, select `last()`, `query(A, 1m, now)`, and supply '80' for the
-'Is Above' field.
+在'When'子句中，选择`last()`，`query(A, 1m, now)`，并在'Is Above'字段中输入'80'。
 
-Select your PagerDuty channel in the 'Notifications' section and provide a descriptive message.
+在'Notifications'部分中选择您的PagerDuty渠道，并提供一个描述性的消息。
 
-### Alert 3: Integrating TimescaleDB, Grafana, and other notification platforms
+### 警报3：集成TimescaleDB、Grafana和其他通知平台
 
-Grafana supports a number of notification platforms, including:
+Grafana支持许多通知平台，包括：
 
 *   DingDing
 *   Discord
-*   Email
+*   电子邮件
 *   Google Hangouts
 *   Hipchat
 *   Kafka
@@ -277,13 +208,12 @@ Grafana supports a number of notification platforms, including:
 *   VictorOps
 *   Webhooks
 
-Steps for integrating with all of these are similar to the steps you used for
-Slack (webhooks) and PagerDuty (API or Integration Key).
+与所有这些平台集成的步骤与您用于Slack（webhooks）和PagerDuty（API或集成密钥）的步骤类似。
 
-### Summary
+### 总结
 
-Complete your Grafana knowledge by following all the TimescaleDB + Grafana tutorials.
+通过遵循所有TimescaleDB + Grafana教程，完善您的Grafana知识。
 
 [install-timescale]: /getting-started/latest/
-[pagerduty-integration-key]: https://support.pagerduty.com/docs/services-and-integrations
+[pagerduty-integration-key]: https://support.pagerduty.com/docs/services-and-integrations 
 [slack-webhook-instructions]: https://slack.com/help/articles/115005265063-Incoming-Webhooks-for-Slack
