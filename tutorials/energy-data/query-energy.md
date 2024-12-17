@@ -1,40 +1,34 @@
 ---
-title: Energy consumption data tutorial - query the data
-excerpt: Energy consumption data
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, query]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze energy consumption data
+标题: 能源消耗数据教程 —— 查询数据
+摘要: 能源消耗数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，查询]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析能源消耗数据
 ---
 
-# Query the data
+# 查询数据
 
-When you have your dataset loaded, you can start constructing some queries to
-discover what your data tells you.
-This tutorial uses [Timescale hyperfunctions][about-hyperfunctions] to construct
-queries that are not possible in standard PostgreSQL.
+当您加载了数据集后，可以开始构建一些查询来发现数据告诉您什么。
+本教程使用[Timescale hyperfunctions][about-hyperfunctions]来构建在标准PostgreSQL中不可能的查询。
 
-In this section, you learn how to construct queries, to answer these questions:
+在本节中，您将学习如何构建查询，以回答这些问题：
 
-*   [Energy consumption by hour of day](#what-is-the-energy-consumption-by-the-hour-of-the-day)
-*   [Energy consumption by weekday](#what-is-the-energy-consumption-by-the-day-of-the-week).
-*   [Energy consumption by month](#what-is-the-energy-consumption-on-a-monthly-basis).
+*   [按小时的能耗](#按小时的能耗是多少)
+*   [按工作日的能耗](#按一周的哪一天能耗是多少)
+*   [按月的能耗](#每月的能耗是多少)
 
-## What is the energy consumption by the hour of the day?
+## 按小时的能耗是多少？
 
-When you have your database set up for energy consumption data, you can
-construct a query to find the median and the maximum consumption of energy on an
-hourly basis in a typical day.
+当您为能耗数据设置好数据库后，可以构建一个查询，以找到典型一天中每小时的能耗中位数和最大值。
 
 <Procedure>
 
-### Finding how many kilowatts of energy is consumed on an hourly basis
+### 查找每小时消耗多少千瓦时的能源
 
-1.  Connect to the Timescale database that contains the energy consumption dataset.
-1.  At the psql prompt, use the Timescale Toolkit functionality to get calculate
-    the fiftieth percentile or the median. Then calculate the maximum energy
-    consumed using the standard PostgreSQL max function:
+1. 连接到包含能耗数据集的Timescale数据库。
+1. 在psql提示符下，使用Timescale Toolkit功能计算第五十百分位数或中位数。然后使用标准PostgreSQL max函数计算消耗的最大能源：
 
     ```sql
     WITH per_hour AS (
@@ -59,7 +53,7 @@ hourly basis in a typical day.
     ORDER BY 1;
     ```
 
-1.  The data you get back looks a bit like this:
+1. 您得到的数据看起来像这样：
 
     ```sql
           hour   |       median       | maximum
@@ -80,17 +74,16 @@ hourly basis in a typical day.
 
 </Procedure>
 
-## What is the energy consumption by the day of the week?
+## 按一周的哪一天能耗是多少？
 
-You can also check how energy consumption varies between weekends and weekdays.
+您还可以检查周末与工作日之间的能耗差异。
 
 <Procedure>
 
-### Finding energy consumption during the weekdays
+### 查找工作日的能耗
 
-1.  Connect to the Timescale database that contains the energy consumption dataset.
-1.  At the psql prompt, use this query to find difference in consumption during
-    the weekdays and the weekends:
+1. 连接到包含能耗数据集的Timescale数据库。
+1. 在psql提示符下，使用此查询找到工作日与周末之间的消耗差异：
 
     ```sql
     WITH per_day AS (
@@ -122,7 +115,7 @@ You can also check how energy consumption varies between weekends and weekdays.
 
     ```
 
-1.  The data you get back looks a bit like this:
+1. 您得到的数据看起来像这样：
 
     ```sql
         day | ordinal |       value
@@ -138,18 +131,16 @@ You can also check how energy consumption varies between weekends and weekdays.
 
 </Procedure>
 
-## What is the energy consumption on a monthly basis?
+## 每月的能耗是多少？
 
-You may also want to check the energy consumption that occurs on a monthly basis.
+您可能还希望检查每月发生的能耗。
 
 <Procedure>
 
-### Finding energy consumption for each month of the year
+### 查找每年每个月的能耗
 
-1.  Connect to the Timescale database that contains the energy consumption
-    dataset.
-1.  At the psql prompt, use this query to find consumption for each month of the
-    year:
+1. 连接到包含能耗数据集的Timescale数据库。
+1. 在psql提示符下，使用此查询找到每年的每个月的消耗：
 
     ```sql
      WITH per_day AS (
@@ -175,7 +166,7 @@ You may also want to check the energy consumption that occurs on a monthly basis
     ORDER BY ordinal;
     ```
 
-1.  The data you get back looks a bit like this:
+1. 您得到的数据看起来像这样：
 
     ```sql
         month | ordinal |       value
@@ -194,22 +185,19 @@ You may also want to check the energy consumption that occurs on a monthly basis
         Dec   |      12 |
     ```
 
-1.  [](#)<Optional /> To visualize this in Grafana, create a new panel, and select
-    the `Bar Chart` visualization. Select the energy consumption dataset as your
-    data source, and type the query from the previous step. In the `Format as`
-    section, select `Table`.
+1. [](#)<Optional /> 在Grafana中可视化这一点，创建一个新的面板，并选择`Bar Chart`可视化。选择能耗数据集作为您的数据源，并输入前一步的查询。在`Format as`部分，选择`Table`。
 
-1.  [](#)<Optional /> Select a color scheme so that different consumptions are shown
-    in different colors. In the options panel, under `Standard options`, change
-    the `Color scheme` to a useful `by value` range.
+1. [](#)<Optional /> 选择一个配色方案，以便不同的消耗以不同的颜色显示。在选项面板中，`Standard options`下，将`Color scheme`更改为有用的`by value`范围。
 
     <img
     class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-energy.webp"
+    src="https://assets.timescale.com/docs/images/grafana-energy.webp&#34; 
     width={1375} height={944}
-    alt="Visualizing energy consumptions in Grafana"
+    alt="在Grafana中可视化能耗"
     />
 
 </Procedure>
 
 [about-hyperfunctions]: https://docs.timescale.com/use-timescale/latest/hyperfunctions/about-hyperfunctions/
+
+
