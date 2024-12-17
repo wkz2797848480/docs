@@ -1,77 +1,37 @@
 ---
-title: Custom TimescaleDB dashboards
-excerpt: Build custom TimescaleDB dashboards with Hasura GraphQL and React
-products: [cloud, mst, self_hosted]
-keywords: [visualizations, analytics, hasura]
+标题: 定制 TimescaleDB 仪表盘
+摘要: 使用 Hasura GraphQL 和 React 构建定制的 TimescaleDB 仪表盘。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [可视化，分析，Hasura]
 ---
 
-# Custom TimescaleDB dashboards
+# 自定义TimescaleDB仪表板
 
-To help you understand what is going on in your database, you can create your
-own custom visualizations and dashboards. TimescaleDB allows you to create
-custom dashboards for your data, using the full functionality of PostgreSQL
-monitoring. Of course, you can always use other commercial tools to monitor
-TimescaleDB, just as you can with PostgreSQL, but custom dashboards give you the
-most flexibility.
+为了帮助您理解数据库中的情况，您可以创建自己的自定义可视化和仪表板。TimescaleDB允许您使用PostgreSQL监控的全部功能为您的数据创建自定义仪表板。当然，您也可以使用其他商业工具来监控TimescaleDB，就像您可以对PostgreSQL做的那样，但自定义仪表板为您提供了最大的灵活性。
 
-This tutorial shows you how to build a custom visualization that shows how
-many chunks a hypertable has, the state of the compression for each chunk, and
-the current total size of the database. The front-end is built in React, and
-connects to metrics about TimescaleDB using Hasura, a GraphQL service. This
-tutorial includes:
+本教程向您展示如何构建一个自定义可视化，显示超表拥有的块数量、每个块的压缩状态以及数据库当前的总大小。前端使用React构建，并使用Hasura（一个GraphQL服务）连接到TimescaleDB的指标。本教程包括：
 
-*   Concepts within TimescaleDB that work well for visualization
-*   How to query TimescaleDB views and functions to get details about
-    hypertables and chunks
-*   How to generate sample data
-*   How Hasura can help to stream data through GraphQL subscriptions
-*   How to build your React front-end to visualize the data
+*   适用于可视化的TimescaleDB概念
+*   如何查询TimescaleDB视图和函数以获取有关超表和块的详细信息
+*   如何生成样本数据
+*  Hasura如何帮助通过GraphQL订阅流式传输数据
+*   如何构建您的React前端以可视化数据
 
-The project uses React, connecting to a [Hasura][] GraphQL API to visualize
-[hypertable chunks][hypertables] of a [TimescaleDB][] instance.
+该项目使用React，连接到[Hasura][] GraphQL API以可视化[超表块][hypertables]的[TimescaleDB][]实例。
 
-The easiest way to get a TimescaleDB instance is to
-[try for free][timescale-signup] using our hosted service. You can also
-[download TimescaleDB for free][timescale-install] and run locally or in your
-own cloud infrastructure.
+获取TimescaleDB实例的最简单方式是使用我们的托管服务[免费试用][timescale-signup]。您也可以[免费下载TimescaleDB][timescale-install]并在本地或您自己的云基础设施中运行。
 
-You can get the full code for this project from
-[this GitHub repo][repo-example].
+您可以从[this GitHub repo][repo-example]获取此项目的完整代码。
 
-This project works on any TimescaleDB instance, but if you're interested
-in generating sample data to use, use our
-simulating IoT sensor data tutorial.
+此项目适用于任何TimescaleDB实例，但如果您有兴趣生成样本数据使用，请使用我们的模拟IoT传感器数据教程。
 
-## How TimescaleDB manages time-series data
+## TimescaleDB如何管理时间序列数据
 
-TimescaleDB uses [hypertables][] to store time-series data. TimescaleDB
-automatically partitions data in hypertables into smaller child tables called
-chunks. The chunks represent data for a given time period, which makes it easier
-to query and manage over time. For example, if you wanted to query data from
-10 AM to 11 AM, instead of scanning your entire database, TimescaleDB would scan
-the specific chunks that contain data for just that period. All the interaction
-with the database still occurs on the hypertable using SQL, but TimescaleDB
-partitions the data to make large queries more efficient.
+TimescaleDB使用[超表][]来存储时间序列数据。TimescaleDB自动将超表中的数据分区到称为块的较小子表中。这些块代表特定时间段的数据，这使得随时间查询和管理变得更加容易。例如，如果您想要查询从上午10点到11点的数据，TimescaleDB将只扫描包含该时期数据的特定块，而不是扫描整个数据库。所有与数据库的交互仍然使用SQL在超表上进行，但TimescaleDB分区数据以使大型查询更加高效。
 
-Many features in TimescaleDB rely on chunks, including
-[continuous aggregates][caggs], [data retention][], and native [compression][].
-Native compression is particularly helpful with large time-series datasets.
-Time-series data can be relentless in quantity and speed, and difficult to store
-and query without a purpose-built time-series database. You can use TimescaleDB
-compression to save as much as 97% of your disk space for the same amount of
-data, and usually increase the speed of your queries over time.
+TimescaleDB的许多功能都依赖于块，包括[连续聚合][caggs]、[数据保留][]和本地[压缩][]。本地压缩对于大型时间序列数据集特别有帮助。时间序列数据在数量和速度上可能是无情的，并且在没有专门构建的时间序列数据库的情况下，存储和查询都很困难。您可以使用TimescaleDB压缩来节省高达97%的磁盘空间，用于相同数量的数据，并且通常还可以随着时间的推移提高查询速度。
 
-Visualizing the state of your hypertables can help you gain a better
-understanding of how compression works and possibly even how different types
-impact compression efficiently. Visualization can help you see the results of
-compression table by table, and chunk by chunk. To do this, TimescaleDB provides
-multiple views and functions that can be queried for information about the
-state of your hypertables and chunks. Although there is no combined view that
-provides exactly the data we need for our visualization, TimescaleDB provides
-the building blocks to craft a custom SQL query that returns the data needed
-to better visualize the current hypertable and chunk compression state. For
-example, this query returns the name and time series range that this chunk
-covers:
+可视化超表的状态可以帮助您更好地理解压缩的工作方式，甚至可能了解不同类型的压缩效率。可视化可以帮助您逐表查看压缩结果，逐块查看。为此，TimescaleDB提供了多个视图和函数，可以查询有关您的超表和块状态的信息。尽管没有综合视图提供我们可视化所需的确切数据，但TimescaleDB提供了构建自定义SQL查询的构建块，以返回可视化当前超表和块压缩状态所需的数据。例如，此查询返回该块覆盖的名称和时间序列范围：
 
 ```sql
 tsdb=> SELECT chunk_name, range_start, range_end FROM timescaledb_information.chunks LIMIT 1;
@@ -81,42 +41,35 @@ tsdb=> SELECT chunk_name, range_start, range_end FROM timescaledb_information.ch
 (1 row)
 ```
 
-## Visualizing tables and chunks
+## 可视化表和块
 
-Hypertables that have data spanning massive time periods can have thousands of chunks, so visualizing them effectively is important. To provide a visual perspective of the table, the image area represents the total size of all table data before compression. Each circle represents a chunk, and the area of each circle represents the size of the chunk on disk.
+拥有跨越巨大时间段的数据的超表可能有数千个块，因此有效地可视化它们非常重要。为了提供表的视觉视角，图像区域代表压缩前所有表数据的总大小。每个圆圈代表一个块，每个圆圈的面积代表磁盘上块的大小。
 
-Here's an example of what this visualization looks like:
+以下是这种可视化的样子：
 
 <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/custom-timescaledb-dashboards-hypertables-compression.webp" width={2500} height={1468} alt="Hypertables compression preview"/>
 
-With this visualization, you can see a few things at a glance:
+通过这种可视化，您可以一目了然地看到一些东西：
 
-*   How many chunks are currently part of this hypertable
-*   The compression state of each chunk
-*   How much space has been saved by enabling compression on some chunks
+*   当前有多少块是这个超表的一部分
+*   每个块的压缩状态
+*   通过在某些块上启用压缩节省了多少空间
 
-By using the uncompressed data size to represent the area of the image, you
-can quickly get a sense of how much space has been saved by the overall white
-space across the image. Smaller yellow chunks are compressed and their size
-represents their portion of space within the larger table, while larger dark
-chunks are uncompressed and take up more space in the image. You can also make
-the visualization interactive, so that you can click on a chunk and compress or
-uncompress it manually.
+通过使用未压缩数据大小来表示图像的面积，您可以快速了解整体白色空间在图像中节省了多少空间。较小的黄色块是压缩的，它们的大小代表它们在更大表中的空间比例，而较大的暗色块是未压缩的，在图像中占用更多的空间。您还可以使可视化交互式，以便您可以点击一个块并手动压缩或解压缩它。
 
-## Create internal views in TimescaleDB to obtain metrics
+## 在TimescaleDB中创建内部视图以获取指标
 
-To build the visualization application, we created some new functions and views to:
+为了构建可视化应用程序，我们创建了一些新的函数和视图：
 
-*   Extract information from chunks, such as name and time range
-*   Get extra details about which chunks are compressed
-*   Get compression statistics and fetch the chunk size after compression
+*   从块中提取信息，如名称和时间范围
+*   获取有关哪些块被压缩的额外详细信息
+*   获取压缩统计信息并获取压缩后块的大小
 
-### Extract information from chunks
+### 从块中提取信息
 
-To extract information from chunks, you can use the
-`timescaledb_information.chunks` view that the TimescaleDB extension provides.
+要从块中提取信息，您可以使用TimescaleDB扩展提供的`timescaledb_information.chunks`视图。
 
-This query returns the time-series range of each chunk:
+此查询返回每个块的时间序列范围：
 
 ```sql
  SELECT hypertable_schema,
@@ -127,7 +80,7 @@ This query returns the time-series range of each chunk:
  FROM timescaledb_information.chunks LIMIT 1;
 ```
 
-Sample row vertically output to explore:
+垂直输出的样本行以供探索：
 
 ```sql
 -[ RECORD 1 ]-----+-----------------------
@@ -138,18 +91,11 @@ range_start       | 2021-04-29 00:00:00+00
 range_end         | 2021-05-06 00:00:00+00
 ```
 
-The chunk name returned with the dataset is unique, and can be used in other
-queries to retrieve enhanced details about each chunk. In this example, the
-chunk has a `range_start` and `range_end` that spans one week. As new data is
-inserted into the table, any data that has a timestamp between 2021-04-29 and
-2021-05-06 is stored on this specific chunk for the `conditions` table.
+返回的数据集的块名称是唯一的，并且可以在其他查询中使用以检索有关每个块的增强详细信息。在这个例子中，块有一个`range_start`和`range_end`，跨越了一周。随着新数据插入表中，任何时间戳在2021-04-29和2021-05-06之间的数据都存储在这个特定的`conditions`表的块上。
 
-### Get details about compression status for a chunk
+### 获取块的压缩状态详细信息
 
-When you know the name and time range of each chunk, you need to get more
-detail about the compression status and how much disk is being saved by
-compressing the data. You can get this additional information by querying the
-`chunk_compression_stats` function with the `conditions` hypertable:
+当您知道每个块的名称和时间范围时，您需要获取有关压缩状态以及通过压缩数据节省了多少磁盘空间的更多详细信息。您可以通过使用`chunk_compression_stats`函数查询`conditions`超表来获取这些额外信息：
 
 ```sql
 tsdb=> SELECT * FROM chunk_compression_stats('conditions');
@@ -180,11 +126,9 @@ after_compression_total_bytes  |
 node_name                      |
 ```
 
-### Get compression stats and size
+### 获取压缩统计信息和大小
 
-When the chunk is uncompressed, this query does not show the size of the chunk.
-To get the size of uncompressed chunks, use the `chunks_detailed_size` function,
-and pass the hypertable name as a parameter:
+当块未压缩时，此查询不显示块的大小。要获取未压缩块的大小，请使用`chunks_detailed_size`函数，并传递超表名称作为参数：
 
 ```sql
 tsdb=> SELECT * FROM chunks_detailed_size('conditions');
@@ -198,14 +142,11 @@ total_bytes  | 147456
 node_name    |
 ```
 
-You can use the `total_bytes` information in this function to see that the chunk
-is uncompressed.
+您可以使用此函数中的`total_bytes`信息查看块是未压缩的。
 
-### Building views for our TimescaleDB metrics
+### 构建TimescaleDB指标的视图
 
-Now that you know how to gather all of the data you need to drive the
-visualization, it's time to join it together in a view that can be queried using
-SQL (and eventually, our application).
+现在您知道如何收集驱动可视化所需的所有数据，是时候将它们组合在一个可以使用SQL查询的视图中了（最终，我们的应用程序将查询此视图）。
 
 ```sql
 CREATE OR REPLACE VIEW chunks_with_compression AS
@@ -232,18 +173,12 @@ FROM (
 ```
 
 <Highlight type="warning">
-The view is dependent on TimescaleDB internals. You might need to drop the view
-to upgrade the TimescaleDB extension, and recreate it after the upgrade.
+视图依赖于TimescaleDB内部。您可能需要在升级TimescaleDB扩展时删除视图，并在升级后重新创建它。
 </Highlight>
 
-To test, use the name of a random chunk from the hypertable to query this view
-and check that you get all of the information you need. You should see the time
-range of the chunk, the hypertable information, and its size before and after
-compression.
+要测试，请使用超表中的随机块名称来查询此视图，并检查您是否获得了所需的所有信息。您应该看到块的时间范围、超表信息以及压缩前后的大小。
 
-In this example chunk, the `before_compression_total_bytes` is ten times bigger
-than `after_compression_total_bytes`. Compression saved more than 90% of disk
-space!
+在这个示例块中，`before_compression_total_bytes`是`after_compression_total_bytes`的十倍。压缩节省了超过90%的磁盘空间！
 
 ```sql
 SELECT * FROM  chunks_with_compression;
@@ -259,17 +194,15 @@ before_compression_total_bytes | 90112
 after_compression_total_bytes  | 8192
 ```
 
-## Setting up your database
 
-In this example, we are using data generated by our
-Simulating IoT sensor data tutorial. This data results in a
-simple schema and data that mimics a number of IoT sensors with information on
-time, device, and temperature.
 
-By following the tutorial, you have a table named `conditions`, which stores the
-temperature of example devices over time.
+## 设置数据库
 
-Use these commands to create the table and generate some sample data:
+在这个例子中，我们使用的是我们的模拟IoT传感器数据教程生成的数据。这些数据产生了一个简单的模式和数据，模仿了多个IoT传感器的信息，包括时间、设备和温度。
+
+按照教程操作后，您将拥有一个名为`conditions`的表，该表存储了示例设备随时间变化的温度数据。
+
+使用以下命令创建表并生成一些样本数据：
 
 ```sql
 CREATE TABLE conditions (
@@ -286,50 +219,30 @@ INSERT INTO conditions
   FROM generate_series(TIMESTAMP '2020-01-01 00:00:00',
                        TIMESTAMP '2020-01-01 00:00:00' + INTERVAL '1 month',
              INTERVAL '1 min') AS time;
-
 ```
 
-## Connecting to the database and retrieving metrics
+## 连接数据库和检索指标
 
-When you write a backend application, you need to protect the database and
-expose only the required information to an authorized user. The Hasura GraphQL
-Engine does this by providing GraphQL APIs over new or existing PostgreSQL
-databases. This allows you to create permission rules and dynamically expand
-your database resources.
+当您编写后端应用程序时，需要保护数据库并仅向授权用户暴露所需的信息。Hasura GraphQL Engine通过为新的或现有的PostgreSQL数据库提供GraphQL API来实现这一点。这允许您创建权限规则并动态扩展数据库资源。
 
-When you have your sample database set up, you can use the
-[Hasura cloud][hasura-cloud] to connect the resources that we want to expose
-through GraphQL. Hasura is a good option because it connects to our TimescaleDB
-database and quickly exposes the tables, views, and functions you need. For
-more information about setting up a new data source on Hasura, check out their
-wizard.
+当您设置好样本数据库后，可以使用[Hasura云][hasura-cloud]连接我们想要通过GraphQL公开的资源。Hasura是一个很好的选择，因为它连接到我们的TimescaleDB数据库，并快速公开您需要的表、视图和函数。有关在Hasura上设置新数据源的更多信息，请查看他们的向导。
 
-We're going to use two types of operations:
+我们将使用两种类型的操作：
 
-*   Queries and subscriptions: watch a specific query and keep pulling data
-    updates to the client. In this example, you subscribe to the chunks'
-    metadata.
-*   Mutation: convention for operations that write data. In this example, you
-    map the compression and decompression actions as mutations.
+*   查询和订阅：监视特定查询并持续向客户端拉取数据更新。在这个例子中，您订阅块的元数据。
+*   突变：写入数据操作的约定。在这个例子中，您将压缩和解压缩操作映射为突变。
 
-### Queries and subscriptions
+### 查询和订阅
 
-Hasura allows you to attach any resource and offer it as a query or a
-subscription. In this example, you map the `chunks_with_compression` view you
-created earlier as a GraphQL resource, so it can be consumed as a query or
-subscription. You can then map the changes, or mutations, as you compress and
-decompress a chunk. This image describes a SQL view is tracked on Hasura:
+Hasura允许您附加任何资源并将其作为查询或订阅提供。在这个例子中，您将之前创建的`chunks_with_compression`视图映射为GraphQL资源，因此它可以被用作查询或订阅。然后，您可以将变化或突变映射为压缩和解压缩块。这张图片描述了在Hasura上跟踪SQL视图：
 
-![Tracking a SQL view on Hasura cloud](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasura-cloud-track-view.png)
+![在Hasura云上跟踪SQL视图](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasura-cloud-track-view.png) 
 
-### Mutations
+### 突变
 
-Hasura can map custom types that come from table structures. To create the
-necessary mutations, functions need to return types that inherit from table
-structures. To create a new structure of the table from a query, call the query
-with limit 0:
+Hasura可以将来自表结构的自定义类型映射。要创建必要的突变，函数需要返回继承自表结构的类型。要从查询中创建表的新结构，请使用限制为0的查询调用：
 
-#### Compress chunk mutation
+#### 压缩块突变
 
 ```sql
 CREATE TABLE compressed_chunk AS
@@ -338,9 +251,7 @@ FROM   timescaledb_information.chunks c
 WHERE  NOT c.is_compressed limit 0;
 ```
 
-Hasura needs a function to be tracked as a mutation. Create a function to rewrap
-the default `compress_chunk` from the TimescaleDB extension, and return the
-"compressed_chunk" in a function that compresses the chunk:
+Hasura需要一个函数作为突变进行跟踪。创建一个函数重新包装TimescaleDB扩展中的默认`compress_chunk`，并在压缩块的函数中返回“compressed_chunk”：
 
 ```sql
 CREATE OR REPLACE FUNCTION compress_chunk_named(varchar) returns setof compressed_chunk AS $$
@@ -351,14 +262,13 @@ CREATE OR REPLACE FUNCTION compress_chunk_named(varchar) returns setof compresse
 $$ LANGUAGE SQL VOLATILE;
 ```
 
-Note that the function adds an extra `where` clause so that it does not compress
-a chunk that is already compressed.
+请注意，该函数添加了一个额外的`where`子句，以便它不会压缩已经压缩的块。
 
-![Tracking compress chunk mutation on Hasura cloud](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasura-cloud-compress-chunk-mutation.png)
+![在Hasura云上跟踪压缩块突变](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasura-cloud-compress-chunk-mutation.png) 
 
-#### Decompress chunk mutation
+#### 解压缩块突变
 
-You also need a similar function for decompression:
+您还需要一个类似的函数进行解压缩：
 
 ```sql
 CREATE OR REPLACE FUNCTION decompress_chunk_named(varchar) returns setof compressed_chunk AS $$
@@ -369,56 +279,41 @@ CREATE OR REPLACE FUNCTION decompress_chunk_named(varchar) returns setof compres
 $$ LANGUAGE SQL VOLATILE;
 ```
 
-The next step is to go to the Hasura cloud and connect the database as a new
-data source. In the data panel, set up the PostgreSQL URI of your database, and
-then you can track each function as a query or mutation. This is an example of
-the `compress_chunk_named` function. In our case, the subscription goes to the
-`chunks_with_compression` function. You can also track `decompress_chunk_named`
-and `compress_chunk_named` as GQL mutations with a single argument.
+下一步是前往Hasura云并将数据库连接为新的数据源。在数据面板中，设置数据库的PostgreSQL URI，然后您可以将每个函数作为查询或突变进行跟踪。这是`compress_chunk_named`函数的一个示例。在我们的例子中，订阅是`chunks_with_compression`函数。您也可以将`decompress_chunk_named`和`compress_chunk_named`作为具有单个参数的GQL突变进行跟踪。
 
-## Build the front-end visualization
+## 构建前端可视化
 
-For the full code of our front-end application, see our
-[GitHub repo][repo-example]. The front-end application connects to the Hasura
-GraphQL layer you created, then connects to the TimescaleDB database to retrieve
-information about chunks and compression status. The front-end application then
-renders the image for the visualization.
+有关我们前端应用程序的完整代码，请查看我们的[GitHub仓库][repo-example]。前端应用程序连接到您创建的Hasura GraphQL层，然后连接到TimescaleDB数据库以检索有关块和压缩状态的信息。然后前端应用程序渲染可视化图像。
 
-As a summary, the front-end:
+作为总结，前端：
 
-1.  Subscribes to the API with GraphQL
-1.  Creates an SVG component
-1.  Iterates over all the chunks, and adds circles in the previous component
-1.  Styles the circle and adds events to interact with the image
+1.  使用GraphQL订阅API
+1.  创建SVG组件
+1.  遍历所有块，并在前面的组件中添加圆圈
+1.  样式化圆圈并添加事件以与图像交互
 
-## Summary
+## 总结
 
-TimescaleDB is a powerful relational database for time-series data, bringing the
-full spectrum of tools and dashboards available for PostgreSQL.
+TimescaleDB是一个强大的关系数据库，用于时间序列数据，带来了PostgreSQL可用的全套工具和仪表板。
 
-In this tutorial you learned how to collect hypertables metadata from
-TimescaleDB internals. Expose it through GraphQL and fetch the data using a
-React client.
+在本教程中，您学会了如何从TimescaleDB内部收集超表元数据。通过GraphQL公开它，并使用React客户端获取数据。
 
-You can get the full code for this project from
-[this GitHub repo][repo-example].
+您可以从[这个GitHub仓库][repo-example]获取这个项目的完整代码。
 
-This tutorial was originally created for HasuraCon 2021.
+本教程最初是为HasuraCon 2021创建的。
 
-[![Click here to watch the video](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasuracon-talk-thumbnail.png)](https://hasura.io/events/hasura-con-2021/talks/visualizing-timescale-db-%20compression-status-in-real-time-with-hasura/ "Watch compression status in real time with Hasura")
+[![点击这里观看视频](https://assets.timescale.com/docs/images/tutorials/visualizing-compression/hasuracon-talk-thumbnail.png)](https://hasura.io/events/hasura-con-2021/talks/visualizing-timescale-db-%20compression-status-in-real-time-with-hasura/  "使用Hasura实时观看压缩状态")
 
-We hope you find new ways to explore your data and make your decisions smarter
-and data-driven. If you get any interesting results or have any questions about
-this tutorial, drop us a line on our [community Slack channel][timescale-slack].
+我们希望您能找到新的方法来探索您的数据，并使您的决策更智能、数据驱动。如果您有任何有趣的结果或对本教程有任何疑问，请在我们的[社区Slack频道][timescale-slack]上留言。
 
-[Hasura]: http://hasura.io/
-[TimescaleDB]: https://timescale.com/
+[Hasura]: http://hasura.io/ 
+[TimescaleDB]: https://timescale.com/ 
 [caggs]: /use-timescale/:currentVersion:/continuous-aggregates/
 [compression]: /use-timescale/:currentVersion:/compression/
 [data retention]: /use-timescale/:currentVersion:/data-retention/
-[hasura-cloud]: https://cloud.hasura.io/
+[hasura-cloud]: https://cloud.hasura.io/ 
 [hypertables]: /use-timescale/:currentVersion:/hypertables/
-[repo-example]: https://github.com/timescale/examples/tree/master/compression-preview
+[repo-example]: https://github.com/timescale/examples/tree/master/compression-preview 
 [timescale-install]: /getting-started/latest/
-[timescale-signup]: http://console.cloud.timescale.com/signup
+[timescale-signup]: http://console.cloud.timescale.com/signup 
 [timescale-slack]: https://slack.timescale.com
