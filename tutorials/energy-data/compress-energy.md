@@ -1,52 +1,30 @@
 ---
-title: Energy consumption data tutorial - set up compression
-excerpt: Compress the dataset so you can store the energy comnsumption data more efficiently
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, query]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze energy consumption data
+标题: 能源消耗数据教程 —— 设置压缩
+摘要: 压缩数据集，以便能更高效地存储能源消耗数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，查询]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析能源消耗数据
 ---
+# 设置压缩并压缩数据集
 
-# Set up compression and compress the dataset
+您现在已经看到了如何为您的能耗数据集创建一个超表并查询它。当摄入这样的数据集时，很少需要更新旧数据，随着时间的推移，表中的数据量会增长。随着时间的推移，您最终会有很多数据，由于这些数据大多是不可变的，您可以压缩它以节省空间并避免产生额外成本。
 
-You have now seen how to create a hypertable for your energy consumption
-dataset and query it. When ingesting a dataset like this
-is seldom necessary to update old data and over time the amount of
-data in the tables grows. Over time you end up with a lot of data and
-since this is mostly immutable you can compress it to save space and
-avoid incurring additional cost.
+可以使用像 ZFS 和 Btrfs 提供的面向磁盘的压缩，但由于 TimescaleDB 是为处理事件导向数据（例如时间序列）而构建的，因此它支持在超表中压缩数据。
 
-It is possible to use disk-oriented compression like the support
-offered by ZFS and Btrfs but since TimescaleDB is build for handling
-event-oriented data (such as time-series) it comes with support for
-compressing data in hypertables.
+TimescaleDB 压缩允许您以更高效的格式存储数据，与普通的 PostgreSQL 表相比，压缩比率可高达 20 倍，但这当然高度依赖于数据和配置。
 
-TimescaleDB compression allows you to store the data in a vastly more
-efficient format allowing up to 20x compression ratio compared to a
-normal PostgreSQL table, but this is of course highly dependent on the
-data and configuration.
+TimescaleDB 压缩是在 PostgreSQL 中本地实现的，不需要特殊的存储格式。相反，它依赖于 PostgreSQL 的特性，在压缩之前将数据转换为列式格式。使用列式格式可以更好地压缩比率，因为相似的数据被存储在相邻位置。有关压缩格式的更多详细信息，您可以查看[压缩设计][compression-design]部分。
 
-TimescaleDB compression is implemented natively in PostgreSQL and does
-not require special storage formats. Instead it relies on features of
-PostgreSQL to transform the data into columnar format before
-compression. The use of a columnar format allows better compression
-ratio since similar data is stored adjacently. For more details on how
-the compression format looks, you can look at the [compression
-design][compression-design] section.
-
-A beneficial side-effect of compressing data is that certain queries
-are significantly faster since less data has to be read into
-memory.
+压缩数据的一个有益副作用是某些查询会显著加快，因为需要读取到内存中的数据减少了。
 
 <Procedure>
 
-## Compression setup
+## 压缩设置
 
-1.  Connect to the Timescale database that contains the energy
-    dataset using, for example `psql`.
-1.  Enable compression on the table and pick suitable segment-by and
-    order-by column using the `ALTER TABLE` command:
+1. 使用例如 `psql` 连接到包含能耗数据集的 Timescale 数据库。
+1. 使用 `ALTER TABLE` 命令在表上启用压缩，并选择适当的 segment-by 和 order-by 列：
 
     ```sql
     ALTER TABLE metrics 
@@ -56,21 +34,15 @@ memory.
         timescaledb.compress_orderby='created DESC'
     );
     ``` 
-    Depending on the choice if segment-by and order-by column you can
-    get very different performance and compression ratio. To learn
-    more about how to pick the correct columns, see
-    [here][segment-by-columns].
-1.  You can manually compress all the chunks of the hypertable using
-    `compress_chunk` in this manner:
+    根据您的 segment-by 和 order-by 列的选择，您可以获得非常不同的性能和压缩比率。要了解更多关于如何选择正确的列，请查看[这里][segment-by-columns]。
+1. 您可以手动使用以下方式压缩超表的所有块：
+
     ```sql
     SELECT compress_chunk(c) from show_chunks('metrics') c;
     ```
-    You can also [automate compression][automatic-compression] by
-    adding a [compression policy][add_compression_policy] which will
-    be covered below.
+    您还可以[自动压缩][automatic-compression]，通过添加[压缩策略][add_compression_policy]，稍后将介绍。
 
-1.  Now that you have compressed the table you can compare the size of
-    the dataset before and after compression:
+1. 现在您已经压缩了表，您可以比较压缩前后数据集的大小：
 
     ```sql
     SELECT 
@@ -78,7 +50,7 @@ memory.
         pg_size_pretty(after_compression_total_bytes) as after
      FROM hypertable_compression_stats('metrics');
     ```
-	This shows a significant improvement in data usage:
+    这显示了数据使用量的显著改进：
 
     ```sql
      before | after 
@@ -89,62 +61,46 @@ memory.
 
 </Procedure>
 
-## Add a compression policy
+## 添加压缩策略
 
-To avoid running the compression step each time you have some data to
-compress you can set up a compression policy. The compression policy
-allows you to compress data that is older than a particular age, for
-example, to compress all chunks that are older than 8 days:
+为了避免每次有数据需要压缩时都运行压缩步骤，您可以设置一个压缩策略。压缩策略允许您压缩超过特定年龄的数据，例如，压缩所有超过 8 天的块：
 
 ```sql
 SELECT add_compression_policy('metrics', INTERVAL '8 days');
 ```
 
-Compression policies run on a regular schedule, by default once every
-day, which means that you might have up to 9 days of uncompressed data
-with the setting above.
+压缩策略按照定期计划运行，默认情况下每天一次，这意味着使用上述设置，您可能有多达 9 天的未压缩数据。
 
-You can find more information on compression policies in the
-[add_compression_policy][add_compression_policy] section.
+您可以在[add_compression_policy][add_compression_policy]部分找到有关压缩策略的更多信息。
 
+## 利用查询加速
 
-## Taking advantage of query speedups
+之前，压缩被设置为按 `type_id` 列值分割。这意味着通过过滤或在该列上分组获取数据将更加高效。排序也设置为 `created` 降序，因此如果您运行尝试以该排序顺序排序数据的查询，您应该看到性能优势。
 
-
-Previously, compression was set up to be segmented by `type_id` column value.
-This means fetching data by filtering or grouping on that column will be 
-more efficient. Ordering is also set to `created` descending so if you run queries
-which try to order data with that ordering, you should see performance benefits. 
-
-For instance, if you run the query example from previous section:
+例如，如果您运行上一节的查询示例：
 ```sql
 SELECT time_bucket('1 day', created, 'Europe/Berlin') AS "time",
         round((last(value, created) - first(value, created)) * 
 100.) / 100. AS value
-FROM metrics                                   
+FROM metrics                                     
 WHERE type_id = 5
 GROUP BY 1;
 ```
 
-You should see a decent performance difference when the dataset is compressed and
-when is decompressed. Try it yourself by running the previous query, decompressing
-the dataset and running it again while timing the execution time. You can enable
-timing query times in psql by running:
+当数据集被压缩和未被压缩时，您应该看到相当大的性能差异。自己尝试一下，运行之前的查询，解压数据集，再次运行它，并计时执行时间。您可以通过运行以下命令在 psql 中启用计时查询时间：
 
 ```sql
     \timing
 ```
 
-To decompress the whole dataset, run:
+要解压整个数据集，请运行：
 ```sql
     SELECT decompress_chunk(c) from show_chunks('metrics') c;
 ```
 
-On an example setup, speedup performance observed was an order of magnitude,
-30 ms when compressed vs 360 ms when decompressed.
+在一个示例设置中，观察到的性能提升是一个数量级，压缩时为 30 毫秒，未压缩时为 360 毫秒。
 
-Try it yourself and see what you get!
-
+自己尝试一下，看看您得到的结果！
 
 [segment-by-columns]: /use-timescale/:currentVersion:/compression/about-compression/#segment-by-columns
 [automatic-compression]: /tutorials/:currentVersion:/energy-data/compress-energy/#add-a-compression-policy
