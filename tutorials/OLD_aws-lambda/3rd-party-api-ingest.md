@@ -1,36 +1,28 @@
 ---
-title: Pull and ingest data from a third-party API
-excerpt: Build a data pipeline to pull data from a third-party finance API into TimescaleDB
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, AWS Lambda, psycopg2, pandas, GitHub Actions, pipeline]
+标题: 从第三方 API 提取并摄取数据
+摘要: 构建一个数据管道，用于将数据从第三方金融 API 提取到 TimescaleDB 中。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，AWS Lambda，psycopg2，Pandas，GitHub 操作，管道]
 ---
 
-# Pull and ingest data from a third-party API
+# 从第三方API拉取并摄入数据
 
-This tutorial builds a data pipeline that pulls data from a third-party finance
-API and loads it into TimescaleDB.
+本教程构建了一个数据管道，从第三方财务API拉取数据并将其加载到TimescaleDB中。
 
-This tutorial requires multiple libraries. This can make your deployment package
-size  larger than the 250&nbsp;MB limit of Lambda. You can use a Docker
-container to extend the package size up to 10&nbsp;GB, giving you much more
-flexibility in libraries and dependencies. For more about AWS Lambda container
-support, see the [AWS documentation][aws-lambda-docs].
+本教程需要多个库。这可能会使您的部署包大小超过Lambda的250MB限制。您可以使用Docker容器将包大小扩展到10GB，为您提供更多的库和依赖灵活性。有关AWS Lambda容器支持的更多信息，请参见[AWS文档][aws-lambda-docs]。
 
-The libraries used in this tutorial:
+本教程中使用的库：
 
 *   [`pandas`][pandas]
 *   `requests`
 *   [`psycopg2`][psycopg2]
 *   [`pgcopy`][pgcopy]
 
-## Create an ETL function
+## 创建ETL函数
 
-Extract, transform, and load (ETL) functions are used to pull data from one
-database and ingest the data into another. In this tutorial, the ETL function
-pulls data from a finance API called Alpha Vantage, and inserts the data into
-TimescaleDB. The connection is made using the values from environment variables.
+提取、转换和加载（ETL）函数用于从一个数据库拉取数据并将其摄入到另一个数据库中。在本教程中，ETL函数从名为Alpha Vantage的财务API拉取数据，并将数据插入到TimescaleDB中。连接使用环境变量中的值进行。
 
-This is the ETL function used in this tutorial:
+这是本教程中使用的ETL函数：
 
 ```python
 # function.py:
@@ -56,29 +48,29 @@ columns = ('time', 'price_open', 'price_close',
           'price_low', 'price_high', 'trading_volume', 'symbol')
 
 def get_symbols():
-   """Read symbols from a csv file.
+   """从csv文件中读取符号。
 
-   Returns:
-       [list of strings]: symbols
+   返回：
+       [字符串列表]：符号
    """
    with open('symbols.csv') as f:
        reader = csv.reader(f)
        return [row[0] for row in reader]
 
 def fetch_stock_data(symbol, month):
-   """Fetches historical intraday data for one ticker symbol (1-min interval)
+   """获取一个股票符号的历史日内数据（1分钟间隔）
 
-   Args:
-       symbol (string): ticker symbol
-       month (int): month value as an integer 1-24 (for example month=4 fetches data from the last 4 months)
+   参数：
+       symbol (字符串)：股票符号
+       month (整数)：月份值，整数1-24（例如month=4获取过去4个月的数据）
 
-   Returns:
-       list of tuples: intraday (candlestick) stock data
+   返回：
+       元组列表：日内（K线）股票数据
    """
    interval = '1min'
    slice = 'year1month' + str(month) if month <= 12 else 'year2month1' + str(month)
    apikey = config['APIKEY']
-   CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&' \
+   CSV_URL = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY_EXTENDED&&#39;  \
              'symbol={symbol}&interval={interval}&slice={slice}&apikey={apikey}' \
              .format(symbol=symbol, slice=slice, interval=interval,apikey=apikey)
    df = pd.read_csv(CSV_URL)
@@ -106,9 +98,9 @@ def handler(event, context):
            conn.commit()
 ```
 
-## Add a requirements file
+## 添加依赖文件
 
-When you have created the ETL function, you need to include the libraries you want to install. You can do this by creating a text file in your project called `requirements.txt` that lists the libraries. This is the `requirements.txt` file used in this tutorial:
+当您创建了ETL函数后，您需要包括您想要安装的库。您可以通过在项目中创建一个名为`requirements.txt`的文本文件来列出库。这是本教程中使用的`requirements.txt`文件：
 
 ```txt
 pandas
@@ -118,33 +110,31 @@ pgcopy
 ```
 
 <Highlight type="note">
-This example uses `psycopg2-binary` instead of `psycopg2` in the
-`requirements.txt` file. The binary version of the library contains all its
-dependencies, so that you don't need to install them separately.
+此示例在`requirements.txt`文件中使用`psycopg2-binary`而不是`psycopg2`。库的二进制版本包含其所有依赖项，因此您不需要单独安装它们。
 </Highlight>
 
-## Create the Dockerfile
+## 创建Dockerfile
 
-When you have the requirements set up, you can create the Dockerfile for the project.
+当您设置了依赖项后，您可以为项目创建Dockerfile。
 
 <Procedure>
 
-### Creating the Dockerfile
+### 创建Dockerfile
 
-1.  Use an AWS Lambda base image:
+1.  使用AWS Lambda基础镜像：
 
     ```docker
     FROM public.ecr.aws/lambda/python:3.8
     ```
 
-1.  Copy all project files to the root directory:
+1.  将所有项目文件复制到根目录：
 
     ```docker
     COPY function.py .
     COPY requirements.txt .
     ```
 
-1.  Install the libraries using the requirements file:
+1.  使用依赖文件安装库：
 
     ```docker
     RUN pip install -r requirements.txt
@@ -153,16 +143,15 @@ When you have the requirements set up, you can create the Dockerfile for the pro
 
 </Procedure>
 
-## Upload the image to ECR
+## 将镜像上传到ECR
 
-To connect the container image to a Lambda function, you need to upload it to
-the AWS Elastic Container Registry (ECR).
+要将容器镜像连接到Lambda函数，您需要将其上传到AWS Elastic Container Registry (ECR)。
 
 <Procedure>
 
-### Uploading the image to ECR
+### 将镜像上传到ECR
 
-1.  Log in to the Docker command line interface:
+1.  登录到Docker命令行界面：
 
     ```bash
     aws ecr get-login-password --region us-east-1 \
@@ -170,26 +159,25 @@ the AWS Elastic Container Registry (ECR).
     --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
     ```
 
-1.  Build the image:
+1.  构建镜像：
 
     ```bash
     docker build -t lambda-image .
     ```
 
-1.  Create a repository in ECR. In this example, the repository is
-    called `lambda-image`:
+1.  在ECR中创建一个仓库。在这个示例中，仓库名为`lambda-image`：
 
     ```bash
     aws ecr create-repository --repository-name lambda-image
     ```
 
-1.  Tag your image using the same name as the repository:
+1.  使用与仓库相同的名称标记您的镜像：
 
     ```bash
     docker tag lambda-image:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/lambda-image:latest
     ```
 
-1.  Deploy the image to Amazon ECR with Docker:
+1.  使用Docker将镜像部署到Amazon ECR：
 
     ```bash
     docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/lambda-image:latest        
@@ -197,11 +185,9 @@ the AWS Elastic Container Registry (ECR).
 
 </Procedure>
 
-## Create a Lambda function from the container
+## 从容器创建Lambda函数
 
-To create a Lambda function from your container, you can use the Lambda
-`create-function` command. You need to define the `--package-type` parameter as
-`image`, and add the ECR Image URI using the `--code` flag:
+要从您的容器创建Lambda函数，您可以使用Lambda `create-function`命令。您需要将`--package-type`参数定义为`image`，并使用`--code`标志添加ECR Image URI：
 
 ```bash
 aws lambda create-function --region us-east-1 \
@@ -209,22 +195,21 @@ aws lambda create-function --region us-east-1 \
 --code ImageUri=<ECR Image URI> --role <ARN_LAMBDA_ROLE>
 ```
 
-## Schedule the Lambda function
+## 定时触发Lambda函数
 
-If you want to run your Lambda function according to a schedule, you can set up
-an EventBridge trigger. This creates a rule using a [`cron` expression][cron-examples].
+如果您希望根据计划运行Lambda函数，可以设置EventBridge触发器。这会使用[`cron`表达式][cron-examples]创建一个规则。
 
 <Procedure>
 
-### Scheduling the Lambda function
+### 定时触发Lambda函数
 
-1.  Create the schedule. In this example, the function runs every day at 9 AM:
+1.  创建计划。在这个示例中，函数每天上午9点运行：
 
     ```bash
     aws events put-rule --name schedule-lambda --schedule-expression 'cron(0 9 * * ? *)'
     ```
 
-1.  Grant the necessary permissions for the Lambda function:
+1.  授予Lambda函数必要的权限：
 
     ```bash
     aws lambda add-permission --function-name <FUNCTION_NAME> \
@@ -232,8 +217,7 @@ an EventBridge trigger. This creates a rule using a [`cron` expression][cron-exa
     --principal events.amazonaws.com
     ```
 
-1.  Add the function to the EventBridge rule, by creating a `targets.json` file
-    containing a memorable, unique string, and the ARN of the Lambda Function:
+1.  通过创建一个包含易于记忆的唯一字符串和Lambda函数ARN的`targets.json`文件，将函数添加到EventBridge规则：
 
     ```json
     [
@@ -244,8 +228,7 @@ an EventBridge trigger. This creates a rule using a [`cron` expression][cron-exa
     ]
     ```
 
-1.  Add the Lambda function, referred to in this command as the `target`, to
-    the rule:
+1.  将Lambda函数，在此命令中称为`target`，添加到规则：
 
     ```bash
     aws events put-targets --rule schedule-lambda --targets file://targets.json
@@ -254,19 +237,16 @@ an EventBridge trigger. This creates a rule using a [`cron` expression][cron-exa
 </Procedure>
 
 <Highlight type="important">
-If you get an error saying `Parameter ScheduleExpression is not valid`, you
-might have made a mistake in the cron expression. Check the [cron expression examples](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions)
-documentation.
+如果您收到错误消息`Parameter ScheduleExpression is not valid`，您可能在cron表达式中犯了一个错误。请检查[cron表达式示例](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions)文档。
 </Highlight>
 
-You can check if the rule is connected correctly to the Lambda function in the
-AWS console. Navigate to Amazon EventBridge → Events → Rules, and click the rule
-you created. The Lambda function's name is listed under `Target(s)`:
+您可以在AWS控制台中检查规则是否正确连接到Lambda函数。导航到Amazon EventBridge → Events → Rules，然后点击您创建的规则。Lambda函数的名称列在`Target(s)`下：
 
-<img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/targets.png" alt="Lamdba function target in AWS Console"/>
+<img class="main-content__illustration" src="https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/targets.png&#34;  alt="Lamdba function target in AWS Console"/>
 
-[aws-lambda-docs]: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
-[cron-examples]: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions
-[pandas]: https://pandas.pydata.org/
-[pgcopy]: https://github.com/G-Node/pgcopy
+[aws-lambda-docs]: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html 
+[cron-examples]: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html#eb-cron-expressions 
+[pandas]: https://pandas.pydata.org/ 
+[pgcopy]: https://github.com/G-Node/pgcopy 
 [psycopg2]: https://github.com/jkehler/awslambda-psycopg2
+
