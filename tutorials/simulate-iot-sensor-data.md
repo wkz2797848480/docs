@@ -1,35 +1,34 @@
 ---
-title: Simulate an IoT sensor dataset
-excerpt: Simulate an IOT dataset in your Timescale Cloud service
-products: [cloud, mst, self_hosted]
-keywords: [IoT, simulate]
+标题: 模拟物联网传感器数据集
+摘要: 在你的 Timescale 云服务中模拟物联网数据集。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [物联网，模拟]
 ---
 
 import ImportPrerequisites from "versionContent/_partials/_migrate_import_prerequisites.mdx";
 
-# Simulate an IoT sensor dataset
+# 模拟物联网传感器数据集
 
-The Internet of Things (IoT) describes a trend where computing capabilities are embedded into IoT devices. That is, physical objects, ranging from light bulbs to oil wells. Many IoT devices collect sensor data about their environment and generate time-series datasets with relational metadata.
+物联网（IoT）描述了一种趋势，即将计算能力嵌入到物联网设备中。也就是说，从灯泡到油井等物理对象。许多物联网设备收集关于其环境的传感器数据，并生成具有关系元数据的时间序列数据集。
 
-It is often necessary to simulate IoT datasets. For example, when you are 
-testing a new system. This tutorial shows how to simulate a basic dataset in your $SERVICE_LONG, and then run simple queries on it.
+通常需要模拟物联网数据集。例如，当您测试新系统时。本教程展示了如何在您的 $SERVICE_LONG 中模拟基本数据集，然后对其运行简单查询。
 
-To simulate a more advanced dataset, see [Time-series Benchmarking Suite (TSBS)][tsbs].
+要模拟更高级的数据集，请参见[时间序列基准测试套件（TSBS）][tsbs]。
 
-## Prerequisites
+## 先决条件
 
-To follow this tutorial, you need to:
+要遵循本教程，您需要：
 
-- [Create a target Timescale Cloud service][create-a-service].
-- [Connect to your service][connect-to-service].
+- [创建目标 Timescale Cloud 服务][create-a-service]。
+- [连接到您的服务][connect-to-service]。
 
-## Simulate a dataset
+## 模拟数据集
 
-<Procedure>
+<程序>
 
-To simulate a dataset, run the following queries:
+要模拟数据集，请运行以下查询：
 
-1. **Create the `sensors` and `sensor_data` tables**:
+1. **创建 `sensors` 和 `sensor_data` 表**：
 
     ```sql
     CREATE TABLE sensors(
@@ -49,13 +48,13 @@ To simulate a dataset, run the following queries:
     );
     ```
 
-1. **Convert `sensor_data` into a hypertable**:
+1. **将 `sensor_data` 转换为超表**：
 
     ```sql
     SELECT create_hypertable('sensor_data', 'time');
     ```
 
-1. **Populate the `sensors` table**:
+1. **填充 `sensors` 表**：
 
     ```sql
     INSERT INTO sensors (type, location) VALUES
@@ -65,13 +64,13 @@ To simulate a dataset, run the following queries:
     ('b', 'ceiling');
     ```
 
-1. **Verify that the sensors have been added correctly**:
+1. **验证传感器是否已正确添加**：
 
     ```sql
     SELECT * FROM sensors;
     ```
 
-    Sample output:
+    样本输出：
 
     ```
      id | type | location
@@ -83,7 +82,7 @@ To simulate a dataset, run the following queries:
     (4 rows)
     ```
 
-1. **Generate and insert a dataset for all sensors:**
+1. **为所有传感器生成并插入数据集**：
 
     ```sql
     INSERT INTO sensor_data (time, sensor_id, cpu, temperature)
@@ -95,13 +94,13 @@ To simulate a dataset, run the following queries:
     FROM generate_series(now() - interval '24 hour', now(), interval '5 minute') AS g1(time), generate_series(1,4,1) AS g2(sensor_id);
     ```
 
-1. **Verify the simulated dataset**:
+1. **验证模拟的数据集**：
 
     ```sql
     SELECT * FROM sensor_data ORDER BY time;
     ```
 
-    Sample output:
+    样本输出：
 
     ```
                  time              | sensor_id |    temperature     |         cpu         
@@ -119,11 +118,11 @@ To simulate a dataset, run the following queries:
 
 </Procedure>
 
-## Run basic queries 
+## 运行基本查询
 
-After you simulate a dataset, you can run some basic queries on it. For example:
+模拟数据集后，您可以在其上运行一些基本查询。例如：
 
-- Average temperature and CPU by 30-minute windows:
+- 每30分钟窗口的平均温度和 CPU：
 
    ```sql
    SELECT
@@ -134,7 +133,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
    GROUP BY period;
    ```
    
-   Sample output:
+   样本输出：
    
    ```
             period         |     avg_temp     |      avg_cpu      
@@ -147,7 +146,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
     ...
    ```
 
-- Average and last temperature, average CPU by 30-minute windows:
+- 每30分钟窗口的平均和最后温度，平均 CPU：
 
    ```sql
    SELECT
@@ -159,7 +158,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
    GROUP BY period;
    ```
    
-   Sample output:
+   样本输出：
    
    ```
             period         |     avg_temp     |    last_temp     |      avg_cpu      
@@ -172,7 +171,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
    ...
    ```
 
-- Query the metadata:
+- 查询元数据：
 
    ```sql
    SELECT
@@ -185,7 +184,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
    GROUP BY period, sensors.location;
    ```
    
-   Sample output:
+   样本输出：
    
    ```
     location |         period         |     avg_temp     |     last_temp     |      avg_cpu      
@@ -201,7 +200,7 @@ After you simulate a dataset, you can run some basic queries on it. For example:
    ...
    ```
 
-You have now successfully simulated and run queries on an IoI dataset. 
+您现在已经成功模拟并在物联网数据集上运行了查询。
 
 [create-a-service]: /getting-started/:currentVersion:/services/#create-a-timescale-cloud-service
 [connect-to-service]: /getting-started/:currentVersion:/run-queries-from-console/
