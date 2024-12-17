@@ -1,61 +1,50 @@
 ---
-title: Build a bar chart in Grafana
-excerpt: Plot a bar chart in Grafana to compare values between categories
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualization, analytics]
-tags: [bar chart]
+标题: 在格拉法纳（Grafana）中构建柱状图
+摘要: 在格拉法纳（Grafana）中绘制柱状图，以对比不同类别间的值。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
+标签: [柱状图]
 ---
 
 import GrafanaVizPrereqs from 'versionContent/_partials/_grafana-viz-prereqs.mdx';
 
-# Build a bar chart in Grafana
+# 在Grafana中构建条形图
 
-A bar chart displays data using bars, each representing a specific category. A
-bar chart is a great comparison tool for data visualization, as it's easy to see
-which item's column or bar is longer or shorter. Bar charts use two axes:
-vertical and horizontal. The longer a bar is, the greater its value. A bar chart
-is a good way to compare items between different groups.
+条形图使用条形显示数据，每个条形代表一个特定类别。条形图是数据可视化中比较数据的绝佳工具，因为很容易看出哪个项目的柱状图或条形更长或更短。条形图使用两个轴：垂直和水平。条形越长，其值越大。条形图是比较多组之间项目的好方法。
 
-Bar charts can answer questions like:
+条形图可以回答以下问题：
 
-*   Which stock has the highest traded volume today?
-*   What was the transaction volume distribution of stocks last week?
-*   How many students in grade A are above a certain age range?
+*   今天哪只股票交易量最高？
+*   上周股票的交易量分布如何？
+*   A年级中有多少学生在某个特定年龄范围内？
 
-To plot a bar chart, Grafana requires only one data frame. You need to have at
-least one string field, which is used as the category for an X or Y axis, and
-one or more numerical fields. You can also provide multiple value columns, if
-you want to plot multiple bar charts in a single panel.
+要绘制条形图，Grafana只需要一个数据帧。您需要至少有一个字符串字段，用作X轴或Y轴的类别，以及一个或多个数值字段。如果您想要在单个面板中绘制多个条形图，您还可以提供多个值列。
 
-This tutorial shows you how to:
+本教程向您展示如何：
 
-*   Create a bar chart with pre-aggregated data using `time_bucket()`.
-*   Create multiple bar charts in a single panel.
-*   Create a stacked bar chart with pre-aggregated data.
+*   使用`time_bucket()`创建预聚合数据的条形图。
+*   在单个面板中创建多个条形图。
+*   使用预聚合数据创建堆叠条形图。
 
-There are a few different kinds of bar charts to choose from, including
-vertical, horizontal, and stacked bar charts. All of these types are covered in
-this tutorial.
+可以选择几种不同类型的条形图，包括垂直、水平和堆叠条形图。本教程涵盖了所有这些类型。
 
-## Prerequisites
+## 前提条件
 
 <GrafanaVizPrereqs />
 
-Check out this video for a step-by-step walk-through on creating bar chart in
-Grafana:
+查看这个视频，了解在Grafana中创建条形图的逐步操作：
 
-<Video url="https://www.youtube-nocookie.com/embed/nBcUiPvYjhc"/>
+<Video url="https://www.youtube-nocookie.com/embed/nBcUiPvYjhc&#34;/&gt; 
 
-## Create a bar chart with preaggregated data
+## 使用预聚合数据创建条形图
 
-Create a bar chart visualization using the data in the table `stocks_real_time`.
+使用表`stocks_real_time`中的数据创建条形图可视化。
 
 <Procedure>
 
-### Creating a bar chat with preaggregated data
+### 使用预聚合数据创建条形图
 
-1.  In the query editor, use this SQL to query a bar chart dataset. Use the
-    variable `$bucket interval` for the time period covered by the bar chart:
+1.  在查询编辑器中，使用此SQL查询条形图数据集。使用变量`$bucket interval`表示条形图覆盖的时间段：
 
     ```sql
     SELECT
@@ -69,58 +58,42 @@ Create a bar chart visualization using the data in the table `stocks_real_time`.
     ORDER BY time;
     ```
 
-1.  In the Grafana dashboard, in the `Dashboard variable` field, select a stock
-    to graph. Adjust the time range of the dashboard if needed. Make sure the
-    returned data has a column named `time` that contains timestamps. The
-    timestamps should be in ascending order. Otherwise, you get an error. The
-    returned data looks like this:
+1.  在Grafana仪表板中，在`Dashboard variable`字段中选择要绘制的股票。如需要，调整仪表板的时间范围。确保返回的数据有一个名为`time`的列，包含时间戳。时间戳应按升序排列。否则，您将获得错误。返回的数据如下所示：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/Tabledataforgoogle.png" alt="Screenshot of the table view of valid time-series data for Google stock."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/Tabledataforgoogle.png" alt="Google股票有效时间序列数据的表视图截图"/>
 
-1.  In the `Visualizations` field, select `Bar chart`. Grafana turns the query
-    into a bar chart. This example shows a vertical bar chart price distribution
-    of Google stock, which ranges between $2836 and $2108 within a specific
-    period:
+1.  在`Visualizations`字段中，选择`Bar chart`。Grafana将查询转换为条形图。此示例显示了Google股票价格在特定时期内垂直条形图分布，范围在$2836到$2108之间：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/googlebarchart.png" alt="Screenshot of the vertical bar chart produced by Grafana. The vertical bar chart represents the price of Google in the past 2 months."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/googlebarchart.png" alt="Grafana生成的垂直条形图截图。垂直条形图代表过去2个月Google的价格。"/>
 
-1.  You can convert from a vertical bar chart to a horizontal one to get room
-    for a longer label along the vertical axis. In the dashboard, navigate to
-    the bar chart section. In the `Orientaton` section, click `horizontal`. The
-    horizontal bar chart looks like this:
+1.  您可以将垂直条形图转换为水平条形图，以便为垂直轴上的较长标签腾出空间。在仪表板中，导航到条形图部分。在`Orientation`部分，点击`horizontal`。水平条形图如下所示：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/horizontalbarchartview.png" alt="Screenshot of the horizontal bar chart produced by Grafana. The horizontal bar chart represents the price of google in the past 2 months."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/horizontalbarchartview.png" alt="Grafana生成的水平条形图截图。水平条形图代表过去2个月Google的价格。"/>
 
 </Procedure>
 
-## Create multiple bar charts
+## 创建多个条形图
 
-If you want to compare the distributions of 4 or more different stocks, you can
-create a panel containing multiple bar charts. The database returns the
-transactions for all selected values, and Grafana buckets them in separate bar
-charts.
+如果您想比较多个不同股票的分布，您可以创建一个包含多个条形图的面板。数据库返回所有选定值的交易，Grafana将它们分别放入不同的条形图中。
 
 <Procedure>
 
-### Creating multiple bar charts in a single panel
+### 在单个面板中创建多个条形图
 
-1.  Fetch all company symbols from the dataset in the
-    [Getting Started Tutorial][gsg-data] with this query:
+1.  使用此查询从[入门教程][gsg-data]的数据集中获取所有公司符号：
 
    ```sql
     SELECT
         DISTINCT symbol FROM company ORDER BY symbol ASC;
     ```
 
-1.  In the Grafana dashboard, navigate to the settings page for your panel. In
-    the `Variables` section:
+1.  在Grafana仪表板中，导航到您的面板设置页面。在`Variables`部分：
 
-    *   In the `Name` field, give your symbol a name.
-    *   In the `Type` field, select `Query`.
-    *   In the `Selection options` field, enable `multi-value`.
+    *   在`Name`字段中，给您的符号一个名称。
+    *   在`Type`字段中，选择`Query`。
+    *   在`Selection options`字段中，启用`multi-value`。
 
-1.  At the psql prompt, update the earlier query to allow you to use multiple
-    symbols. You can select as many symbols as you want to compare:
+1.  在psql提示符下，更新之前的查询，允许您使用多个符号。您可以选择任意多的符号进行比较：
 
     ```sql
     SELECT
@@ -133,43 +106,33 @@ charts.
     ORDER BY time;
     ```
 
-1.  In Grafana, refresh the dashboard. The returned data looks like this:
+1.  在Grafana中，刷新仪表板。返回的数据如下所示：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/tableviewfivestockdata.png" alt="Screenshot of the table view of valid time series data for four different stocks."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/tableviewfivestockdata.png" alt="四个不同股票的有效时间序列数据的表视图截图"/>
 
-    And the displayed graph looks like this:
+    显示的图表如下所示：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/multiplebarchart.png" alt="Screenshot of the multiple bar chart produced by Grafana. The multiple bar chart represents the price of four different stocks in the past 1 month."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/multiplebarchart.png" alt="Grafana生成的多个条形图截图。多个条形图代表过去1个月四种不同股票的价格。"/>
 
-1.  In the graph you just created, you can see the 5 different stocks, but it is
-    difficult to differentiate them. To tell them apart, you can adjust the
-    color of each stock by clicking the legend to the left of each line, and
-    picking a color for each bar:
+1.  在您刚刚创建的图表中，您可以看到5种不同的股票，但很难区分它们。要区分它们，您可以通过点击每个线左侧的图例，并为每个条形选择颜色来调整每种股票的颜色：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/multicoloredbarchart.png" alt="Screenshot of Grafana plot, showing 5 bar chart of stock values in green, blue, red, purple and orange."/>
+    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/multicoloredbarchart.png" alt="Grafana图表截图，显示5个条形图的股票值分别为绿色、蓝色、红色、紫色和橙色。"/>
 
 </Procedure>
 
-## Create a stacked bar chart
+## 创建堆叠条形图
 
-You can use a stacked bar chart to show how different stock divides into smaller
-categories, and what impact each part has on the total amount.
+您可以使用堆叠条形图显示不同股票如何划分为更小的类别，以及每个部分对总数的影响。
 
-The previous examples used vertical, horizontal, and multiple bar charts with
-price transactions. In this section, you see the trading volume of each stock
-using a bucket interval.
+前面的示例使用了价格交易的垂直、水平和多个条形图。在本节中，您将使用桶间隔查看每只股票的交易量。
 
-The `stock_real_time` hypertable contains a column with the daily cumulative
-traded volume. This helps to calculate the volume of data for each bucket.
+`stock_real_time`超表包含一个列，记录每日累计交易量。这有助于计算每个桶的数据量。
 
 <Procedure>
 
-### Creating a stacked bar chart
+### 创建堆叠条形图
 
-1.  At the psql prompt, update the earlier query to find the maximum
-    `day_volume` value for a symbol within a bucket. Then, subtract each maximum
-    from the previous bucket's maximum. The difference gives the traded volume
-    for that bucket:
+1.  在psql提示符下，更新之前的查询，以找到符号在桶内的最大`day_volume`值。然后，从上一个桶的最大值中减去每个最大值。差值给出了该桶的交易量：
 
     ```sql
     SELECT
@@ -186,22 +149,14 @@ traded volume. This helps to calculate the volume of data for each bucket.
     ORDER BY time_bucket('$bucket_interval', time), symbol;
     ```
 
-1.  In the Grafana dashboard, convert your multiple bar chart to a stacked bar
-    chart. In the symbol drop-down menu, select all the stocks you want to
-    compare. On the right side of the panel, click the bar chart drop-down. In
-    the `stacking` field, select `normal`, and refresh the panel. The stacked
-    bar chart view shows a 1-day bucket with a 1-hour bucket interval. The
-    volume calculation is valid mostly with the trading day:
+1.  在Grafana仪表板中，将多个条形图转换为堆叠条形图。在符号下拉菜单中，选择您想要比较的所有股票。在面板右侧，点击条形图下拉菜单。在`stacking`字段中，选择`normal`，然后刷新面板。堆叠条形图视图显示了1天的桶，桶间隔为1小时。交易量计算主要在交易日内有效：
 
-  <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/stackedbarcharts.png" alt="Screenshot of Grafana dashboard, showing a stacked bar chart."/>
+  <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/barchart/stackedbarcharts.png" alt="Grafana仪表板截图，显示堆叠条形图。"/>
 
 <Highlight type="note">
-If you go beyond a single trading day, you might get results that don't look
-very good, or you might get no data returned. To fix this, focus your
-calculation on a single trading day instead.
+如果您超出了单个交易日，您可能会得到看起来不太好的结果，或者您可能没有数据返回。要解决这个问题，请将计算重点放在单个交易日上。
 </Highlight>
 
 </Procedure>
-
 
 [gsg-data]: /getting-started/:currentVersion:/
