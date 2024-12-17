@@ -1,76 +1,59 @@
 ---
-title: Store financial tick data in TimescaleDB using the OHLCV (candlestick) format
-excerpt: Store your financial tick data and create candlestick views to analyze price changes
-keywords: [finance, analytics]
-tags: [candlestick]
+标题: 使用 OHLCV（K 线）格式将金融逐笔交易数据存储在 TimescaleDB 中
+摘要: 存储你的金融逐笔交易数据，并创建 K 线图视图来分析价格变化。
+关键词: [金融，分析]
+标签: [K 线]
 ---
 
-<!-- markdown-link-check-disable -->
+# 使用OHLCV（K线）格式在TimescaleDB中存储金融tick数据
 
-# Store financial tick data in TimescaleDB using the OHLCV (candlestick) format
+[K线图][charts]是分析金融资产价格变动的标准方式。它们可以用来检查股票价格、加密货币价格甚至NFT价格的趋势。要生成K线图，您需要OHLCV格式的K线数据。也就是说，您需要某些金融资产的开盘价、最高价、最低价、收盘价和成交量数据。
 
-[Candlestick charts][charts] are the standard way to analyze the price changes of
-financial assets. They can be used to examine trends in stock prices, cryptocurrency prices,
-or even NFT prices. To generate candlestick charts, you need candlestick data in
-the OHLCV format. That is, you need the Open, High, Low, Close, and Volume data for
-some financial assets.
+本教程向您展示如何高效地存储原始金融tick数据，创建不同的K线视图，并使用OHLCV格式在TimescaleDB中查询聚合数据。它还向您展示如何下载包含BTC、ETH和其他流行资产的加密货币tick交易的真实世界样本数据。
 
-This tutorial shows you how to efficiently store raw financial tick
-data, create different candlestick views, and query aggregated data in
-TimescaleDB using the OHLCV format. It also shows you how to download sample
-data containing real-world crypto tick transactions for cryptocurrencies like
-BTC, ETH, and other popular assets.
+## 前提条件
 
-## Prerequisites
+在开始之前，请确保您拥有以下条件：
 
-Before you begin, make sure you have:
+*   本地或云端运行的TimescaleDB实例。更多信息，请参见[入门指南](/getting-started/latest/)
+*   [`psql`][psql]、DBeaver或任何其他PostgreSQL客户端
 
-*   A TimescaleDB instance running locally or on the cloud. For more
-    information, see [the Getting Started guide](/getting-started/latest/)
-*   [`psql`][psql], DBeaver, or any other PostgreSQL client
+## K线数据和OHLCV是什么？
 
-## What's candlestick data and OHLCV?
+K线图在金融领域中用于可视化资产价格的变化。每个K线代表一个时间框架（例如，1分钟、5分钟、1小时或类似时间），并显示该时间段内资产价格的变化。
 
-Candlestick charts are used in the financial sector to visualize the price
-change of an asset. Each candlestick represents a time
-frame (for example, 1 minute, 5 minutes, 1 hour, or similar) and shows how the asset's
-price changed during that time.
+![candlestick](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick_fig.png) 
 
-![candlestick](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick_fig.png)
+K线图是由K线数据生成的，K线数据是图表中使用的数据点集合。这通常缩写为OHLCV（开盘-最高-最低-收盘-成交量）：
 
-Candlestick charts are generated from candlestick data, which is the collection of data points
-used in the chart. This is often abbreviated
-as OHLCV (open-high-low-close-volume):
+*   开盘价：开盘价
+*   最高价：最高价
+*   最低价：最低价
+*   收盘价：收盘价
+*   成交量：交易量
 
-*   Open: opening price
-*   High: highest price
-*   Low: lowest price
-*   Close: closing price
-*   Volume: volume of transactions
+这些数据点对应于K线所涵盖的时间桶。例如，1分钟K线将需要那一分钟的开盘价和收盘价。
 
-These data points correspond to the bucket of time covered by the candlestick.
-For example, a 1-minute candlestick would need the open and close prices for that minute.
+许多Timescale社区成员使用TimescaleDB来存储和分析K线数据。以下是一些示例：
 
-Many Timescale community members use
-TimescaleDB to store and analyze candlestick data. Here are some examples:
+*   [Trading Strategy如何为加密货币量化交易构建数据栈][trading-strategy]
+*   [Messari如何使用数据向所有人开放加密经济][messari]
+*   [我如何使用TimescaleDB为（成功的）加密货币交易机器人提供动力][bot]
 
-*   [How Trading Strategy built a data stack for crypto quant trading][trading-strategy]
-*   [How Messari uses data to open the cryptoeconomy to everyone][messari]
-*   [How I power a (successful) crypto trading bot with TimescaleDB][bot]
+按照本教程，看看如何设置您的TimescaleDB数据库以高效地消费实时tick或聚合的金融数据，并生成K线视图。
 
-Follow this tutorial and see how to set up your TimescaleDB database to consume real-time tick or aggregated financial data and generate candlestick views efficiently.
+*   [设计模式并摄入tick数据][design]
+*   [创建K线（开盘-最高-最低-收盘-成交量）聚合][create]
+*   [查询K线视图][query]
+*   [高级数据管理][manage]
 
-*   [Design schema and ingest tick data][design]
-*   [Create candlestick (open-high-low-close-volume) aggregates][create]
-*   [Query candlestick views][query]
-*   [Advanced data management][manage]
-
-[charts]: https://www.investopedia.com/terms/c/candlestick.asp
-[trading-strategy]: https://www.timescale.com/blog/how-trading-strategy-built-a-data-stack-for-crypto-quant-trading/
-[messari]: https://www.timescale.com/blog/how-messari-uses-data-to-open-the-cryptoeconomy-to-everyone/
-[bot]: https://www.timescale.com/blog/how-i-power-a-successful-crypto-trading-bot-with-timescaledb/
+[charts]: https://www.investopedia.com/terms/c/candlestick.asp 
+[trading-strategy]: https://www.timescale.com/blog/how-trading-strategy-built-a-data-stack-for-crypto-quant-trading/ 
+[messari]: https://www.timescale.com/blog/how-messari-uses-data-to-open-the-cryptoeconomy-to-everyone/ 
+[bot]: https://www.timescale.com/blog/how-i-power-a-successful-crypto-trading-bot-with-timescaledb/ 
 [design]: /tutorials/:currentVersion:/financial-candlestick-tick-data/design-tick-schema
 [create]: /tutorials/:currentVersion:/financial-candlestick-tick-data/create-candlestick-aggregates
 [query]: /tutorials/:currentVersion:/financial-candlestick-tick-data/query-candlestick-views
 [manage]: /tutorials/:currentVersion:/financial-candlestick-tick-data/advanced-data-management
 [psql]: /use-timescale/:currentVersion:/integrations/query-admin/about-psql/
+
