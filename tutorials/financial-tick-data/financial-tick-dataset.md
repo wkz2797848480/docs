@@ -1,49 +1,42 @@
 ---
-title: Analyze financial tick data - Set up the dataset
-excerpt: Set up a dataset so you can query financial tick data to analyze price changes
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, finance, learn]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze financial tick data
+标题: 分析金融逐笔数据 —— 设置数据集
+摘要: 设置数据集，以便能够查询金融逐笔数据来分析价格变化。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，金融，学习]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析金融逐笔数据
 ---
 
 import CreateAndConnect from "versionContent/_partials/_cloud-create-connect-tutorials.mdx";
 import CreateHypertable from "versionContent/_partials/_create-hypertable-twelvedata-stocks.mdx";
 import AddData from "versionContent/_partials/_add-data-twelvedata-stocks.mdx";
 
-# Set up the database
+# 设置数据库
 
-This tutorial uses a dataset that contains second-by-second stock-trade data for
-the top 100 most-traded symbols, in a hypertable named `stocks_real_time`. It
-also includes a separate table of company symbols and company names, in a
-regular PostgreSQL table named `company`.
+本教程使用的数据集包含了前100个最活跃交易符号的每秒股票交易数据，存储在一个名为`stocks_real_time`的超表中。它还包括一个单独的公司符号和公司名称表，存储在一个常规的PostgreSQL表中，名为`company`。
 
-<Collapsible heading="Create a Timescale service and connect to your service" defaultExpanded={false}>
+<Collapsible heading="创建Timescale服务并连接到您的服务" defaultExpanded={false}>
 
-<CreateAndConnect/>
+<创建和连接/>
 
 </Collapsible>
 
-<Collapsible heading="The dataset" defaultExpanded={false}>
+<Collapsible heading="数据集" defaultExpanded={false}>
 
-The dataset is updated on a nightly basis and contains data from the last four
-weeks, typically around 8 million rows of data. Stock trades are recorded in
-real-time Monday through Friday, typically during normal trading hours of the
-New York Stock Exchange (9:30&nbsp;AM - 4:00&nbsp;PM EST).
+数据集每晚更新，包含最近四周的数据，通常大约有800万行数据。股票交易在周一至周五实时记录，通常在纽约证券交易所的正常交易时间内（东部标准时间上午9:30至下午4:00）。
 
-<CreateHypertable />
+<创建超表 />
 
-<AddData />
+<添加数据 />
 
 </Collapsible>
 
-<Collapsible heading="Connect to Grafana" defaultExpanded={false}>
+<Collapsible heading="连接到Grafana" defaultExpanded={false}>
 
-The queries in this tutorial are suitable for visualizing in Grafana. If you
-want to visualize the results of your queries, connect your Grafana account to
-the energy consumption dataset.
+本教程中的查询适合在Grafana中进行可视化。如果您想要可视化查询结果，请将您的Grafana账户连接到能源消耗数据集。
 
-<GrafanaConnect />
+<Grafana连接 />
 
 </Collapsible>
+
