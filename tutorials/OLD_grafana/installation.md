@@ -1,62 +1,50 @@
 ---
-title: Set up TimescaleDB and Grafana
-excerpt: Use Grafana to visualize your data on Managed Service for TimescaleDB
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualization, analytics]
+标题: 设置 TimescaleDB 与格拉法纳（Grafana）
+摘要: 使用格拉法纳（Grafana）在 TimescaleDB 托管服务上可视化您的数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
 ---
 
 import GrafanaConnect from "versionContent/_partials/_grafana-connect.mdx";
 
-# Set up TimescaleDB and Grafana
+# 设置TimescaleDB和Grafana
 
-This tutorial uses Managed Service for TimescaleDB to set up your database, and
-to set up Grafana.
+本教程使用TimescaleDB的托管服务来设置您的数据库，并设置Grafana。
 
-## Create a new service for Grafana
+## 为Grafana创建新服务
 
-You need to sign in to your Managed Service for Timescale account to create a
-new service to run Grafana.
+您需要登录到您的Timescale托管服务账户来创建一个新的服务来运行Grafana。
 
 <Procedure>
 
-### Creating a new service for Grafana
+### 为Grafana创建新服务
 
-1.  Log in to your Managed Service for TimescaleDB account, and click `Create a new service`.
-1.  In the `Select your service` section, click `TimescaleDB Grafana - Metrics
-    dashboard`:
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/mst-selectservice-grafana.png" alt="Select the Grafana service"/>
-1.  In the `Select your cloud service provider` and `Select your cloud service
-    region` sections, choose the provider and region that you prefer, or accept
-    the default values.
-1.  In the `Select your service plan` section, click `Dashboard-1`.
-1.  In the `Provide your service name` section, type a name for your new
-    service. In this example, we've used `grafana-tutorial`.
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/mst-nameservice-grafana.png" alt="Name the Grafana service"/>
-1.  When you are happy with your selections, click `Create Service` to go back
-    to the `Services` view while your service is created. The status indicator
-    says `Rebuilding` while the service is created. It is ready for you to use
-    when the indicator is green and says `Running`. This usually takes a couple
-    of minutes, but different clouds can vary. You can click the service name in
-    the list to see more information and make changes.
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/mst-buildservice-grafana.png" alt="Building the Grafana service"/>
+1.  登录到您的TimescaleDB托管服务账户，并点击“创建新服务”。
+2.  在“选择您的服务”部分，点击“TimescaleDB Grafana - 指标仪表板”：
+    ![选择Grafana服务](https://assets.timescale.com/docs/images/mst-selectservice-grafana.png)
+3.  在“选择您的云服务提供商”和“选择您的云服务区域”部分，选择您喜欢的提供商和区域，或接受默认值。
+4.  在“选择您的服务计划”部分，点击“Dashboard-1”。
+5.  在“提供您的服务名称”部分，为您的新服务输入一个名称。在这个例子中，我们使用了`grafana-tutorial`。
+    ![命名Grafana服务](https://assets.timescale.com/docs/images/mst-nameservice-grafana.png)
+6.  当您对选择满意时，点击“创建服务”返回到“服务”视图，同时您的服务正在创建。状态指示器显示“重建”时服务正在创建。当指示器变为绿色并显示“运行中”时，服务即可使用。这通常需要几分钟，但不同的云服务可能有所不同。您可以点击列表中的服务名称查看更多信息并进行更改。
+    ![构建Grafana服务](https://assets.timescale.com/docs/images/mst-buildservice-grafana.png)
 
 </Procedure>
 
-## Log in to your Grafana service
+## 登录到您的Grafana服务
 
-When your service is built, you can log and set up your data services.
+当您的服务构建完成后，您可以登录并设置您的数据服务。
 
-### Logging in to your MST Grafana service
+### 登录到您的MST Grafana服务
 
-1.  In the Managed Service for TimescaleDB `Services` view, click the name of
-    your new Grafana service.
-1.  On the service details page, take a note of the user name and password for
-    your service, and click the link in the `Service URI` field to open Grafana:
-    <img class="main-content__illustration" src="https://assets.timescale.com/docs/images/mst-buildservice-grafana.png" alt="Building the Grafana service"/>
-1.  Log in to Grafana with your service credentials.
+1.  在TimescaleDB托管服务的“服务”视图中，点击您的新Grafana服务的名称。
+2.  在服务详情页面，记下您的服务用户名和密码，并点击“服务URI”字段中的链接以打开Grafana：
+    ![构建Grafana服务](https://assets.timescale.com/docs/images/mst-buildservice-grafana.png)
+3.  使用您的服务凭据登录Grafana。
 
 <GrafanaConnect />
 
 <!---
-I appreciate that this doesn't really fit here well at the moment, but I'm coming back to this tutorial next, and will rewrite it properly then. I promise! --LKB 2023-02-28
+我意识到这部分内容目前可能不太适合放在这里，但我接下来会回到这个教程，并适当地重写它。我保证！--LKB 2023-02-28
 -->
+
