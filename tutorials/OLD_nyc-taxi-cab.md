@@ -1,44 +1,37 @@
 ---
-title: IoT analysis and monitoring
-excerpt: Analyze IoT data with TimescaleDB
-keywords: [IoT, analytics, monitor]
+标题: 物联网分析与监控
+摘要: 使用 TimescaleDB 分析物联网数据。
+关键词: [物联网，分析，监控]
 ---
 
-# Introduction to IoT: New York City Taxicabs
+# 物联网简介：纽约市出租车
 
-Use case: IoT Analysis and Monitoring
+用例：物联网分析与监控
 
-In this tutorial, you learn:
+在本教程中，你将学习：
 
-1.  How to get started with TimescaleDB
-2.  How to use TimescaleDB to analyze and monitor data from IoT sensors
+1.  如何开始使用TimescaleDB
+2.  如何使用TimescaleDB分析和监控物联网传感器数据
 
-<!--- This link no longer works, deleted. LKB 2023-05-11
+<!--- 此链接不再有效，已删除。LKB 2023-05-11
 
-Dataset: <Tag type="download">[nyc_data.tar.gz]()</Tag>
+数据集：<Tag type="download">[nyc_data.tar.gz]()</Tag>
 
 -->
 
-Estimated time for completion: 25 minutes.
+预计完成时间：25分钟。
 
-### Prerequisites
+### 先决条件
 
-To complete this tutorial, you need a cursory knowledge of the
-Structured Query Language (SQL). The tutorial walks you through each
-SQL command, but it is helpful if you've seen SQL before.
+要完成本教程，你需要对结构化查询语言（SQL）有基本了解。虽然教程会带你逐步了解每个SQL命令，但如果你之前接触过SQL将会有所帮助。
 
-### Accessing Timescale
+### 访问Timescale
 
-There are multiple options for using Timescale to follow along with this tutorial. **All connection information
-and database naming** throughout this tutorial assumes you are connected to **Timescale**, our hosted,
-fully managed database-as-a-service. [Sign up for a free, 30-day demo account][cloud-signup], no credit-card
-required. Once you confirm the account and get logged in, proceed to the **Background** section below.
+有多种方式使用Timescale来跟随本教程。**所有连接信息和数据库命名**都假设你连接到**Timescale**，这是我们的托管、全托管数据库即服务。[注册免费30天试用账户][cloud-signup]，无需信用卡。一旦你确认账户并登录，进入下面的**背景**部分。
 
-If you would like to follow along with a local or on-prem install, you can follow the [install TimescaleDB][install-timescale]
-instructions. Once your installation is complete, you need to create a tutorial database and
-install the **Timescale** extension.
+如果你想跟随本地或现场安装的教程，可以按照[安装TimescaleDB][install-timescale]的说明操作。安装完成后，你需要创建一个教程数据库并安装**Timescale**扩展。
 
-Using `psql` from the command line, create a database called `nyc_data` and install the extension:
+使用命令行的`psql`，创建一个名为`nyc_data`的数据库并安装扩展：
 
 ```sql
 CREATE DATABASE tsdb;
@@ -46,77 +39,54 @@ CREATE DATABASE tsdb;
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 ```
 
-You're all set to follow along locally!
+现在你可以开始本地跟随教程了！
 
-### Background
+### 背景
 
-New York City is home to more than 8.3 million people. In this tutorial,
-we analyze and monitor data from New York's yellow cab taxis
-using TimescaleDB in order to identify ways to gain efficiency and
-reduce greenhouse gas emissions. The analysis we perform is similar to
-the kind of analysis data science organizations in many problem
-domains use to plan upgrades, set budgets, allocate resources, and more.
+纽约市是超过830万人的家园。在本教程中，我们使用TimescaleDB分析和监控纽约黄色出租车的数据，以识别提高效率和减少温室气体排放的方法。我们执行的分析类似于许多问题领域中的数据科学组织用来规划升级、设定预算、分配资源等的分析。
 
-In this tutorial, you complete three missions:
+在本教程中，你将完成三个任务：
 
-*   **Mission 1: Gear up [5-15 minutes]** You learn how to setup and connect to a *TimescaleDB* instance and load data from a CSV file in your local terminal using *psql*.
-*   **Mission 2: Analysis [10 minutes]** You learn how to analyze a time-series dataset using TimescaleDB and *PostgreSQL*.
-*   **Mission 3: Monitoring [10 minutes]** You learn how to use TimescaleDB to monitor IoT devices. You'll also learn about using TimescaleDB in conjunction with other PostgreSQL extensions like *PostGIS*, for querying geospatial data.
+*   **任务1：准备就绪 [5-15分钟]** 你将学习如何设置和连接到一个*TimescaleDB*实例，并使用*psql*从本地终端加载CSV文件中的数据。
+*   **任务2：分析 [10分钟]** 你将学习如何使用TimescaleDB和*PostgreSQL*分析时间序列数据集。
+*   **任务3：监控 [10分钟]** 你将学习如何使用TimescaleDB监控物联网设备。你还将学习如何结合使用TimescaleDB和其他PostgreSQL扩展，如*PostGIS*，查询地理空间数据。
 
-### Mission 1: Gear up
+### 任务1：准备就绪
 
-For this tutorial, we use yellow taxi cab data from the
-[New York City Taxi and Limousine Commission][NYCTLC]
-(NYC TLC). The NYC TLC is the agency responsible for licensing and
-regulating New York City's Yellow taxi cabs and other for-hire
-vehicles. These vehicles are famous for getting New Yorkers
-and tourists wherever they need to go across all five boroughs.
+对于本教程，我们使用来自[纽约市出租车和豪华轿车委员会][NYCTLC]（NYC TLC）的黄色出租车数据。NYC TLC是负责许可和监管纽约市黄色出租车和其他租赁车辆的机构。这些车辆以在五个行政区运送纽约人和游客而闻名。
 
-The NYC TLC has over 200,000 licensee vehicles completing
-about 1 million trips each day. That's a lot of trips! They've
-made their taxi utilization data publicly available. And, because nearly all of this data
-is time-series data, proper analysis requires a purpose-built
-time-series database. We use the unique functions
-of TimescaleDB to complete our missions in this tutorial.
+NYC TLC拥有超过20万辆许可车辆，每天完成约100万次行程。他们已经公开了他们的出租车使用数据。而且，因为几乎所有这些数据都是时间序列数据，适当的分析需要一个专门构建的时间序列数据库。我们使用TimescaleDB的独特功能来完成本教程中的任务。
 
-#### Download and load data
+#### 下载和加载数据
 
-Let's start by downloading the dataset. In the interest of (downloading) time
-and space (on your machine), we'll only grab data for the month of January 2016, a dataset
-containing ~11 million records!
+让我们从下载数据集开始。为了（下载）时间和（你的机器上的）空间考虑，我们只获取2016年1月的数据，这个数据集包含约1100万条记录！
 
-This download contains two files:
+这个下载包含两个文件：
 
-1.  `nyc_data.sql` - A SQL file that sets up the necessary tables
-1.  `nyc_data_rides.csv` - A CSV file with the ride data
+1.  `nyc_data.sql` - 一个设置必要表格的SQL文件
+2.  `nyc_data_rides.csv` - 一个包含行程数据的CSV文件
 
-You can download the files from the below link:
+你可以从下面的链接下载文件：
 
-<!--- This link no longer works, deleted. LKB 2023-05-10
+<!--- 此链接不再有效，已删除。LKB 2023-05-10
 
 <Tag type="download">[nyc_data.tar.gz]()</Tag>
 
 -->
 
-#### Get connected to TimescaleDB
+#### 连接到TimescaleDB
 
-To connect to the database, you'll need to make sure the `psql`
-utility is installed on your command line. Follow the instructions for
-your platform in order to
-[setup the psql command-line utility][setup-psql].
+要连接到数据库，你需要确保命令行上安装了`psql`实用程序。按照[设置psql命令行实用程序][setup-psql]的说明操作。
 
-Next, locate your `host`, `port`, and `password`.
+接下来，找到你的`host`、`port`和`password`。
 
-Afterward, connect to your TimescaleDB instance from `psql`
-by typing the command below into your terminal,
-ensuring that you replace the {curly brackets} with your real
-password, hostname, and port number.
+之后，通过在终端输入以下命令连接到你的TimescaleDB实例，确保将{大括号}替换为你的真实密码、主机名和端口号。
 
 ```bash
 psql -x "postgres://tsdbadmin:{YOUR_PASSWORD_HERE}@{YOUR_HOSTNAME_HERE}:{YOUR_PORT_HERE}/tsdb?sslmode=require"
 ```
 
-You should see the following connection message:
+你应该看到以下连接消息：
 
 ```bash
 =require
@@ -127,9 +97,7 @@ Type "help" for help.
 tsdb=>
 ```
 
-To verify that TimescaleDB is installed, run the `\dx` command
-to list all installed extensions to your PostgreSQL database.
-You should see something similar to the following output:
+要验证TimescaleDB是否已安装，运行`\dx`命令列出你的PostgreSQL数据库安装的所有扩展。你应该看到类似以下输出：
 
 ```sql
                   List of installed extensions
@@ -139,46 +107,37 @@ You should see something similar to the following output:
 | timescaledb | 1.6.0   | public     | Enables scalable inserts and complex queries |
 ```
 
-#### Define your data schema
+#### 定义你的数据模式
 
-As mentioned above, the NYC TLC collects ride-specific data from every
-vehicle in its fleet, generating data from millions of rides every day.
+如上所述，NYC TLC从其车队的每辆车收集特定行程数据，每天生成数百万次行程的数据。
 
-They collect the following data about each ride:
+他们收集每次行程的以下数据：
 
-*   Pickup date and time (as a timestamp)
-*   Pickup location (latitude and longitude)
-*   Drop off date and time (as a timestamp)
-*   Drop off location (latitude and longitude)
-*   Trip distance (in miles)
-*   Fares (in USD)
-*   Passenger count
-*   Rate type (e.g, standard, airport, etc.)
-*   Payment type (Cash, credit card, etc.)
+*   接客日期和时间（作为时间戳）
+*   接客地点（纬度和经度）
+*   下车日期和时间（作为时间戳）
+*   下车地点（纬度和经度）
+*   行程距离（英里）
+*   车费（美元）
+*   乘客数量
+*   费率类型（例如标准、机场等）
+*   支付类型（现金、信用卡等）
 
-To efficiently store that data, we're going to need three tables:
+为了有效存储这些数据，我们将需要三个表：
 
-1.  A [hypertable][hypertables] called `rides`, which stores all of the above data for each ride taken.
-2.  A regular Postgres table called `payment_types`, which maps the payment types to their English description.
-3.  A regular Postgres table called `rates`, which maps the numeric rate codes to their English description.
+1.  一个名为`rides`的[超表][hypertables]，存储每次行程的所有上述数据。
+2.  一个常规Postgres表`payment_types`，将支付类型映射到它们的英文描述。
+3.  一个常规Postgres表`rates`，将数字费率代码映射到它们的英文描述。
 
-The `nyc_data.sql` script defines the schema for our three tables. The script
-automatically configures your TimescaleDB instance with the appropriate
-`rides`, `payment_types`, and `rates` tables.
+`nyc_data.sql`脚本定义了我们三个表的模式。该脚本自动配置你的TimescaleDB实例，创建适当的`rides`、`payment_types`和`rates`表。
 
-In the command below, be sure to substitute the items in the curly braces with
-information from your TimescaleDB instance, as you did earlier. Also take
-note that this command includes the Timescale database that is automatically created
-for you. If you are running the database locally, replace the database name as needed.
+在下面的命令中，确保用你的TimescaleDB实例的信息替换大括号中的内容，就像你之前做的那样。同时注意，这个命令包括了为你自动创建的Timescale数据库。如果你在本地运行数据库，请根据需要替换数据库名称。
 
 ```bash
 psql -x "postgres://tsdbadmin:{YOUR_PASSWORD_HERE}@{|YOUR_HOSTNAME_HERE}:{YOUR_PORT_HERE}/tsdb?sslmode=require" < nyc_data.sql
 ```
 
-Alternatively, you can run each script manually from the `psql` command
-line. This first script creates a table called `rides`, which stores
-trip data. Notice also that we are creating a few indexes to help with later
-queries in this tutorial:
+或者，你可以从`psql`命令行手动运行每个脚本。这个第一个脚本创建了一个名为`rides`的表，用于存储行程数据。注意，我们还在创建一些索引，以帮助本教程后续的查询：
 
 ```sql
 CREATE TABLE "rides"(
@@ -207,8 +166,7 @@ CREATE INDEX ON rides (rate_code, pickup_datetime DESC);
 CREATE INDEX ON rides (passenger_count, pickup_datetime DESC);
 ```
 
-This script creates table `payment_types` and preconfigure
-the types of payments taxis can accept:
+这个脚本创建了`payment_types`表，并预配置了出租车可以接受的支付类型：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "payment_types"(
@@ -224,8 +182,7 @@ INSERT INTO payment_types(payment_type, description) VALUES
 (6, 'voided trip');
 ```
 
-This script creates table `rates` and preconfigure
-the types of rates taxis can charge:
+这个脚本创建了`rates`表，并预配置了出租车可以收取的费率类型：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "rates"(
@@ -241,8 +198,7 @@ INSERT INTO rates(rate_code, description) VALUES
 (6, 'group ride');
 ```
 
-You can confirm the success of these scripts by running the `\dt` command
-in the `psql` command line. You should see the following:
+你可以通过在`psql`命令行运行`\dt`命令来确认这些脚本的成功。你应该看到以下内容：
 
 ```sql
            List of relations
@@ -254,41 +210,33 @@ in the `psql` command line. You should see the following:
 (3 rows)
 ```
 
-#### Load trip data into TimescaleDB
+#### 将行程数据加载到TimescaleDB
 
-Next, let's upload the taxi cab data into your TimescaleDB instance.
-The data is in the file called `nyc_data_rides.csv` and we load it
-into the `rides` hypertable. To do this, we'll use the `psql` `\copy` command below.
+接下来，让我们将出租车数据上传到你的TimescaleDB实例中。数据在名为`nyc_data_rides.csv`的文件中，我们将其加载到`rides`超表中。为此，我们将使用以下`psql` `\copy`命令。
 
->:WARNING: The PostgreSQL `\COPY` command is single-threaded and doesn't support batching
-inserts into multiple transactions. With nearly 11 million rows of data this import can take
-10 minutes or more depending on your Internet connection.
+>:WARNING: PostgreSQL `\COPY`命令是单线程的，不支持将批量插入分批到多个事务中。有了近1100万行数据，这个导入可能需要10分钟或更长时间，具体取决于你的互联网连接。
 
 ```sql
 \COPY rides FROM nyc_data_rides.csv CSV;
 ```
 
-A faster alternative is the [Parallel COPY command][parallel-copy], written in GoLang, that Timescale makes
-available to the community. Once installed, issuing the following command imports the CSV file
-in multiple threads, 5,000 rows at a time, significantly improving import speed. Set `--workers` <= CPUs (or CPUs x 2)
-if they support Hyperthreading. **Be sure to replace your connection string, database name, and file location appropriately.**
+一个更快的替代方案是Timescale提供的[Parallel COPY命令][parallel-copy]，它用GoLang编写，可以多线程导入CSV文件，显著提高导入速度。设置`--workers` <= CPUs（或者如果CPU支持超线程，则为CPUs x 2）。**确保替换你的连接字符串、数据库名称和文件位置。**
 
 ```bash
 timescaledb-parallel-copy --connection {CONNECTION STRING} --db-name {DATABASE NAME} --table rides --file {PATH TO `nyc_data_rides.csv`} --workers 4 --truncate --reporting-period 30s
 ```
 
-With this Parallel Copy command you can get updates every 30 seconds on the progress of your import.
+使用这个Parallel Copy命令，你可以每30秒获得一次导入进度的更新。
 
-Once the import is complete, you can validate your setup by running the following command:
+导入完成后，你可以通过运行以下命令来验证你的设置：
 
 ```sql
 SELECT * FROM rides LIMIT 5;
 ```
 
-If you see something similar to the following result, congrats
-you've successfully completed Mission 1!
+如果你看到类似于以下结果，恭喜你成功完成了任务1！
 
->:TIP: You can toggle expanded display on or off by using the `\x` flag on the `psql` command line. The output below is what you'd see when expanded display is on.
+>:TIP: 你可以通过在`psql`命令行上使用`\x`标志来切换展开显示的开关。下面的输出是在展开显示开启时你将看到的。
 
 ```sql
 -[ RECORD 1 ]---------+--------------------
@@ -331,34 +279,24 @@ improvement_surcharge | 0.3
 total_amount          | 19.3
 ```
 
-### Mission 2: Analysis
+### 任务2：分析
 
-Let's say that the NYC Taxi and Limousine Commission has made it a key
-goal to mitigate the impact of global warming by reducing their greenhouse
-gas emissions by 20% by 2024. Given the number of taxi rides taken each
-day, they believe studying past taxi rider history and behavior enables
-them to plan for the future.
+假设纽约市出租车和豪华轿车委员会设定了一个关键目标，即通过研究过去的出租车乘客历史和行为，计划未来，以在2024年之前减少20%的温室气体排放。鉴于每天乘坐出租车的人数，他们相信这将有助于实现目标。
 
-In this tutorial, we limit analysis of historical taxi ride data
-to all NYC TLC taxi rides taken in January 2016. You can imagine that in a
-more expansive scenario, you would want to examine rides taken over several years.
+在这个教程中，我们将历史出租车行程数据分析限制在2016年1月的所有NYC TLC出租车行程。你可以想象，在更广泛的场景中，你可能想要检查几年的行程数据。
 
-#### How many rides took place on each day?
+#### 2016年1月每天发生了多少行程？
 
-The first question to explore is simple: *How many rides took place on each day during January 2016?*
+首先探索的问题很简单：*2016年1月每天发生了多少行程？*
 
-Since TimescaleDB supports full SQL, all that's required is a simple SQL query
-to count the number of rides and group/order them by the day they took place,
-as seen below:
+由于TimescaleDB支持完整的SQL，所有需要的只是一条简单的SQL查询，以计算行程数量并按它们发生的日期进行分组/排序，如下所示：
 
 ```sql
--- What's the total number of rides that took place everyday for first 5 days
+-- 2016年1月前5天每天的总行程数是多少
 SELECT date_trunc('day', pickup_datetime) as day, COUNT(*) FROM rides GROUP BY day ORDER BY day;
 ```
 
-With this information, we know *how many* rides are taken each day, and we can
-identify the days of the week and month in which the most rides take place.
-Your result should look like this:
+有了这些信息，我们知道每天发生了*多少*行程，我们可以确定一周和一个月中发生最多行程的日期。你的结果应该像这样：
 
 ```sql
          day         | count
@@ -398,20 +336,14 @@ Your result should look like this:
 (32 rows)
 ```
 
-#### What is the average fare amount for passengers?
+#### 乘客的平均车费是多少？
 
-But this initial analysis is incomplete. We also need to understand how long each
-ride is. After all, if we're looking to lessen the impact on the environment, we
-probably want to discourage idle taxis and short trips.
+但这个初步分析是不完整的。我们还需要了解每次行程有多长时间。毕竟，如果我们想要减少对环境的影响，我们可能希望阻止出租车空驶和短途行程。
 
-One way we can glean insight into the duration of trips is by looking into
-the daily average fare amount for rides with only one passenger. Once
-again, this is a simple SQL query with some conditional statements,
-shown in the query below:
+我们可以通过查看只有一名乘客的行程的日均车费来洞察行程的持续时间。再一次，这是一个简单的SQL查询，带一些条件语句，如下所示：
 
 ```sql
--- What is the daily average fare amount for rides with only one passenger
--- for first 7 days?
+-- 对于前7天，只有一名乘客的行程的日均车费是多少？
 SELECT date_trunc('day', pickup_datetime)
 AS day, avg(fare_amount)
 FROM rides
@@ -420,13 +352,13 @@ AND pickup_datetime < '2016-01-08'
 GROUP BY day ORDER BY day;
 ```
 
->:TIP: Queries like the ones above execute up to 20x faster on large datasets with TimescaleDB vs. a vanilla PostgreSQL database, thanks to Timescale's automatic time and space partitioning.
+>:TIP: 像上面的查询在TimescaleDB上执行速度比在普通PostgreSQL数据库上快20倍，这得益于Timescale的自动时间和空间分区。
 
-Your result should look like this:
+你的结果应该像这样：
 
 ```sql
          day         |         avg
----------------------+---------------------
+---------------------+-------------------
  2016-01-01 00:00:00 | 12.5464748850129787
  2016-01-02 00:00:00 | 12.1129878886746750
  2016-01-03 00:00:00 | 12.8262352076841150
@@ -437,15 +369,12 @@ Your result should look like this:
 (7 rows)
 ```
 
-#### How many rides took place for each rate type?
+#### 每种费率类型的行程发生了多少次？
 
-Of course, the fare amount only gives us a certain amount of insight. Some fares
-are pre-set, regardless of the length. For example, trips to and from the airport are
-a flat rate from within the city. So, let's examine the breakdown of
-rides by ride type. This is also a fairly straightforward SQL query:
+当然，车费金额只给我们提供了一定程度的洞察。有些车费是预设的，无论行程长度如何。例如，往返机场的行程是从市内出发的固定费率。所以，让我们检查按行程类型划分的行程分解。这也是一个相当直接的SQL查询：
 
 ```sql
--- How many rides of each rate type took place in the month?
+-- 这个月每种费率类型的行程发生了多少次？
 SELECT rate_code, COUNT(vendor_id) AS num_trips
 FROM rides
 WHERE pickup_datetime < '2016-02-01'
@@ -453,8 +382,7 @@ GROUP BY rate_code
 ORDER BY rate_code;
 ```
 
-After running the query above, you'll get the following output,
-which shows how many rides of each rate code took place:
+运行上述查询后，你将得到以下输出，显示每种费率代码的行程发生了多少次：
 
 ```sql
  rate_code | num_trips
@@ -469,13 +397,11 @@ which shows how many rides of each rate code took place:
 (7 rows)
 ```
 
-While that's technically correct, you'd like to use something more human
-readable. To do that, we can use the power of SQL joins, and combine
-these results with the contents of the `rates` table, like in the query below:
+虽然这是技术上正确的，但你可能希望使用更易于阅读的内容。为了做到这一点，我们可以使用SQL join的力量，并将这些结果与`rates`表的内容结合起来，如下所示：
 
 ```sql
--- How many rides of each rate type took place?
--- Join rides with rates to get more information on rate_code
+-- 每种费率类型的行程发生了多少次？
+-- 将rides与rates join以获取更多关于rate_code的信息
 SELECT rates.description, COUNT(vendor_id) AS num_trips,
   RANK () OVER (ORDER BY COUNT(vendor_id) DESC) AS trip_rank FROM rides
   JOIN rates ON rides.rate_code = rates.rate_code
@@ -484,14 +410,13 @@ SELECT rates.description, COUNT(vendor_id) AS num_trips,
   ORDER BY LOWER(rates.description);
 ```
 
->:TIP: This is a simple illustration of a powerful point: By allowing JOINs over hypertables and regular PostgreSQL tables, TimescaleDB allows you to combine your time-series data with your relational or business data to unearth powerful insights.
+>:TIP: 这是一个简单的例子，说明了强大的观点：通过允许超表和常规PostgreSQL表之间的JOIN，TimescaleDB允许你将时间序列数据与关系或业务数据结合起来，以发现强大的洞察。
 
-Your result should look like this, joining the information in the `rates` table
-with the query you ran earlier:
+你的结果应该像这样，将`rates`表中的信息与你之前运行的查询结合起来：
 
 ```sql
       description      | num_trips | trip_rank
------------------------+-----------------------
+-----------------------+-----------+------------
  group ride            |       102 |          6
  JFK                   |    225019 |          2
  Nassau or Westchester |      4696 |          5
@@ -501,31 +426,23 @@ with the query you ran earlier:
 (6 rows)
 ```
 
-#### Analysis of rides to JFK and EWR
+#### 肯尼迪和纽瓦克机场行程分析
 
-From your work calculating rides by rate type, the NYC TLC noticed that
-rides to John F Kennedy International Airport (JFK) and Newark International
-Airport (EWR) were the second and fourth most popular ride types, respectively.
-Given this popularity in airport rides and consequent carbon footprint,
-the city of New York thinks that airport public transportation could be
-an area of improvement - reducing traffic in the city and overall carbon
-footprint associated with airport trips.
+从你计算费率类型的工作中，NYC TLC注意到，前往约翰·肯尼迪国际机场（JFK）和纽瓦克国际机场（EWR）的行程分别是第二和第四最受欢迎的行程类型。鉴于机场行程的受欢迎程度和随之而来的碳足迹，纽约市认为改善机场公共交通可能是一个改进领域——减少城市交通和与机场行程相关的整体碳足迹。
 
-Prior to instituting any programs, they would like you to more closely
-examine trips to JFK (code 2) and Newark (code 3). For each airport, they
-would like to know the following for the month of January:
+在实施任何计划之前，他们希望你更仔细地检查前往JFK（代码2）和纽瓦克（代码3）的行程。对于每个机场，他们希望了解以下信息，针对1月份：
 
-*   Number of trips to that airport
-*   Average trip duration (i.e drop off time - pickup time)
-*   Average trip cost
-*   Average tip
-*   Minimum, Maximum and Average trip distance
-*   Average number of passengers
+*   前往该机场的行程数量
+*   平均行程持续时间（即下车时间 - 接客时间）
+*   平均行程费用
+*   平均小费
+*   最小、最大和平均行程距离
+*   平均乘客数量
 
-To do this, we can run the following query:
+为了做到这一点，我们可以运行以下查询：
 
 ```sql
--- For each airport: num trips, avg trip duration, avg cost, avg tip, avg distance, min distance, max distance, avg number of passengers
+-- 对于每个机场：行程数量、平均行程持续时间、平均费用、平均小费、平均距离、最小距离、最大距离、平均乘客数量
 SELECT rates.description, COUNT(vendor_id) AS num_trips,
    AVG(dropoff_datetime - pickup_datetime) AS avg_trip_duration, AVG(total_amount) AS avg_total,
    AVG(tip_amount) AS avg_tip, MIN(trip_distance) AS min_distance, AVG (trip_distance) AS avg_distance, MAX(trip_distance) AS max_distance,
@@ -537,10 +454,10 @@ SELECT rates.description, COUNT(vendor_id) AS num_trips,
  ORDER BY rates.description;
 ```
 
-Which produces the following output:
+这产生了以下输出：
 
 ```sql
--[ RECORD 1 ]-----+--------------------
+-[ RECORD 1 ]-----+-------------------
 description       | JFK
 num_trips         | 225019
 avg_trip_duration | 00:45:46.822517
@@ -550,7 +467,7 @@ min_distance      | 0.00
 avg_distance      | 17.2602816651038357
 max_distance      | 221.00
 avg_passengers    | 1.7333869584346211
--[ RECORD 2 ]-----+--------------------
+-[ RECORD 2 ]-----+-------------------
 description       | Newark
 num_trips         | 16822
 avg_trip_duration | 00:35:16.157472
@@ -562,52 +479,36 @@ max_distance      | 177.23
 avg_passengers    | 1.7435501129473309
 ```
 
-Based on your analysis, you are able to identify:
+根据你的分析，你可以确定：
 
-*   There are 13x more rides to JFK than Newark. This often leads to heavy traffic on the roads to and from JFK, especially during peak times. They've decided to explore road improvements to those areas, as well as increasing public transport to and from the airport (e.g, buses, subway, trains, etc.)
-*   Each airport ride has on average the same number of passengers per trip (~1.7 passengers per trip).
-*   The trip distances are roughly the same 16-17 miles.
-*   JFK is about 30% cheaper, most likely because of NJ tunnel and highway tolls.
-*   Newark trips are 22% (10 min) shorter.
+*   JFK的行程数量是纽瓦克的13倍。这通常导致前往和离开JFK的道路拥堵，尤其是在高峰时段。他们决定探索这些地区的道路交通改善，以及增加从机场出发的公共交通（例如公交车、地铁、火车等）。
+*   每个机场的行程平均乘客数量相同（每次行程约1.7名乘客）。
+*   行程距离大致相同，为16-17英里。
+*   JFK的行程费用便宜约30%，这可能是因为新泽西隧道和高速公路收费。
+*   纽瓦克的行程比JFK短22%（10分钟）。
 
-This data is useful not just for city planners, but also for airport travellers
-and tourism organizations like the NYC Tourism Bureau. For example, a tourism
-organization could recommend cost-conscious travelers who'd rather not fork out
-$84 for a ride to Newark to use public transport instead, like the NJ Transit
-train from Penn Station ($15.25 for an adult ticket). Similarly, they could
-recommend to those travelling to JFK airport, and who are weary of heavy traffic,
-to take the subway and airtrain instead, for just $7.50.
+这些数据不仅对城市规划者有用，对机场旅客和纽约市旅游局等旅游组织也有用。例如，旅游组织可以建议成本意识较强的旅客，如果他们不想支付84美元的纽瓦克行程费用，可以改乘公共交通，如从宾州车站出发的新泽西交通列车（成人票价15.25美元）。同样，他们可以建议前往JFK机场的旅客，如果他们担心交通拥堵，可以乘坐地铁和机场快线，只需7.50美元。
 
-Moreover, you could also make recommendations for those flying out of
-New York City about which airport to choose. For example, from the data above,
-we can recommend those travellers who think they'd be in a rush and who don't
-mind paying a little extra to consider flying out of Newark over JFK.
+此外，你还可以为从纽约市出发的旅客提供关于选择哪个机场的建议。例如，根据上述数据，我们可以建议那些认为自己可能赶时间且不介意支付额外费用的旅客，考虑从纽瓦克出发而不是JFK。
 
-If you've made it this far, you've successfully completed Mission 2 and now
-have a basic understanding of how to analyze time-series data using TimescaleDB!
+如果你已经走到了这一步，那么你就成功完成了任务2，现在对如何使用TimescaleDB分析时间序列数据有了基本的了解！
 
-### Mission 3: Monitoring
+### 任务3：监控
 
-We can also use the time-series data from taxi rides to monitor
-a ride's current status.
+我们还可以利用出租车行程的时间序列数据来监控行程的当前状态。
 
->:WARNING: A more realistic setup would involve creating a data pipeline that streams sensor data directly from the cars into TimescaleDB. However, we use the January 2016 data to illustrate the underlying principles that are applicable regardless of setup.
+>:WARNING: 更现实的设置将涉及创建一个数据管道，直接从汽车中流式传输传感器数据到TimescaleDB。然而，我们使用2016年1月的数据来说明无论设置如何都适用的基本原理。
 
-#### How many rides took place every 5 minutes for the first day of 2016?
+#### 2016年第一天每5分钟发生了多少次行程？
 
-It's January 1, 2016. NYC riders have celebrated New Year's Eve, and are using taxi
-cabs to travel to and from their first gathering of the new year.
+2016年1月1日。纽约市的乘客庆祝了新年前夕，使用出租车前往和离开他们新年的第一次聚会。
 
-The first thing you might like to know is how many rides have recently taken
-place. We can approximate that by counting the number of rides that were
-completed on the first day of 2016, in 5 minute intervals.
+你可能首先想知道最近发生了多少次行程。我们可以通过计算2016年第一天完成的行程数量，以5分钟为间隔来近似得出这个数字。
 
-While it's easy to count how many rides took place, there is no easy way
-to segment data by 5 minute time intervals in PostgreSQL. As a result, we
-need to use a query similar to the query below:
+虽然计算发生多少次行程很容易，但在PostgreSQL中按5分钟时间间隔分割数据并没有那么容易。因此，我们需要使用类似于下面的查询：
 
 ```sql
--- Vanilla Postgres query for num rides every 5 minutes
+-- 每5分钟的行程数量的普通Postgres查询
 SELECT
   EXTRACT(hour from pickup_datetime) as hours,
   trunc(EXTRACT(minute from pickup_datetime) / 5)*5 AS five_mins,
@@ -617,45 +518,29 @@ WHERE pickup_datetime < '2016-01-02 00:00'
 GROUP BY hours, five_mins;
 ```
 
-It may not be immediately clear why the above query returns rides segmented
-by 5 minute buckets, so let's examine it more closely, using the sample time
-of 08:49:00.
+可能不是立即清楚为什么上述查询返回按5分钟桶分割的行程，让我们更仔细地检查它，使用示例时间为08:49:00。
 
-In the above query, we first extract the hour that a ride took place in:
+在上述查询中，我们首先提取行程发生的时间：
 
 ```sql
-EXTRACT(hour from pickup_datetime) as hours
+EXTRACT(hour from pickup_datetime) as
 ```
 
-So for 08:49 our result for `hours` would be 8. Then we need to calculate, `five_mins`,
-the closest multiple of 5 minutes for a given timestamp. To do this, we calculate
-the quotient of the minute that a ride began in divided by 5. Then we truncate
-the result to take the floor of that quotient. Afterward, we multiply that truncated
-quotient by 5 to, in essence, find the 5 minute bucket that the minute is closest to:
+所以对于08:49，我们`hours`的结果将是8。然后我们需要计算`five_mins`，给定时间戳最接近的5分钟倍数。为此，我们计算行程开始的分钟数除以5的商。然后我们截断结果，取该商的底数。之后，我们将截断的商乘以5，本质上找到最接近的5分钟桶，该分钟最接近：
 
 ```sql
 trunc(EXTRACT(minute from pickup_datetime) / 5)*5 AS five_mins
 ```
 
-So our result for time of 08:49 would be `trunc(49/5)*5 = trunc(9.8)*5 = 9*5 = 45`,
-so this time would be in the 45&nbsp;min bucket. After extracting both the hours and which
-5 minute interval the time fell into, we then group our results, first by the
-`hours` and then the `five_mins` interval. Whew, that was a lot for a conceptually
-simple question!
+所以对于08:49的时间，我们的结果将是`trunc(49/5)*5 = trunc(9.8)*5 = 9*5 = 45`，所以这个时间将在45&nbsp;min桶中。在提取小时和时间落入哪个5分钟间隔之后，我们按`hours`和`five_mins`间隔对结果进行分组。哇，对于一个概念上简单的问题来说，这是很多步骤！
 
-Segmentation by arbitrary time intervals is common in time-series analysis,
-but can sometimes be unwieldy in vanilla PostgreSQL. Thankfully,
-TimescaleDB has many custom-built SQL functions to make time-series
-analysis quick and simple. For example, `time_bucket` is a more powerful
-version of the PostgreSQL `date_trunc` function. It allows for arbitrary
-time intervals, rather than the standard day, minute, hour provided by `date_trunc`.
+在时间序列分析中，按任意时间间隔分割是常见的，但在普通PostgreSQL中有时可能不太方便。幸运的是，TimescaleDB有许多定制的SQL函数，使时间序列分析变得快速简单。例如，`time_bucket`是PostgreSQL `date_trunc`函数的更强大的版本。它允许使用任意时间间隔，而不是`date_trunc`提供的标准天、分钟、小时。
 
-So when using TimescaleDB, the complex query above turns into a simpler
-SQL query, as seen below:
+所以当使用TimescaleDB时，上述复杂的查询变成了一个更简单的SQL查询，如下所示：
 
 ```sql
--- How many rides took place every 5 minutes for the first day of 2016?
--- using the TimescaleDB "time_bucket" function
+-- 2016年第一天每5分钟发生了多少次行程？
+-- 使用TimescaleDB的“time_bucket”函数
 SELECT time_bucket('5 minute', pickup_datetime) AS five_min, count(*)
 FROM rides
 WHERE pickup_datetime < '2016-01-02 00:00'
@@ -663,7 +548,7 @@ GROUP BY five_min
 ORDER BY five_min;
 ```
 
-The result of your query should start something like this:
+你的查询结果应该开始像这样：
 
 ```sql
       five_min       | count
@@ -676,38 +561,25 @@ The result of your query should start something like this:
 
 ```
 
-#### How many rides on New Year's morning originated from within 400m of Times Square, in 30 minute buckets?
+#### 元旦早晨从时代广场400米范围内出发的行程有多少，在30分钟的桶中？
 
-New York City is famous for its annual Ball Drop New Year's Eve
-celebration in Times Square. Thousands of people gather to bring in the
-new year together and then head home, to their favorite bar, or first
-gathering of the new year.
+纽约市以其在时代广场举行的年度新年落球庆典而闻名。数千人聚集在一起迎接新年的到来，然后回家，去他们最喜欢的酒吧，或参加新年的第一次聚会。
 
-This matters to your analysis because you'd like to understand taxi demand
-in peak times, and there's no more peak time in New York than the Times Square area
-on the first day of the year.
+这对分析很重要，因为你想在高峰时段了解出租车需求，而在纽约，没有比新年第一天的时代广场地区更高峰的时段了。
 
-To answer this question, your first guess might be to use our friend `time_bucket`
-from the previous section to count rides initiated in 30 minute intervals. But
-there's one piece of information we don't have: how do we figure out
-which rides started *near Times Square*?
+要回答这个问题，你可能会首先想到使用我们在上一节中的`time_bucket`来计算30分钟间隔内发起的行程。但我们没有的信息是：我们如何确定哪些行程开始于*时代广场附近*？
 
-This requires that we make use of the pickup latitude and longitude columns
-in our `rides` hypertable. To use the pickup location, we'll need to get our
-hypertable ready for geospatial queries.
+这需要我们利用`rides`超表中的接客纬度和经度列。要使用接客地点，我们需要为我们的超表准备好进行地理空间查询。
 
-The good news is that TimescaleDB is compatible with all other PostgreSQL
-extensions and, for geospatial data, we'll use [PostGIS][postgis]. This allows us
-to slice data by time and location with the speed and scale of TimescaleDB!
+好消息是，TimescaleDB与所有其他PostgreSQL扩展兼容，对于地理空间数据，我们将使用[PostGIS][postgis]。这使我们能够以TimescaleDB的速度和规模按时间和地点切片数据！
 
 ```sql
--- Geospatial queries - TimescaleDB + POSTGIS -- slice by time and location
--- Install the extension in the database
+-- 地理空间查询 - TimescaleDB + POSTGIS - 按时间和地点切片
+-- 在数据库中安装扩展
 CREATE EXTENSION postgis;
 ```
 
-Then, run the `\dx` command in `psql` to verify that PostGIS was installed properly.
-You should see the PostGIS extension in your extension list, as noted below:
+然后，在`psql`中运行`\dx`命令以验证PostGIS是否已正确安装。你应该在扩展列表中看到PostGIS扩展，如下所示：
 
 ```sql
                                         List of installed extensions
@@ -719,36 +591,31 @@ You should see the PostGIS extension in your extension list, as noted below:
  (3 rows)
  ```
 
-Now, we need to alter our table to work with PostGIS. To start, we'll add
-geometry columns for ride pick up and drop off locations:
+现在，我们需要修改我们的表以使用PostGIS。首先，我们将为行程接客和落客位置添加几何列：
 
 ```sql
--- Create geometry columns for each of our (lat,long) points
+-- 为我们的（lat,long）点创建几何列
 ALTER TABLE rides ADD COLUMN pickup_geom geometry(POINT,2163);
 ALTER TABLE rides ADD COLUMN dropoff_geom geometry(POINT,2163);
 ```
 
-Next we'll need to convert the latitude and longitude points into geometry coordinates
-so that it plays well with PostGIS:
+接下来，我们需要将纬度和经度点转换为几何坐标，以便与PostGIS良好协作：
 
->:WARNING: This next query may take several minutes. Updating both columns in one UPDATE statement
-as shown reduces the amount of time it takes to update all rows in the `rides` table.
+>:WARNING: 下一个查询可能需要几分钟。在一次UPDATE语句中更新两个列，如下所示，减少了更新`rides`表中所有行所需的时间。
 
 ```sql
--- Generate the geometry points and write to table
+-- 生成几何点并写入表
 UPDATE rides SET pickup_geom = ST_Transform(ST_SetSRID(ST_MakePoint(pickup_longitude,pickup_latitude),4326),2163),
    dropoff_geom = ST_Transform(ST_SetSRID(ST_MakePoint(dropoff_longitude,dropoff_latitude),4326),2163);
 ```
 
-Lastly, we need one more piece of info: Times Square is located at (`lat`, `long`) (`40.7589`,`-73.9851`).
+最后，我们需要一个额外的信息：时代广场位于（lat，long）（40.7589，-73.9851）。
 
-Now, we have all the information to answer our original question:
-*How many rides on New Year's morning originated within 400m of Times Square, in 30 minute buckets?*
+现在，我们有了回答我们原始问题的所有信息：*元旦早晨在时代广场400米范围内发起的行程有多少，在30分钟的桶中？*
 
 ```sql
--- How many taxis pick up rides within 400m of Times Square on New Years Day, grouped by 30 minute buckets.
--- Number of rides on New Years Day originating within 400m of Times Square, by 30 min buckets
--- Note: Times Square is at (lat, long) (40.7589,-73.9851)
+-- 元旦当天在时代广场400米范围内发起的出租车行程数量，按30分钟桶分组。
+-- 请注意：时代广场位于（lat，long）（40.7589，-73.9851）
 SELECT time_bucket('30 minutes', pickup_datetime) AS thirty_min, COUNT(*) AS near_times_sq
 FROM rides
 WHERE ST_Distance(pickup_geom, ST_Transform(ST_SetSRID(ST_MakePoint(-73.9851,40.7589),4326),2163)) < 400
@@ -756,7 +623,7 @@ AND pickup_datetime < '2016-01-01 14:00'
 GROUP BY thirty_min ORDER BY thirty_min;
 ```
 
-You should get the following results:
+你应该得到以下结果：
 
 ```sql
      thirty_min      | near_times_sq
@@ -792,41 +659,27 @@ You should get the following results:
 (28 rows)
 ```
 
-From the figure above, you can surmise that few people wanted to leave
-by taxi around midnight, while many left by taxi between 03:00-05:00, after the
-bars, clubs, and other New Year's Eve parties closed. This is useful information
-for capacity planning, reducing idling vehicles, and pre-positioning alternative
-transportation with a smaller carbon footprint, such as shuttle buses to/from
-subway and train lines.
+从上面的图表中，你可以推断出，午夜时分很少有人想乘出租车离开，而在凌晨03:00至05:00之间，许多人乘出租车离开，这时酒吧、俱乐部和其他新年派对已经结束。这对于容量规划、减少空驶车辆和预先布置替代交通工具（如地铁和火车线路的班车）非常有用，这些交通工具的碳足迹较小。
 
-As an aside, the data also shows you that rides then picked up in the mid-morning
-hours, as people headed to breakfast and other New Years activities. New York is
-truly the city that never sleeps and Times Square is a good reflection of that!
+顺便说一句，数据还显示，行程在上午晚些时候开始增加，因为人们前往早餐和其他新年活动。纽约确实是一个不夜城，时代广场是一个很好的反映！
 
-### Conclusions and next steps
+### 结论和后续步骤
 
-In this tutorial you learned how to get started with TimescaleDB.
+在本教程中，你学习了如何开始使用TimescaleDB。
 
-In **Mission 1**, you learned how to setup and connect to a TimescaleDB instance
-and load data from a CSV file using `psql`.
+在**任务1**中，你学习了如何设置和连接到TimescaleDB实例，并使用`psql`从CSV文件加载数据。
 
-In **Missions 2 and 3** you learned how to use TimescaleDB to conduct analysis and
-monitoring on a large dataset. You learned about hypertables, saw how TimescaleDB
-supports full SQL, and how JOINs enable you to combine your time-series data
-with your relational or business data.
+在**任务2和3**中，你学习了如何使用TimescaleDB进行分析和监控大型数据集。你了解了超表，看到了TimescaleDB如何支持完整的SQL，以及JOIN如何使你能够将时间序列数据与关系或业务数据结合起来。
 
-You also learned about special TimescaleDB SQL functions like `time_bucket` and
-how they make time-series analysis possible in fewer lines of code, as well
-as how TimescaleDB is compatible with other extensions like *PostGIS*, for fast
-querying by time and location.
+你还学习了TimescaleDB的特殊SQL函数，如`time_bucket`，以及它们如何使时间序列分析在更少的代码行中成为可能，以及TimescaleDB如何与*PostGIS*等其他扩展兼容，快速按时间和地点查询。
 
-[NYCTLC]: https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page
-[cloud-signup]: https://console.cloud.timescale.com/signup
+[NYCTLC]: https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page 
+[cloud-signup]: https://console.cloud.timescale.com/signup 
 [continuous-aggregates]: /getting-started/:currentVersion:/create-cagg/
 [hypertables]: /use-timescale/:currentVersion:/hypertables
 [install-timescale]: /getting-started/latest/
 [migrate]: /use-timescale/:currentVersion:/migration/
-[parallel-copy]: https://github.com/timescale/timescaledb-parallel-copy
-[postgis]: http://postgis.net/documentation
+[parallel-copy]: https://github.com/timescale/timescaledb-parallel-copy 
+[postgis]: http://postgis.net/documentation 
 [setup-psql]: /use-timescale/:currentVersion:/integrations/query-admin/about-psql
 [time-series-forecasting]: /tutorials/:currentVersion:/time-series-forecast/
