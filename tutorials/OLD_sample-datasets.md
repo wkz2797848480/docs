@@ -1,111 +1,73 @@
 ---
-title: Sample datasets
-excerpt: Download these sample datasets to start exploring TimescaleDB
+标题: 示例数据集
+摘要: 下载这些示例数据集，以便开始探索 TimescaleDB。
 ---
 
-# Sample datasets
+# 样本数据集
 
-Timescale have created several sample datasets to help you get started using
-TimescaleDB. These datasets vary in database size, number of time
-intervals, and number of values for the partition field.
+Timescale 创建了几个样本数据集，以帮助您开始使用 TimescaleDB。这些数据集在数据库大小、时间间隔数量和分区字段的值的数量上各不相同。
 
-Each gzip archive contains a single `.sql` file to create the necessary
-hypertables within the database, and several `.csv` files that contain the
-data to be copied into those tables. These files presume the database
-you are importing them to has already been [set up with the TimescaleDB extension][installation].
+每个 gzip 归档包含一个 `.sql` 文件，用于在数据库中创建必要的超表，以及几个包含要复制到这些表中的数据的 `.csv` 文件。这些文件假设您导入它们的数据库已经[设置了 TimescaleDB 扩展][installation]。
 
-**Device ops**: these datasets include metrics such as CPU, memory, and network,
-that are collected from mobile devices. Click on the name to download.
+**设备操作**：这些数据集包括从移动设备收集的 CPU、内存和网络等指标。点击名称下载。
 
-<!--- These links no longer work, deleted. LKB 2023-05-10
+对于更多细节和示例用法，参见[设备操作数据集](#device-ops-datasets)。
 
-*   <Tag type="download" >[devices_small]()</Tag> 1,000 devices recorded over 1,000 time intervals - 39&nbsp;MB
-*   <Tag type="download" >[devices_med]()</Tag> 5,000 devices recorded over 2,000 time intervals - 390&nbsp;MB
-*   <Tag type="download" >[devices_big]()</Tag> 3,000 devices recorded over 10,000 time intervals - 1.2&nbsp;GB
+**天气**：这些数据集包括来自各种位置的温度和湿度数据。点击名称下载。
 
--->
+对于更多细节和示例用法，参见[天气数据集](#weather-datasets)。
 
-For more details and example usage, see
-[device ops datasets](#device-ops-datasets).
+## 导入
+简要来说，导入步骤如下：
 
-**Weather**: these datasets include metrics like temperature and humidity data
-from a variety of locations. Click on the name to download.
+1.  设置带有 TimescaleDB 的数据库。
+2.  解压缩归档。
+3.  通过 `psql` 导入 `.sql` 文件以创建超表。
+4.  通过 `psql` 从 `.csv` 文件导入数据。
 
-<!--- These links no longer work, deleted. LKB 2023-05-10
+每个数据集的名称格式为 `[数据集]_[size].tar.gz`。
+例如，`devices_small.tar.gz` 是数据集 `devices` 和大小 `small`。
+每个数据集包含一个名为 `[数据集].sql` 的 `.sql` 文件和几个命名为 `[数据集]_[size]_[table].csv` 的 CSV 文件。
 
-*   <Tag type="download" >[weather_small]()</Tag>
-    1,000 locations over 1,000 two-minute intervals - 8.1&nbsp;MB
-*   <Tag type="download" >[weather_med]()</Tag>
-    1,000 locations over 15,000 two-minute intervals - 115&nbsp;MB
-*   <Tag type="download" >[weather_big]()</Tag>
-    2,000 locations over 20,000 two-minute intervals - 305&nbsp;MB
-
--->
-
-For more details and example usage, see [weather datasets](#weather-datasets).
-
-## Importing
-<!-- Add steps format-->
-Briefly, the import steps are:
-
-1.  Setup a database with TimescaleDB.
-1.  Unzip the archive.
-1.  Import the `.sql` file to create the hypertables via `psql`.
-1.  Import the data from `.csv` files via `psql`.
-
-Each dataset has a name in the format of `[dataset]_[size].tar.gz`.
-For example, `devices_small.tar.gz` is dataset `devices` and size `small`.
-Each dataset contains one `.sql` file named `[dataset].sql` and a few
-CSV files named in the format `[dataset]_[size]_[table].csv`.
-
-As an example, if you wanted to import the `devices_small` dataset, it creates
-two tables (`device_info` and a hypertable named `readings`) from `devices.sql`.
-Therefore, there are two CSV files: `devices_small_readings.csv` and
-`devices_small_device_info.csv`. So, to import this dataset into a TimescaleDB
-database named `devices_small`:
+例如，如果您想导入 `devices_small` 数据集，它从 `devices.sql` 创建两个表（`device_info` 和一个名为 `readings` 的超表）。
+因此，有两个 CSV 文件：`devices_small_readings.csv` 和 `devices_small_device_info.csv`。
+所以，要将此数据集导入名为 `devices_small` 的 TimescaleDB 数据库：
 
 ```bash
-# (1) unzip the archive
+# (1) 解压缩归档
 tar -xvzf devices_small.tar.gz
 
-# (2) import the .sql file to the database
+# (2) 将 .sql 文件导入数据库
 psql -U postgres -d tsdb < devices.sql
 
-# (3) import data from .csv files to the database
+# (3) 从 .csv 文件导入数据到数据库
 psql -U postgres -d tsdb -c "\COPY readings FROM devices_small_readings.csv CSV"
 psql -U postgres -d tsdb -c "\COPY device_info FROM devices_small_device_info.csv CSV"
 ```
 
-The data is now ready for use.
+数据现在已准备好使用。
 
 <Highlight type="tip">
-The standard `COPY` command in PostgreSQL is single threaded. To speed up
-importing the larger sample datasets, you can use the
-[parallel importer](https://github.com/timescale/timescaledb-parallel-copy)
-instead.
+PostgreSQL 中的标准 `COPY` 命令是单线程的。要加速导入较大的样本数据集，您可以使用[并行导入工具](https://github.com/timescale/timescaledb-parallel-copy) 代替。
 </Highlight>
 
 ```bash
-# To access your database (for example: `tsdb`)
+# 访问您的数据库（例如：`tsdb`）
 psql -U postgres -h localhost -d tsdb
 ```
 
-## Device ops datasets
+## 设备操作数据集
 
-After importing one of these datasets (`devices_small`, `devices_med`,
-`devices_big`), you have a plain PostgreSQL table called `device_info` and a
-hypertable called `readings`. The `device_info` table has static metadata
-about each device, such as the OS name and manufacturer. The `readings`
-hypertable tracks data sent from each device, for example CPU activity, or
-memory levels. Hypertables are exposed as a single table, so you can query
-them and join them with the metadata as you would normal SQL tables, as shown in
-the example queries in this section.
+导入这些数据集之一（`devices_small`、`devices_med`、`devices_big`）后，您将拥有一个名为 `device_info` 的普通 PostgreSQL 表和一个名为 `readings` 的超表。
+`device_info` 表包含有关每个设备的静态元数据，例如操作系统名称和制造商。
+`readings` 超表跟踪来自每个设备的数据，例如 CPU 活动或内存水平。
+超表作为单个表暴露，因此您可以像普通 SQL 表一样查询它们并与元数据进行连接，如本节示例查询所示。
 
-#### Schemas
+#### 模式
 
 ```sql
-Table "public.device_info"
-Column       | Type | Modifiers
+表 "public.device_info"
+列       | 类型 | 修饰符
 -------------+------+-----------
 device_id    | text |
 api_version  | text |
@@ -115,8 +77,8 @@ os_name      | text |
 ```
 
 ```sql
-Table "public.readings"
-Column              |       Type       | Modifiers
+表 "public.readings"
+列              |       类型       | 修饰符
 --------------------+------------------+-----------
 time                | bigint           |
 device_id           | text             |
@@ -131,16 +93,16 @@ mem_free            | double precision |
 mem_used            | double precision |
 rssi                | double precision |
 ssid                | text             |
-Indexes:
+索引：
   "readings_device_id_time_idx" btree (device_id, "time" DESC)
   "readings_time_idx" btree ("time" DESC)
 ```
 
-#### Example queries
+#### 示例查询
 
-Uses `devices_med` dataset
+使用 `devices_med` 数据集
 
-**10 most recent battery temperature readings for charging devices**
+**充电设备的最新 10 个电池温度读数**
 
 ```sql
 SELECT time, device_id, battery_temperature
@@ -163,7 +125,7 @@ time                   | device_id  | battery_temperature
 (10 rows)
 ```
 
-**Busiest devices (1 min avg) whose battery level is below 33% and is not charging**
+**电池电量低于 33% 且不在充电状态的最繁忙设备（1 分钟平均值）**
 
 ```sql
 SELECT time, readings.device_id, cpu_avg_1min,
@@ -207,27 +169,24 @@ hour                   | min_battery_level | max_battery_level
 2016-11-15 16:00:00-05 |                 6 |               100
 2016-11-15 17:00:00-05 |                 6 |               100
 2016-11-15 18:00:00-05 |                 6 |               100
+
 (12 rows)
 ```
 
 ---
 
-## Weather datasets
+## 天气数据集
 
-After importing one of these datasets (`weather_small`, `weather_med`,
-`weather_big`), you notice a plain PostgreSQL table called `locations` and a
-hypertable called `conditions`. The `locations` table has metadata about each of
-the locations, such as its name and environmental type. The `conditions`
-hypertable tracks readings of temperature and humidity from those locations.
-Because hypertables are exposed as a single table, you can query them and join
-them with the metadata as you would normal SQL tables, as shown in the example
-queries in this section.
+导入这些数据集之一（`weather_small`、`weather_med`、`weather_big`）后，您将注意到一个名为 `locations` 的普通 PostgreSQL 表和一个名为 `conditions` 的超表。
+`locations` 表包含有关每个位置的元数据，例如其名称和环境类型。
+`conditions` 超表跟踪来自这些位置的温度和湿度读数。
+由于超表作为单个表暴露，您可以像普通 SQL 表一样查询它们并与元数据进行连接，如本节示例查询所示。
 
-#### Schemas
+#### 模式
 
 ```sql
-Table "public.locations"
-Column      | Type | Modifiers
+表 "public.locations"
+列      | 类型 | 修饰符
 ------------+------+-----------
 device_id   | text |
 location    | text |
@@ -235,31 +194,31 @@ environment | text |
 ```
 
 ```sql
-Table "public.conditions"
-Column      |           Type           | Modifiers
+表 "public.conditions"
+列      |           类型           | 修饰符
 ------------+--------------------------+-----------
 time        | timestamp with time zone | not null
 device_id   | text                     |
 temperature | double precision         |
 humidity    | double precision         |
-Indexes:
+索引：
 "conditions_device_id_time_idx" btree (device_id, "time" DESC)
 "conditions_time_idx" btree ("time" DESC)
 ```
 
-#### Example queries
+#### 示例查询
 
-Uses `weather_med` dataset.
+使用 `weather_med` 数据集。
 
-**Last ten readings**
+**最后十个读数**
 
 ```sql
 SELECT * FROM conditions c ORDER BY time DESC LIMIT 10;
 
 time                   |     device_id      |    temperature     |      humidity
 -----------------------+--------------------+--------------------+--------------------
-2016-12-06 02:58:00-05 | weather-pro-000000 |  84.10000000000034 |  83.70000000000053
-2016-12-06 02:58:00-05 | weather-pro-000001 | 35.999999999999915 |  51.79999999999994
+2016-12-06 02:58:00-05 | weather-pro-000000 |  84.10000000000034 |  83.7000000000053
+2016-12-06 02:58:00-05 | weather-pro-000001 | 35.999999999999915 |  51.7999999999994
 2016-12-06 02:58:00-05 | weather-pro-000002 |  68.90000000000006 |  63.09999999999999
 2016-12-06 02:58:00-05 | weather-pro-000003 |  83.70000000000041 |  84.69999999999989
 2016-12-06 02:58:00-05 | weather-pro-000004 |  83.10000000000039 |  84.00000000000051
@@ -271,7 +230,7 @@ time                   |     device_id      |    temperature     |      humidity
 (10 rows)
 ```
 
-**Last 10 readings from 'outside' locations**
+**来自“outside”位置的最后 10 个读数**
 
 ```sql
 SELECT time, c.device_id, location,
@@ -296,7 +255,7 @@ time                   |     device_id      |   location    | temperature | humi
 (10 rows)
 ```
 
-**Hourly average, min, and max temperatures for "field" locations**
+**“field”位置的每小时平均值、最小值和最大温度**
 
 ```sql
 SELECT date_trunc('hour', time) "hour",
@@ -339,3 +298,5 @@ hour                   | avg_temp | min_temp | max_temp
 ```
 
 [installation]: /getting-started/latest/
+
+
