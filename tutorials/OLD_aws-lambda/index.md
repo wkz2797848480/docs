@@ -1,69 +1,60 @@
 ---
-title: TimescaleDB with AWS Lambda
-excerpt: Learn to use AWS Lambda and TimescaleDB together
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, AWS Lambda, psycopg2, pandas, GitHub Actions, pipeline]
+标题: 结合使用 TimescaleDB 与亚马逊网络服务（AWS）Lambda
+摘要: 学习如何一同使用 AWS Lambda 和 TimescaleDB。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，AWS Lambda，psycopg2，Pandas，GitHub 操作，管道]
 ---
+# TimescaleDB与AWS Lambda
 
-# TimescaleDB with AWS Lambda
+本节包含有关如何使用AWS Lambda和TimescaleDB的教程。
 
-This section contains tutorials for working with AWS Lambda and TimescaleDB.
+*   使用AWS Lambda和API Gateway为TimescaleDB创建数据API。
+*   使用AWS Lambda和Docker从第三方API拉取数据并导入TimescaleDB。如果您有很多依赖项，这非常有用。
+*   使用GitHub Actions持续部署您的Lambda函数。
 
-*   Create a data API for TimescaleDB using AWS Lambda and
-    API Gateway.
-*   Pull data from third-party API and ingest into TimescaleDB
-    using AWS Lambda and Docker. This is great if you have a lot of dependencies.
-*   Continuously deploy your Lambda function with GitHub Actions
-    using Github Actions.
+## 前提条件
 
-## Prerequisites
+开始之前，请确保您已完成以下步骤：
+日内股票数据分析教程。
+本教程需要您在该教程中设置的表格和数据。
 
-Before you begin, make sure you have completed the
-Analyze intraday stock data tutorial.
-This tutorial needs the tables and data that you set up in that tutorial.
-
-To complete this tutorial, you need an AWS account. You also need access to the
-AWS command-line interface (CLI). To check if you have AWS CLI installed, use
-this command at the command prompt. If it is installed, the command shows the
-version number, like this:
+要完成本教程，您需要一个AWS账户。您还需要访问AWS命令行界面（CLI）。要检查是否已安装AWS CLI，请在命令提示符下使用此命令。如果已安装，该命令会显示版本号，如下所示：
 
 ```bash
 aws --version
 aws-cli/2.2.18 Python/3.8.8 Linux/5.10.0-1044-oem exe/x86_64.ubuntu.20 prompt/off
 ```
 
-For more information about installing the AWS CLI, see
-[the AWS installation instructions][aws-install].
+有关安装AWS CLI的更多信息，请参见[AWS安装说明][aws-install]。
 
-<Highlight type="cloud" header="VPC on Timescale" button="Try for free">
-If you are completing this tutorial in Timescale, make sure you have
-created a VPC on both AWS, and on your database in Timescale. For more
-information about setting up a VPC, see the
-[Timescale VPC section](/use-timescale/latest/vpc/).
+<Highlight type="cloud" header="Timescale上的VPC" button="免费试用">
+如果您在Timescale完成本教程，请确保您已在AWS和Timescale数据库上创建了VPC。有关设置VPC的更多信息，请参见[Timescale VPC部分][timescale-vpc]。
 </Highlight>
 
-## Programming language
+## 编程语言
 
-The code examples in this tutorial use Python, but you can use any language
-[supported by AWS Lambda][lambda-supported-langs].
+本教程中的代码示例使用Python，但您可以使用AWS Lambda支持的任何语言[lambda-supported-langs]。
 
-## Resources
+## 资源
 
-For more information about the topics in this tutorial, check out these resources:
+有关本教程中的主题的更多信息，请查看以下资源：
 
-*   AWS CLI Version 2 References
-*   Creating Lambda container images
-*   Getting started with AWS Lambda
-*   Analyze historical intraday stock data
-*   Analyze cryptocurrency market data
+*   AWS CLI版本2参考
+*   创建Lambda容器镜像
+*   开始使用AWS Lambda
+*   分析历史日内股票数据
+*   分析加密货币市场数据
 
 [3rd-party-ingest]: /tutorials/:currentVersion:/aws-lambda/3rd-party-api-ingest
-[aws-cli2]: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/index.html
-[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+[aws-cli2]: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/index.html 
+[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html 
 [create-data-api]: /tutorials/:currentVersion:/aws-lambda/create-data-api
 [cryptocurrency-market-data]: /tutorials/:currentVersion:/analyze-cryptocurrency-data
 [gh-actions]: /tutorials/:currentVersion:/aws-lambda/continuous-deployment
 [intraday-stock-data]: /tutorials/:currentVersion:/
-[lambda-container-images]: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
-[lambda-getting-started]: https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html
-[lambda-supported-langs]: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+[lambda-container-images]: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html 
+[lambda-getting-started]: https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html 
+[lambda-supported-langs]: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html 
+
+[timescale-vpc]: /use-timescale/latest/vpc/
+
