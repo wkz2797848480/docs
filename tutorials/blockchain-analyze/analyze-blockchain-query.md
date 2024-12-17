@@ -1,45 +1,35 @@
 ---
-title: Analyze the Bitcoin blockchain - query the data
-excerpt: Analyze the Bitcoin blockchain with Timescale hyperfunctions
-products: [cloud]
-keywords: [intermediate, crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Analyze the Bitcoin blockchain
+标题: 分析比特币区块链 —— 查询数据
+摘要: 利用 Timescale 超级函数分析比特币区块链。
+产品: [云服务]
+关键词: [中级，加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析比特币区块链
 ---
 
-# Analyze the data
+# 分析数据
 
-When you have your dataset loaded, you can create some continuous aggregates,
-and start constructing queries to discover what your data tells you. This
-tutorial uses [Timescale hyperfunctions][about-hyperfunctions] to construct
-queries that are not possible in standard PostgreSQL.
+当您加载数据集后，可以创建一些连续聚合，并开始构建查询以发现数据所揭示的信息。本教程使用[Timescale超函数][about-hyperfunctions]构建在标准PostgreSQL中不可能的查询。
 
-In this section, you learn how to write queries that answer these questions:
+在本节中，您将学习如何编写回答以下问题：
 
-*   [Is there any connection between the number of transactions and the transaction fees?](#is-there-any-connection-between-the-number-of-transactions-and-the-transaction-fees)
-*   [Does the transaction volume affect the BTC-USD rate?](#does-the-transaction-volume-affect-the-btc-usd-rate)
-*   [Do more transactions in a block mean the block is more expensive to mine?](#do-more-transactions-in-a-block-mean-the-block-is-more-expensive-to-mine)
-*   [What percentage of the average miner's revenue comes from fees compared to block rewards?](#what-percentage-of-the-average-miners-revenue-comes-from-fees-compared-to-block-rewards)
-*   [How does block weight affect miner fees?](#how-does-block-weight-affect-miner-fees)
-*   [What's the average miner revenue per block?](#whats-the-average-miner-revenue-per-block)
+*   [交易数量与交易费用之间是否存在联系？](#交易数量与交易费用之间是否存在联系)
+*   [交易量是否影响BTC-USD汇率？](#交易量是否影响BTC-USD汇率)
+*   [区块中更多的交易是否意味着区块更昂贵？](#区块中更多的交易是否意味着区块更昂贵)
+*   [平均矿工收入中有多少百分比来自费用与区块奖励相比？](#平均矿工收入中有多少百分比来自费用与区块奖励相比)
+*   [区块重量如何影响矿工费用？](#区块重量如何影响矿工费用)
+*   [每个区块的平均矿工收入是多少？](#每个区块的平均矿工收入是多少)
 
-## Create continuous aggregates
+## 创建连续聚合
 
-You can use [continuous aggregates][docs-cagg] to simplify and speed up your
-queries. For this tutorial, you need three continuous aggregates, focusing on
-three aspects of the dataset: Bitcoin transactions, blocks, and coinbase
-transactions. In each continuous aggregate definition, the `time_bucket()`
-function controls how large the time buckets are. The examples all use 1-hour
-time buckets.
+您可以使用[连续聚合][docs-cagg]简化和加速查询。对于本教程，您需要三个连续聚合，关注数据集的三个方面：比特币交易、区块和coinbase交易。在每个连续聚合定义中，`time_bucket()`函数控制时间桶的大小。所有示例都使用1小时的时间桶。
 
 <Procedure>
 
-### Continuous aggregate: transactions
+### 连续聚合：交易
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, create a continuous aggregate called
-    `one_hour_transactions`. This view holds aggregated data about each hour of
-    transactions:
+1.  连接到包含比特币数据集的Timescale数据库。
+2.  在psql提示符下，创建一个名为`one_hour_transactions`的连续聚合。此视图包含每小时交易的聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_hour_transactions
@@ -61,7 +51,7 @@ time buckets.
     GROUP BY bucket;
     ```
 
-1.  Add a refresh policy to keep the continuous aggregate up-to-date:
+3.  添加刷新策略以保持连续聚合最新：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_hour_transactions',
@@ -70,8 +60,7 @@ time buckets.
        schedule_interval => INTERVAL '1 hour');
     ```
 
-1.  Create a continuous aggregate called `one_hour_blocks`. This view holds
-    aggregated data about all the blocks that were mined each hour:
+4.  创建一个名为`one_hour_blocks`的连续聚合。此视图包含每小时开采的所有区块的聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_hour_blocks
@@ -95,7 +84,7 @@ time buckets.
     GROUP BY bucket, block_id;
     ```
 
-1.  Add a refresh policy to keep the continuous aggregate up-to-date:
+5.  添加刷新策略以保持连续聚合最新：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_hour_blocks',
@@ -104,9 +93,7 @@ time buckets.
        schedule_interval => INTERVAL '1 hour');
     ```
 
-1.  Create a continuous aggregate called `one_hour_coinbase`. This view holds
-   aggregated data about all the transactions that miners received as rewards
-   each hour:
+6.  创建一个名为`one_hour_coinbase`的连续聚合。此视图包含每小时矿工作为奖励收到的所有交易的聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_hour_coinbase
@@ -121,7 +108,7 @@ time buckets.
     GROUP BY bucket;
     ```
 
-1.  Add a refresh policy to keep the continuous aggregate up-to-date:
+7.  添加刷新策略以保持连续聚合最新：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_hour_coinbase',
@@ -131,206 +118,23 @@ time buckets.
     ```
 
 </Procedure>
+### 探索是否更高的区块重量意味着更高的挖矿成本
 
-## Is there any connection between the number of transactions and the transaction fees?
-
-Transaction fees are a major concern for blockchain users. If a blockchain is
-too expensive, you might not want to use it. This query shows you whether
-there's any correlation between the number of Bitcoin transactions and the fees.
-The time range for this analysis is the last 2 days.
-
-If you choose to visualize the query in Grafana, you can see the average
-transaction volume and the average fee per transaction, over time. These trends
-might help you decide whether to submit a transaction now or wait a few days for
-fees to decrease.
-
-<Procedure>
-
-### Finding a connection between the number of transactions and the transaction fees
-
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to average transaction volume and the
-    fees from the `one_hour_transactions` continuous aggregate:
+1. 连接到包含比特币数据集的Timescale数据库。
+2. 在psql提示符下，使用以下查询返回区块重量与挖矿费用的比较：
 
     ```sql
     SELECT
-     bucket AS "time",
-     tx_count as "tx volume",
-     average(stats_fee_sat) as fees
-    FROM one_hour_transactions
-    WHERE bucket > NOW() - INTERVAL '2 days'
-    ORDER BY 1;
-    ```
-
-1.  The data you get back looks a bit like this:
-
-    ```sql
-              time          | tx volume |        fees
-    ------------------------+-----------+--------------------
-     2023-06-13 08:00:00+00 |     20063 |  7075.682450281613
-     2023-06-13 09:00:00+00 |     16984 |   7302.61716910033
-     2023-06-13 10:00:00+00 |     15856 |  9682.086402623612
-     2023-06-13 11:00:00+00 |     24967 |  5631.992550166219
-     2023-06-13 12:00:00+00 |      8575 |  17594.24256559767
-    ...
-    ```
-
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-
-    <img
-    class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-transactions-fees.webp"
-    width={1375} height={944}
-    alt="Visualizing number of transactions and fees"
-    />
-
-</Procedure>
-
-## Does the transaction volume affect the BTC-USD rate?
-
-In cryptocurrency trading, there's a lot of speculation. You can adopt a
-data-based trading strategy by looking at correlations between blockchain
-metrics, such as transaction volume and the current exchange rate between
-Bitcoin and US Dollars.
-
-If you choose to visualize the query in Grafana, you can see the average
-transaction volume, along with the BTC to US Dollar conversion rate.
-
-<Procedure>
-
-### Finding the transaction volume and the BTC-USD rate
-
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return the trading volume and the BTC
-    to US Dollar exchange rate:
-
-    ```sql
-    SELECT
-     bucket AS "time",
-     tx_count as "tx volume",
-     total_fee_usd / (total_fee_sat*0.00000001) AS "btc-usd rate"
-    FROM one_hour_transactions
-    WHERE bucket > NOW() - INTERVAL '2 days'
-    ORDER BY 1;
-    ```
-
-1.  The data you get back looks a bit like this:
-
-    ```sql
-              time          | tx volume |    btc-usd rate
-    ------------------------+-----------+--------------------
-     2023-06-13 08:00:00+00 |     20063 | 25975.888587931426
-     2023-06-13 09:00:00+00 |     16984 |  25976.00446352126
-     2023-06-13 10:00:00+00 |     15856 | 25975.988587014584
-     2023-06-13 11:00:00+00 |     24967 |  25975.89166787936
-     2023-06-13 12:00:00+00 |      8575 | 25976.004209699528
-     ...
-    ```
-
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, add an override to put
-    the fees on a different Y-axis. In the options panel, add an override for
-    the `btc-usd rate` field for `Axis > Placement` and choose `Right`.
-
-    <img
-    class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-volume-rate.webp"
-    width={1375} height={944}
-    alt="Visualizing transaction volume and BTC-USD conversion rate"
-    />
-
-</Procedure>
-
-## Do more transactions in a block mean the block is more expensive to mine?
-
-The number of transactions in a block can influence the overall block mining
-fee. For this analysis, a larger time frame is required, so increase the
-analyzed time range to 5 days.
-
-If you choose to visualize the query in Grafana, you can see that the more
-transactions in a block, the higher the mining fee becomes.
-
-<Procedure>
-
-## Finding if more transactions in a block mean the block is more expensive to mine
-
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return the number of transactions in a
-    block, compared to the mining fee:
-
-    ```sql
-    SELECT
-     bucket as "time",
-     avg(tx_count) AS transactions,
-     avg(block_fee_sat)*0.00000001 AS "mining fee"
-    FROM one_hour_blocks
-    WHERE bucket > now() - INTERVAL '5 day'
-    GROUP BY bucket
-    ORDER BY 1;
-    ```
-
-1.  The data you get back looks a bit like this:
-
-    ```sql
-              time          |     transactions      |       mining fee
-    ------------------------+-----------------------+------------------------
-     2023-06-10 08:00:00+00 | 2322.2500000000000000 | 0.29221418750000000000
-     2023-06-10 09:00:00+00 | 3305.0000000000000000 | 0.50512649666666666667
-     2023-06-10 10:00:00+00 | 3011.7500000000000000 | 0.44783255750000000000
-     2023-06-10 11:00:00+00 | 2874.7500000000000000 | 0.39303009500000000000
-     2023-06-10 12:00:00+00 | 2339.5714285714285714 | 0.25590717142857142857
-    ...
-    ```
-
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, add an override to put
-    the fees on a different Y-axis. In the options panel, add an override for
-    the `mining fee` field for `Axis > Placement` and choose `Right`.
-
-    <img
-    class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-transactions-miningfee.webp"
-    width={1375} height={944}
-    alt="Visualizing transactions in a block and the mining fee"
-    />
-
-</Procedure>
-
-You can extend this analysis to find if there is the same correlation between
-block weight and mining fee. More transactions should increase the block weight,
-and boost the miner fee as well.
-
-If you choose to visualize the query in Grafana, you can see the same kind of
-high correlation between block weight and mining fee. The relationship weakens
-when the block weight gets close to its maximum value, which is 4 million weight
-units, in which case it's impossible for a block to include more transactions.
-
-<Procedure>
-
-### Finding if higher block weight means the block is more expensive to mine
-
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return the block weight, compared to
-    the mining fee:
-
-    ```sql
-    SELECT
-     bucket as "time",
-     avg(block_weight) as "block weight",
-     avg(block_fee_sat*0.00000001) as "mining fee"
+       bucket as "time",
+       avg(block_weight) as "block weight",
+       avg(block_fee_sat*0.00000001) as "mining fee"
     FROM one_hour_blocks
     WHERE bucket > now() - INTERVAL '5 day'
     group by bucket
     ORDER BY 1;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
               time          |     block weight     |       mining fee
@@ -343,59 +147,47 @@ units, in which case it's impossible for a block to include more transactions.
     ...
     ```
 
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, add an override to put
-    the fees on a different Y-axis. In the options panel, add an override for
-    the `mining fee` field for `Axis > Placement` and choose `Right`.
+4. <Optional />在Grafana中可视化这一点，创建一个新的面板，选择比特币数据集作为您的数据源，并输入上一步的查询。在`Format as`部分，选择`Time series`。
+5. <Optional />要使这个可视化更有用，添加一个覆盖层，将费用放在不同的Y轴上。在选项面板中，为`mining fee`字段添加一个覆盖层，对于`Axis > Placement`选择`Right`。
 
     <img
     class="main-content__illustration"
     src="https://assets.timescale.com/docs/images/grafana-blockweight-miningfee.webp"
     width={1375} height={944}
-    alt="Visualizing blockweight and the mining fee"
+    alt="可视化区块重量和挖矿费用"
     />
 
 </Procedure>
 
-## What percentage of the average miner's revenue comes from fees compared to block rewards?
+## 矿工收入中来自费用与区块奖励的百分比是多少？
 
-In the previous queries, you saw that mining fees are higher when block weights
-and transaction volumes are higher. This query analyzes the data from a
-different perspective. Miner revenue is not only made up of miner fees, it also
-includes block rewards for mining a new block. This reward is currently 6.25
-BTC, and it gets halved every four years. This query looks at how much of a
-miner's revenue comes from fees, compares to block rewards.
+在之前的查询中，您看到当区块重量和交易量较高时，挖矿费用也较高。这个查询从不同的角度分析数据。矿工收入不仅由挖矿费用组成，还包括挖新块的区块奖励。这个奖励目前是6.25 BTC，并且每四年减半。这个查询查看矿工收入中有多少来自费用，与区块奖励相比。
 
-If you choose to visualize the query in Grafana, you can see that most miner
-revenue actually comes from block rewards. Fees never account for more than a
-few percentage points of overall revenue.
+如果您选择在Grafana中可视化查询，您可以看到大多数矿工收入实际上来自区块奖励。费用从未超过总收入的几个百分点。
 
 <Procedure>
 
-### Finding what percentage of the average miner's revenue comes from fees compared to block rewards
+### 探索矿工收入中来自费用与区块奖励的百分比
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return coinbase transactions, along
-    with the block fees and rewards:
+1. 连接到包含比特币数据集的Timescale数据库。
+2. 在psql提示符下，使用以下查询返回coinbase交易，以及区块费用和奖励：
 
     ```sql
     WITH coinbase AS (
-       SELECT block_id, output_total AS coinbase_tx FROM transactions
-       WHERE is_coinbase IS TRUE and time > NOW() - INTERVAL '5 days'
+      SELECT block_id, output_total AS coinbase_tx FROM transactions
+      WHERE is_coinbase IS TRUE and time > NOW() - INTERVAL '5 days'
     )
     SELECT
        bucket as "time",
-       avg(block_fee_sat)*0.00000001 AS "fees",
-       FIRST((c.coinbase_tx - block_fee_sat), bucket)*0.00000001 AS "reward"
+        avg(block_fee_sat)*0.00000001 AS "fees",
+        FIRST((c.coinbase_tx - block_fee_sat), bucket)*0.00000001 AS "reward"
     FROM one_hour_blocks b
     INNER JOIN coinbase c ON c.block_id = b.block_id
     GROUP BY bucket
     ORDER BY 1;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
               time          |          fees          |   reward
@@ -408,51 +200,39 @@ few percentage points of overall revenue.
     ...
     ```
 
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, stack the series to
-    100%. In the options panel, in the `Graph styles` section, for
-    `Stack series` select `100%`.
+4. <Optional />在Grafana中可视化这一点，创建一个新的面板，选择比特币数据集作为您的数据源，并输入上一步的查询。在`Format as`部分，选择`Time series`。
+5. <Optional />要使这个可视化更有用，将系列堆叠到100%。在选项面板中，在`Graph styles`部分，对于`Stack series`选择`100%`。
 
     <img
     class="main-content__illustration"
     src="https://assets.timescale.com/docs/images/grafana-coinbase-revenue.webp"
     width={1375} height={944}
-    alt="Visualizing coinbase revenue sources"
+    alt="可视化coinbase收入来源"
     />
 
 </Procedure>
 
-## How does block weight affect miner fees?
+## 区块重量如何影响矿工费用？
 
-You've already found that more transactions in a block mean it's more expensive
-to mine. In this query, you ask if the same is true for block weights? The more
-transactions a block has, the larger its weight, so the block weight and mining
-fee should be tightly correlated. This query uses a 12-hour moving average to
-calculate the block weight and block mining fee over time.
+您已经发现区块中的交易越多，挖矿成本越高。在这个查询中，您询问区块重量是否也是如此？区块中的交易越多，其重量越大，因此区块重量和挖矿费用应该紧密相关。这个查询使用12小时移动平均值来计算随时间变化的区块重量和挖矿费用。
 
-If you choose to visualize the query in Grafana, you can see that the block
-weight and block mining fee are tightly connected. In practice, you can also see
-the four million weight units size limit. This means that there's still room to
-grow for individual blocks, and they could include even more transactions.
+如果您选择在Grafana中可视化查询，您可以看到区块重量和区块挖矿费用紧密相连。实际上，您还可以看到四百万重量单位的大小限制。这意味着单个区块仍有增长空间，它们可以包含更多的交易。
 
 <Procedure>
 
-### Finding how block weight affects miner fees
+### 探索区块重量如何影响矿工费用
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return block weight, along with the
-    block fees and rewards:
+1. 连接到包含比特币数据集的Timescale数据库。
+2. 在psql提示符下，使用以下查询返回区块重量，以及区块费用和奖励：
 
     ```sql
     WITH stats AS (
-       SELECT
-           bucket,
-           stats_agg(block_weight, block_fee_sat) AS block_stats
-       FROM one_hour_blocks
-       WHERE bucket > NOW() - INTERVAL '5 days'
-       GROUP BY bucket
+      SELECT
+        bucket,
+        stats_agg(block_weight, block_fee_sat) AS block_stats
+      FROM one_hour_blocks
+      WHERE bucket > NOW() - INTERVAL '5 days'
+      GROUP BY bucket
     )
     SELECT
        bucket as "time",
@@ -462,11 +242,11 @@ grow for individual blocks, and they could include even more transactions.
     ORDER BY 1;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
               time          |    block weight    |     mining fee
-    ------------------------+--------------------+---------------------
+    ------------------------+--------------------+-------------------
      2023-06-10 09:00:00+00 | 3991766.3333333335 |  0.5051264966666666
      2023-06-10 10:00:00+00 | 3992424.5714285714 | 0.47238710285714286
      2023-06-10 11:00:00+00 |            3992224 | 0.44353000909090906
@@ -475,36 +255,29 @@ grow for individual blocks, and they could include even more transactions.
     ...
     ```
 
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, add an override to put
-    the fees on a different Y-axis. In the options panel, add an override for
-    the `mining fee` field for `Axis > Placement` and choose `Right`.
+4. <Optional />在Grafana中可视化这一点，创建一个新的面板，选择比特币数据集作为您的数据源，并输入上一步的查询。在`Format as`部分，选择`Time series`。
+5. <Optional />要使这个可视化更有用，添加一个覆盖层，将费用放在不同的Y轴上。在选项面板中，为`mining fee`字段添加一个覆盖层，对于`Axis > Placement`选择`Right`。
 
     <img
     class="main-content__illustration"
     src="https://assets.timescale.com/docs/images/grafana-blockweight-rewards.webp"
     width={1375} height={944}
-    alt="Visualizing block weight and mining fees"
+    alt="可视化区块重量和挖矿费用"
     />
 
 </Procedure>
 
-## What's the average miner revenue per block?
+## 每个区块的平均矿工收入是多少？
 
-In this final query, you analyze how much revenue miners actually generate by
-mining a new block on the blockchain, including fees and block rewards. To make
-the analysis more interesting, add the Bitcoin to US Dollar exchange rate, and
-increase the time range.
+在这个最终的查询中，您分析矿工通过在区块链上挖新块实际产生的收入，包括费用和区块奖励。为了使分析更有趣，添加比特币对美元的汇率，并扩大时间范围。
 
 <Procedure>
 
-### Finding the average miner revenue per block
+### 探索每个区块的平均矿工收入
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to return the average miner revenue per
-    block, with a 12-hour moving average:
+1. 连接到包含比特币数据集的Timescale数据库。
+2. 在psql提示符下，使用以下查询返回
+每个区块的平均矿工收入，使用12小时移动平均值：
 
     ```sql
     SELECT
@@ -516,11 +289,11 @@ increase the time range.
     ORDER BY 1;
     ```
 
-1.  The data you get back looks a bit like this:
+3. 返回的数据看起来像这样：
 
     ```sql
               time          |   revenue in BTC   |   revenue in USD
-    ------------------------+--------------------+--------------------
+    ------------------------+--------------------+-------------------
      2023-06-09 14:00:00+00 |       6.6732841925 |        176922.1133
      2023-06-09 15:00:00+00 |  6.785046736363636 |  179885.1576818182
      2023-06-09 16:00:00+00 |       6.7252952905 | 178301.02735000002
@@ -529,21 +302,18 @@ increase the time range.
     ...
     ```
 
-1.  [](#)<Optional />To visualize this in Grafana, create a new panel, select the
-    Bitcoin dataset as your data source, and type the query from the previous
-    step. In the `Format as` section, select `Time series`.
-1.  [](#)<Optional />To make this visualization more useful, add an override to put
-    the US Dollars on a different Y-axis. In the options panel, add an override
-    for the `mining fee` field for `Axis > Placement` and choose `Right`.
+4. <Optional />在Grafana中可视化这一点，创建一个新的面板，选择比特币数据集作为您的数据源，并输入上一步的查询。在`Format as`部分，选择`Time series`。
+5. <Optional />要使这个可视化更有用，添加一个覆盖层，将美元放在不同的Y轴上。在选项面板中，为`mining fee`字段添加一个覆盖层，对于`Axis > Placement`选择`Right`。
 
     <img
     class="main-content__illustration"
     src="https://assets.timescale.com/docs/images/grafana-blockweight-revenue.webp"
     width={1375} height={944}
-    alt="Visualizing block revenue over time"
+    alt="随时间可视化区块收入"
     />
 
 </Procedure>
+
 
 [docs-cagg]: /use-timescale/:currentVersion:/continuous-aggregates/
 [about-hyperfunctions]: https://docs.timescale.com/use-timescale/latest/hyperfunctions/about-hyperfunctions/
