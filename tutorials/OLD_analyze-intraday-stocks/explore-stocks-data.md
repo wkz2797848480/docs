@@ -285,5 +285,3 @@ figure.show()
 </Highlight>
 
 ![candlestick chart apple](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick.png)
-[pandas-docs]: https://pandas.pydata.org
-[plotly-docs]: https://plotly.com/python/
