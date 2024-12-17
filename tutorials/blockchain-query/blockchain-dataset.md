@@ -1,36 +1,29 @@
 ---
-title: Query the Bitcoin blockchain - set up dataset
-excerpt: Set up a dataset so you can query the Bitcoin blockchain
-products: [cloud]
-keywords: [beginner, crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Query the Bitcoin blockchain
+标题: 查询比特币区块链 —— 设置数据集
+摘要: 设置数据集，以便能够查询比特币区块链。
+产品: [云服务]
+关键词: [初学者，加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容_group: 查询比特币区块链
 ---
 
 import CreateAndConnect from "versionContent/_partials/_cloud-create-connect-tutorials.mdx";
 import CreateHypertableBlockchain from "versionContent/_partials/_create-hypertable-blockchain.mdx";
 import AddDataBlockchain from "versionContent/_partials/_add-data-blockchain.mdx";
 
-# Set up the database
+# 设置数据库
 
-This tutorial uses a dataset that contains Bitcoin blockchain data for
-the past five days, in a hypertable named `transactions`.
+本教程使用的数据集包含了过去五天的比特币区块链数据，存储在一个名为`transactions`的超表中。
 
-<Collapsible heading="Create a Timescale service and connect to your service" defaultExpanded={false}>
+<Collapsible heading="创建Timescale服务并连接到您的服务" defaultExpanded={false}>
 
 <CreateAndConnect/>
 
 </Collapsible>
 
-<Collapsible heading="The dataset" defaultExpanded={false}>
+<Collapsible heading="数据集" defaultExpanded={false}>
 
-The dataset is updated daily and contains data from the last five days,
-typically around 1.5 million Bitcoin transactions. The data includes information
-about each transaction, including the value of the transaction in
-[satoshi][satoshi-def], the smallest denomination of Bitcoin. It also states if
-a transaction is the first transaction in a block, known as a
-[coinbase][coinbase-def] transaction, which includes the reward a coin miner
-receives for mining the coin.
+数据集每天更新，包含最近五天的数据，通常是大约150万笔比特币交易。数据包括每笔交易的详细信息，包括交易的价值以[satoshi][satoshi-def]计，即比特币的最小单位。它还指出某笔交易是否是区块中的第一笔交易，称为[coinbase][coinbase-def]交易，这包括矿工挖矿得到的奖励。
 
 <CreateHypertableBlockchain />
 
@@ -38,5 +31,6 @@ receives for mining the coin.
 
 </Collapsible>
 
-[satoshi-def]: https://www.pcmag.com/encyclopedia/term/satoshi
+[satoshi-def]: https://www.pcmag.com/encyclopedia/term/satoshi 
 [coinbase-def]: https://www.pcmag.com/encyclopedia/term/coinbase-transaction
+
