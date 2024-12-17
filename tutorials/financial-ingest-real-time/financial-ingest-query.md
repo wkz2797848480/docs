@@ -1,31 +1,26 @@
 ---
-title: Ingest real-time financial websocket data - Query the data
-excerpt: Create candlestick views and query financial tick data to analyze price changes
-products: [cloud]
-keywords: [finance, analytics, websockets, data pipeline]
-tags: [tutorials, intermediate]
-layout_components: [next_prev_large]
-content_group: Ingest real-time financial websocket data
+标题: 摄取实时金融网络套接字数据-查询数据
+摘要: 创建蜡烛图视图并查询金融逐笔数据以分析价格变化。
+产品: [云服务]
+关键词: [金融，分析，网络套接字，数据管道]
+标签: [教程，中级]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 摄取实时金融网络套接字数据
 ---
 
 import GraphOhlcv from "versionContent/_partials/_graphing-ohlcv-data.mdx";
 
-# Query the data
+# 查询数据
 
-To look at OHLCV values, the most effective way is to create a continuous
-aggregate. You can create a continuous aggregate to aggregate data
-for each hour, then set the aggregate to refresh every hour, and aggregate
-the last two hours' worth of data.
+要查看OHLCV值，最有效的方法是创建一个连续聚合。您可以创建一个连续聚合来每小时聚合数据，然后设置聚合每小时刷新，并聚合最后两小时的数据。
 
 <Procedure>
 
-## Creating a continuous aggregate
+## 创建连续聚合
 
-1.  Connect to the Timescale database `tsdb` that contains the Twelve Data
-    stocks dataset.
+1.  连接到包含十二数据股票数据集的Timescale数据库`tsdb`。
 
-1.  At the psql prompt, create the continuous aggregate to aggregate data every
-    minute:
+2.  在psql提示符下，创建连续聚合以每分钟聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_hour_candle
@@ -42,10 +37,9 @@ the last two hours' worth of data.
         GROUP BY bucket, symbol;
     ```
 
-    When you create the continuous aggregate, it refreshes by default.
+    创建连续聚合时，默认会刷新。
 
-1.  Set a refresh policy to update the continuous aggregate every hour,
-    if there is new data available in the hypertable for the last two hours:
+3.  设置刷新策略，如果超表中最后两小时有新数据可用，则每小时更新连续聚合：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_hour_candle',
@@ -56,20 +50,17 @@ the last two hours' worth of data.
 
 </Procedure>
 
-## Query the continuous aggregate
+## 查询连续聚合
 
-When you have your continuous aggregate set up, you can query it to get the
-OHLCV values.
+设置好连续聚合后，您可以查询它以获取OHLCV值。
 
 <Procedure>
 
-### Querying the continuous aggregate
+### 查询连续聚合
 
-1.  Connect to the Timescale database that contains the Twelve Data
-    stocks dataset.
+1.  连接到包含十二数据股票数据集的Timescale数据库。
 
-1.  At the psql prompt, use this query to select all `AAPL` OHLCV data for the
-    past 5 hours, by time bucket:
+2.  在psql提示符下，使用此查询按时间桶选择过去5小时所有`AAPL`的OHLCV数据：
 
     ```sql
     SELECT * FROM one_hour_candle
@@ -77,7 +68,7 @@ OHLCV values.
     ORDER BY bucket;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
              bucket         | symbol  |  open   |  high   |   low   |  close  | day_volume
@@ -96,3 +87,4 @@ OHLCV values.
 </Procedure>
 
 <GraphOhlcv />
+
