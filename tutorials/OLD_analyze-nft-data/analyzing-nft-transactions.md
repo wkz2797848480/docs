@@ -175,8 +175,7 @@ ORDER BY bucket DESC, slug;
 
 bucket             |slug         |volume|
 -------------------|-------------|------|
-2021-10-12 02:00:00|ape-gang
-     |    58|
+2021-10-12 02:00:00|ape-gang     |    58|
 2021-10-12 02:00:00|cryptokitties|    48|
 2021-10-11 02:00:00|ape-gang     |   208|
 2021-10-11 02:00:00|cryptokitties|    61|
@@ -214,10 +213,9 @@ FROM nft_sales
 WHERE payment_symbol = 'ETH' AND ( seller_account = (SELECT id FROM snoop_dogg) OR winner_account = (SELECT id FROM snoop_dogg) )
 AND time > NOW()-INTERVAL '3 months'
 ```
-
-trade_count|nft_count|collection_count|sale_count|buy_count|total_volume_eth  |avg_price         |min_price|max_price|
------------|---------|----------------|----------|---------|------------------|------------------|---------|---------|
-        59|       57|              20|         1|       58|1835.5040000000006|31.110237288135604|      0.0|   1300.0|
+| trade_count | nft_count | collection_count | sale_count | buy_count | total_volume_eth  | avg_price         | min_price | max_price |
+|-------------|-----------|------------------|------------|-----------|------------------|------------------|-----------|-----------|
+| 59          | 57        | 20               | 1          | 58        | 1835.5040000000006 | 31.110237288135604 | 0.0       | 1300.0    |
 
 从查询结果中，我们可以看到Snoop Dogg在过去3个月总共进行了59次交易（购买了58次，仅出售了1次）。他的交易包括57个单独的NFT和23个收藏，总共花费了1835.504 ETH，最低支付价格为0，最高为1300 ETH。
 
