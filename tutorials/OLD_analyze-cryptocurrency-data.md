@@ -1,114 +1,91 @@
 ---
-title: Analyze cryptocurrency market data
-excerpt: Analyze a time-series cryptocurrency dataset with TimescaleDB
-products: [cloud, mst, self_hosted]
-keywords: [crypto, finance, analytics]
+标题: 分析加密货币市场数据
+摘要: 使用 TimescaleDB 分析时间序列加密货币数据集。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [加密货币，金融，分析]
 ---
 
-# Analyze cryptocurrency market data
+```markdown
+# 分析加密货币市场数据
 
-This tutorial is a step-by-step guide on how to analyze a time-series
-cryptocurrency dataset using TimescaleDB. The instructions in this tutorial
-were used to create [this analysis of 4100+ cryptocurrencies][crypto-blog].
+本教程是一个逐步指南，介绍了如何使用TimescaleDB分析时间序列加密货币数据集。本教程中的指导用于创建[这个分析4100多个加密货币][crypto-blog]。
 
-The tutorial covers these steps:
+教程涵盖以下步骤：
 
-1.  Design our database schema
-1.  Create a dataset using publicly available cryptocurrency pricing data
-1.  Load the dataset into TimescaleDB
-1.  Query the data in TimescaleDB
+1. 设计我们的数据库模式
+2. 使用公开可用的加密货币定价数据创建数据集
+3. 将数据集加载到TimescaleDB中
+4. 在TimescaleDB中查询数据
 
-You can
-[skip ahead to the TimescaleDB portion](#load-the-dataset-into-timescaledb)
-if you would prefer not to run through the scripts to create your database
-schema or your dataset.
+如果您不想运行创建数据库模式或数据集的脚本，可以直接[跳转到TimescaleDB部分](#load-the-dataset-into-timescaledb)。
 
-You can also download the resources for this tutorial:
+您还可以下载本教程的资源：
 
-*   Schema creation script: <Tag type="download" >[schema.sql](https://github.com/timescale/examples/blob/master/crypto_tutorial/schema.sql)</Tag>
-*   Dataset creation script: <Tag type="download" >[crypto_data_extraction.py](https://github.com/timescale/examples/blob/master/crypto_tutorial/crypto_data_extraction.py)</Tag>
-<!-- vale Google.Units = NO -->
-*   Dataset: <Tag type="download" >[Crypto Currency Dataset September 2019](https://github.com/timescale/examples/tree/master/crypto_tutorial/Cryptocurrency%20dataset%20Sept%2016%202019)</Tag> (Note that this data is from
-    September 2019. Follow the steps in Section 2 of this tutorial if you require fresh data)
-<!-- vale Google.Units = YES -->
+*   模式创建脚本：<Tag type="download" >[schema.sql](https://github.com/timescale/examples/blob/master/crypto_tutorial/schema.sql)</Tag> 
+*   数据集创建脚本：<Tag type="download" >[crypto_data_extraction.py](https://github.com/timescale/examples/blob/master/crypto_tutorial/crypto_data_extraction.py)</Tag> 
+*   数据集：<Tag type="download" >[Crypto Currency Dataset September 2019](https://github.com/timescale/examples/tree/master/crypto_tutorial/Cryptocurrency%20dataset%20Sept%2016%202019)</Tag>  （请注意，这些数据来自2019年9月。如果您需要最新数据，请按照本教程第2部分的步骤操作）
 
-## Prerequisites
+## 前提条件
 
-To complete this tutorial, you need a cursory knowledge of the Structured Query
-Language (SQL). The tutorial walks you through each SQL command, but it is
-helpful if you've seen SQL before.
+要完成本教程，您需要对结构化查询语言（SQL）有初步了解。教程将指导您完成每个SQL命令，但如果您之前使用过SQL将会有所帮助。
 
-To start, [install TimescaleDB][install-timescale]. When your installation is
-complete, you can start ingesting or creating sample data.
+首先，请[安装TimescaleDB][install-timescale]。安装完成后，您可以开始摄入或创建样本数据。
 
-This tutorial leads directly into a second tutorial that covers
-how Timescale can be used with Tableau to visualize
-time-series data.
+本教程直接引入第二个教程，涵盖如何将Timescale与Tableau结合使用来可视化时间序列数据。
 
-## Design the database schema
+## 设计数据库模式
 
-When you have a new database up and running, you need some data to insert into
-it. Before you get data for analysis, you need to define what kind of data you
-want to perform queries on.
+当您有一个新数据库运行时，您需要一些数据插入其中。在获取分析数据之前，您需要定义您想要执行查询的数据类型。
 
-In this analysis, we have two main goals:
+在本分析中，我们有两个主要目标：
 
-*   Explore the price of Bitcoin and Ethereum, expressed in different fiat
-    currencies, over time.
-*   Explore the price of different cryptocurrencies, expressed in Bitcoin, over
-    time.
+*   探索比特币和以太坊的价格，以不同法定货币计价，随时间变化。
+*   探索不同加密货币的价格，以比特币计价，随时间变化。
 
-Some questions you might want to ask:
+您可能想要问的一些问题：
 
-*   How has Bitcoin's price in USD varied over time?
-*   How has Ethereum's price in ZAR varied over time?
-*   How has Bitcoin's trading volume in KRW increased or decreased over time?
-*   Which crypto-currency has the greatest trading volume in the last two weeks?
-*   Which day was Bitcoin most profitable?
-*   Which are the most profitable new coins from the past three months?
+*   比特币的美元价格随时间如何变化？
+*   以太坊的南非兰特价格随时间如何变化？
+*   比特币的交易量在韩元计价随时间如何增加或减少？
+*   过去两周交易量最大的加密货币是什么？
+*   比特币最赚钱的是哪一天？
+*   过去三个月最赚钱的新币种有哪些？
 
-Understanding the questions you want to ask of the data helps to inform your
-schema definition.
+了解您想要询问的数据问题有助于指导您的模式定义。
 
-These requirements lead us to four tables. We need three TimescaleDB
-hypertables, called `btc_prices`, `crypto_prices`, and `eth_prices`, and one
-relational table, called `currency_info`.
+这些需求导致我们设计了四个表。我们需要三个TimescaleDB超表，分别称为`btc_prices`、`crypto_prices`和`eth_prices`，以及一个关系表，称为`currency_info`。
 
-The `btc_prices` and `eth_prices` hypertables contain data about Bitcoin prices
-in 17 different fiat currencies since 2010. This is the Bitcoin table, but the
-Ethereum table is very similar:
+`btc_prices`和`eth_prices`超表包含自2010年以来比特币在17种不同法定货币的价格数据。这是比特币表，但以太坊表非常相似：
 
-|Field|Description|
+|字段|描述|
 |-|-|
-|`time`|The day-specific timestamp of the price records, with time given as the default 00:00:00+00|
-|`opening_price`|The first price at which the coin was exchanged that day|
-|`highest_price`|The highest price at which the coin was exchanged that day|
-|`lowest_price`|The lowest price at which the coin was exchanged that day|
-|`closing_price`|The last price at which the coin was exchanged that day|
-|`volume_btc`|The volume exchanged in the cryptocurrency value that day, in BTC|
-|`volume_currency`|The volume exchanged in its converted value for that day, quoted in the corresponding fiat currency|
-|`currency_code`|Corresponds to the fiat currency used for non-BTC prices/volumes|
+|`time`|价格记录的特定日期时间戳，默认为00:00:00+00|
+|`opening_price`|当天首次交易的硬币价格|
+|`highest_price`|当天交易的最高价格|
+|`lowest_price`|当天交易的最低价格|
+|`closing_price`|当天最后交易的价格|
+|`volume_btc`|当天以加密货币价值交换的量，以BTC计|
+|`volume_currency`|当天转换为相应法定货币的交易量|
+|`currency_code`|对应非BTC价格/交易量的法定货币|
 
-Finally, the `currency_info` table maps the currency's code to its
-English-language name:
+最后，`currency_info`表将货币代码映射为其英文名称：
 
-|Field|Description|
+|字段|描述|
 |-|-|
-|`currency_code`|2-7 character abbreviation for currency. Used in other hypertables|
-|`currency`|English name of currency|
+|`currency_code`|货币的2-7个字符缩写。在其他超表中使用|
+|`currency`|货币的英文名称|
 
-When you have established the schema for the tables in the database, you can
-formulate `create_table` SQL statements to actually create the tables you need:
+当您在数据库中为表建立了模式后，您可以制定`create_table` SQL语句来实际创建所需的表：
 
 ```sql
---Schema for cryptocurrency analysis
+-- 加密货币分析的模式
 DROP TABLE IF EXISTS "currency_info";
 CREATE TABLE "currency_info"(
    currency_code   VARCHAR (10),
    currency        TEXT
 );
 
---Schema for btc_prices table
+-- btc_prices表的模式
 DROP TABLE IF EXISTS "btc_prices";
 CREATE TABLE "btc_prices"(
    time            TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -121,7 +98,7 @@ CREATE TABLE "btc_prices"(
    currency_code   VARCHAR (10)
 );
 
---Schema for crypto_prices table
+-- crypto_prices表的模式
 DROP TABLE IF EXISTS "crypto_prices";
 CREATE TABLE "crypto_prices"(
    time            TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -134,7 +111,7 @@ CREATE TABLE "crypto_prices"(
    currency_code   VARCHAR (10)
 );
 
---Schema for eth_prices table
+-- eth_prices表的模式
 DROP TABLE IF EXISTS "eth_prices";
 CREATE TABLE "eth_prices"(
    time            TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -147,47 +124,33 @@ CREATE TABLE "eth_prices"(
    currency_code   VARCHAR (10)
 );
 
---Timescale specific statements to create hypertables for better performance
+-- 创建超表以提高性能的Timescale特定语句
 SELECT create_hypertable('btc_prices', 'time');
 SELECT create_hypertable('eth_prices', 'time');
 SELECT create_hypertable('crypto_prices', 'time');
 ```
 
-Note that there are three `create_hypertable` statements which are
-TimescaleDB-specific statements. A hypertable is an abstraction of a single
-continuous table across time intervals, so that you can query it using standard
-SQL. For more on hypertables, see the [Timescale docs][hypertable-docs] and this
-[blog post][hypertable-blog].
+请注意，有三个`create_hypertable`语句是TimescaleDB特定的语句。超表是跨时间间隔的单个连续表的抽象，因此您可以使用标准SQL对其进行查询。有关超表的更多信息，请参见[Timescale文档][hypertable-docs]和这篇[博客文章][hypertable-blog]。
 
-## Create a dataset to analyze
+## 创建待分析的数据集
 
-Now that you've defined the data you want, you can construct a dataset
-containing that data. You can write a small Python script for extracting data
-from [CryptoCompare][cryptocompare] into four CSV files, called `coin_names.csv`,
-`crypto_prices.csv`, `btc_prices.csv`, and `eth_prices.csv`.
+现在您已经定义了想要的数据，可以构建包含这些数据的数据集。您可以编写一个小型Python脚本来从[CryptoCompare][cryptocompare]提取数据到四个CSV文件中，称为`coin_names.csv`、`crypto_prices.csv`、`btc_prices.csv`和`eth_prices.csv`。
 
-To get data from CryptoCompare, you'll need to
-[obtain an API key][cryptocompare-apikey]. For this analysis, the free key is
-sufficient.
+要从CryptoCompare获取数据，您需要[获得一个API密钥][cryptocompare-apikey]。对于此分析，免费密钥就足够了。
 
-The script consists of five parts:
+脚本由五部分组成：
 
-*   Import the necessary Python libraries in order to complete the data
-    extraction
-*   Populate the `currency_info` table with a list of coin names
-*   Get the historical Bitcoin (BTC) prices in 4198 other cryptocurrencies and
-    populate the `crypto_prices` table
-*   Get historical Bitcoin prices in different fiat currencies to populate
-    `btc_prices`
-*   Get historical Ethereum prices in different fiat currencies to populate
-    `eth_prices`
+*   导入完成数据提取所需的Python库
+*   用硬币名称列表填充`currency_info`表
+*   获取历史上比特币（BTC）在4198种其他加密货币中的价格，并填充`crypto_prices`表
+*   获取不同法定货币中的比特币历史价格以填充`btc_prices`
+*   获取不同法定货币中的以太坊历史价格以填充`eth_prices`
 
-Here's the full Python script, which you can also
-<Tag type="download" >[download](https://github.com/timescale/examples/blob/master/crypto_tutorial/crypto_data_extraction.py)</Tag>
+以下是完整的Python脚本，您也可以<Tag type="download" >[下载](https://github.com/timescale/examples/blob/master/crypto_tutorial/crypto_data_extraction.py)</Tag> 
 
 ```python
 #####################################################################
-#1. Import library and setup API key
+#1. 导入库并设置API密钥
 #####################################################################
 import requests
 import json
@@ -195,23 +158,23 @@ import csv
 from datetime import datetime
 
 apikey = 'YOUR_CRYPTO_COMPARE_API_KEY'
-#attach to end of URLstring
+#附加到URL字符串末尾
 url_api_part = '&api_key=' + apikey
 
 #####################################################################
-#2. Populate list of all coin names
+#2. 填充所有硬币名称列表
 #####################################################################
-#URL to get a list of coins from cryptocompare API
-URLcoinslist = 'https://min-api.cryptocompare.com/data/all/coinlist'
+#从cryptocompare API获取硬币列表的URL
+URLcoinslist = 'https://min-api.cryptocompare.com/data/all/coinlist&#39; 
 
-#Get list of cryptos with their symbols
+#获取带有符号的加密货币列表
 res1 = requests.get(URLcoinslist)
 res1_json = res1.json()
 data1 = res1_json['Data']
 symbol_array = []
 cryptoDict = dict(data1)
 
-#write to CSV
+#写入CSV
 with open('coin_names.csv', mode = 'w') as test_file:
    test_file_writer = csv.writer(test_file,
                                  delimiter = ',',
@@ -219,7 +182,7 @@ with open('coin_names.csv', mode = 'w') as test_file:
                                  quoting=csv.QUOTE_MINIMAL)
    for coin in cryptoDict.values():
      if day.get('time') == None:
-       continue # skip this item
+       continue #跳过此项
        name = coin['Name']
        symbol = coin['Symbol']
        symbol_array.append(symbol)
@@ -230,22 +193,22 @@ with open('coin_names.csv', mode = 'w') as test_file:
 print('Done getting crypto names and symbols. See coin_names.csv for result')
 
 #####################################################################
-#3. Populate historical price for each crypto in BTC
+#3. 填充每种加密货币在BTC中的历史价格
 #####################################################################
-#Note: this part might take a while to run since we're populating data for 4k+ coins
-#counter variable for progress made
+#注意：由于我们要为4000多个硬币填充数据，此部分可能需要一段时间才能运行
+#进度计数器
 progress = 0
 num_cryptos = str(len(symbol_array))
 for symbol in symbol_array:
-   # get data for that currency
-   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=' +
+   # 获取该货币的数据
+   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=&#39;  +
          symbol +
          '&tsym=BTC&allData=true' +
          url_api_part
    res = requests.get(URL)
    res_json = res.json()
    data = res_json['Data']
-   # write required fields into csv
+   # 将所需字段写入csv
    with open('crypto_prices.csv', mode = 'a') as test_file:
        test_file_writer = csv.writer(test_file,
                                      delimiter = ',',
@@ -266,28 +229,39 @@ for symbol in symbol_array:
    print('Processed ' + str(symbol))
    print(str(progress) + ' currencies out of ' +  num_cryptos + ' written to csv')
 print('Done getting price data for all coins. See crypto_prices.csv for result')
+```
 
+[crypto-blog]: https://blog.timescale.com/blog/cryptocurrency-time-series-analysis-timescaledb/
+[install-timescale]: https://www.timescale.com/download/
+[hypertable-docs]: https://docs.timescale.com/latest/how-to-build/hypertables/
+[hypertable-blog]: https://blog.timescale.com/blog/introducing-hypertables/
+[cryptocompare]: https://www.cryptocompare.com/
+[cryptocompare-apikey]: https://min-api.cryptocompare.com/pricing/
+```
+
+
+```markdown
 #####################################################################
-#4. Populate BTC prices in different fiat currencies
+#4. 填充不同法定货币中的BTC价格
 #####################################################################
-# List of fiat currencies we want to query
-# You can expand this list, but CryptoCompare does not have
-# a comprehensive fiat list on their site
+# 我们想要查询的法定货币列表
+# 你可以扩展这个列表，但CryptoCompare网站上没有
+# 一个全面的法定货币列表
 fiatList = ['AUD', 'CAD', 'CNY', 'EUR', 'GBP', 'GOLD', 'HKD',
 'ILS', 'INR', 'JPY', 'KRW', 'PLN', 'RUB', 'SGD', 'UAH', 'USD', 'ZAR']
 
-#counter variable for progress made
+# 进度计数器
 progress2 = 0
 for fiat in fiatList:
-   # get data for bitcoin price in that fiat
-   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=BTC&tsym=' +
+   # 获取该法定货币中比特币的价格数据
+   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=BTC&tsym=&#39;  +
          fiat +
          '&allData=true' +
          url_api_part
    res = requests.get(URL)
    res_json = res.json()
    data = res_json['Data']
-   # write required fields into csv
+   # 将所需字段写入csv
    with open('btc_prices.csv', mode = 'a') as test_file:
        test_file_writer = csv.writer(test_file,
                                      delimiter = ',',
@@ -310,20 +284,20 @@ for fiat in fiatList:
 print('Done getting price data for btc. See btc_prices.csv for result')
 
 #####################################################################
-#5. Populate ETH prices in different fiat currencies
+#5. 填充不同法定货币中的ETH价格
 #####################################################################
-#counter variable for progress made
+# 进度计数器
 progress3 = 0
 for fiat in fiatList:
-   # get data for bitcoin price in that fiat
-   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=ETH&tsym=' +
+   # 获取该法定货币中以太坊的价格数据
+   URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=ETH&tsym=&#39;  +
          fiat +
          '&allData=true' +
          url_api_part
    res = requests.get(URL)
    res_json = res.json()
    data = res_json['Data']
-   # write required fields into csv
+   # 将所需字段写入csv
    with open('eth_prices.csv', mode = 'a') as test_file:
        test_file_writer = csv.writer(test_file,
                                      delimiter = ',',
@@ -346,32 +320,27 @@ for fiat in fiatList:
 print('Done getting price data for eth. See eth_prices.csv for result')
 ```
 
-After running the script, you should have four .csv files:
+运行脚本后，您应该得到四个.csv文件：
 
 ```bash
 python crypto_data_extraction.py
 ```
 
-## Load the dataset into TimescaleDB
+## 将数据集加载到TimescaleDB中
 
-Before you start, you need a
-[working installation of TimescaleDB][install-timescale].
+开始之前，您需要一个[TimescaleDB的运行安装][install-timescale]。
 
-### Set up the schema
+### 设置模式
 
-Now all your hard work at the beginning comes in handy, and you can use the SQL
-script you created to set up the TimescaleDB unstance. If you don't want to
-enter the SQL script by yourself, you can download
-<Tag type="download">[schema.sql](https://github.com/timescale/examples/blob/master/crypto_tutorial/schema.sql)</Tag> instead.
+现在您在开始时的所有辛苦工作将派上用场，您可以使用您创建的SQL脚本来设置TimescaleDB实例。如果您不想自己输入SQL脚本，您也可以下载<Tag type="download">[schema.sql](https://github.com/timescale/examples/blob/master/crypto_tutorial/schema.sql)</Tag>。
 
-Log in to the TimescaleDB instance. Locate your `host`, `port`, and `password`
-and then connect to the database:
+登录到TimescaleDB实例。找到您的`host`、`port`和`password`，然后连接到数据库：
 
 ```bash
 psql -x "postgres://tsdbadmin:{YOUR_PASSWORD_HERE}@{YOUR_HOSTNAME_HERE}:{YOUR_PORT_HERE}/defaultdb?sslmode=require"
 ```
 
-From the `psql` command line, create a database. Let's call it `crypto_data`:
+在`psql`命令行中，创建一个数据库。我们称之为`crypto_data`：
 
 ```sql
 CREATE DATABASE crypto_data;
@@ -379,14 +348,13 @@ CREATE DATABASE crypto_data;
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 ```
 
-From the command prompt, you can apply the schema creation script to the
-database like this:
+从命令提示符，您可以像这样将模式创建脚本应用到数据库：
 
 ```bash
 psql -x "postgres://tsdbadmin:{YOUR_PASSWORD_HERE}@{|YOUR_HOSTNAME_HERE}:{YOUR_PORT_HERE}/crypto_data?sslmode=require" < schema.sql
 ```
 
-The output should look something like this:
+输出应该看起来像这样：
 
 ```sql
 NOTICE:  00000: table "currency_info" does not exist, skipping
@@ -433,8 +401,7 @@ Time: 84.650 ms
 Time: 81.864 ms
 ```
 
-Now when you log back in to the TimescaleDB instance using `psql`, you can run
-the `\dt` command and see that the tables have been created properly:
+现在当您使用`psql`重新登录到TimescaleDB实例时，您可以运行`\dt`命令并看到表已正确创建：
 
 ```sql
              List of relations
@@ -447,34 +414,30 @@ the `\dt` command and see that the tables have been created properly:
 (4 rows)
 ```
 
-### Ingest data
+### 摄入数据
 
-Now that you've created the tables with the desired schema, all that's left is
-to insert the data from the .csv files you created into the tables.
+现在您已经用期望的模式创建了表，剩下的就是将您创建的.csv文件中的数据插入到表中。
 
-Make sure you are logged into TimescaleDB using `psql` so that you can run each
-of these commands in turn:
+确保您使用`psql`登录到TimescaleDB，以便您可以依次运行以下每个命令：
 
 ```sql
-\COPY btc_prices FROM btc_prices.csv CSV;
-\COPY eth_prices FROM eth_prices.csv CSV;
-\COPY crypto_prices FROM crypto_prices.csv CSV;
-\COPY currency_info FROM coin_names.csv CSV;
+\COPY btc_prices FROM 'btc_prices.csv' CSV;
+\COPY eth_prices FROM 'eth_prices.csv' CSV;
+\COPY crypto_prices FROM 'crypto_prices.csv' CSV;
+\COPY currency_info FROM 'coin_names.csv' CSV;
 ```
 
 <Highlight type="important">
-Data ingestion could take a while, depending on the speed of your Internet
-connection.
+数据摄入可能需要一段时间，这取决于您的互联网连接速度。
 </Highlight>
 
-You can verify that the ingestion worked by running a simple SQL command, such
-as:
+您可以通过运行一个简单的SQL命令来验证摄入是否成功，例如：
 
 ```sql
 SELECT * FROM btc_prices LIMIT 5;
 ```
 
-You should get something like this output:
+您应该得到类似这样的输出：
 
 ```sql
 -[ RECORD 1 ]---+-----------------------
@@ -504,6 +467,7 @@ closing_price   | 262.87
 volume_btc      | 33.04
 volume_currency | 8974.45
 currency_code   | CNY
+
 -[ RECORD 4 ]---+-----------------------
 time            | 2013-03-07 00:00:00+00
 opening_price   | 32.31
@@ -526,13 +490,12 @@ currency_code   | EUR
 Time: 224.741 ms
 ```
 
-## Query and analyze the data
+## 查询和分析数据
 
-At the beginning of the tutorial, we defined some questions to answer.
-Naturally, each of those questions has an answer in the form of a SQL query. Now that you database
-is set up properly, and the data is captured and ingested, you can find some answers:
+在教程开始时，我们定义了一些要回答的问题。
+自然，这些问题的每个答案都以SQL查询的形式存在。现在您的数据库已正确设置，数据已捕获并摄入，您可以找到一些答案：
 
-For example, **How did Bitcoin price in USD vary over time?**
+例如，**比特币的美元价格随时间如何变化？**
 
 ```sql
 SELECT time_bucket('7 days', time) AS period,
@@ -543,7 +506,7 @@ GROUP BY period
 ORDER BY period
 ```
 
-**How did BTC daily returns vary over time? Which days had the worst and best returns?**
+**BTC的日回报随时间如何变化？哪些天的回报最差和最好？**
 
 ```sql
 SELECT time,
@@ -557,7 +520,7 @@ FROM (
 ) sub window prices AS (ORDER BY time DESC)
 ```
 
-**How did the trading volume of Bitcoin vary over time in different fiat currencies?**
+**比特币在不同法定货币中的交易量随时间如何变化？**
 
 ```sql
 SELECT time_bucket('7 days', time) AS period,
@@ -568,7 +531,7 @@ GROUP BY currency_code, period
 ORDER BY period
 ```
 
-**How did Ethereum (ETH) price in BTC vary over time?**
+**以太坊（ETH）的BTC价格随时间如何变化？**
 
 ```sql
 SELECT
@@ -580,7 +543,7 @@ GROUP BY time_period
 ORDER BY time_period
 ```
 
-**How did ETH prices, in different fiat currencies, vary over time?**
+**不同法定货币中的ETH价格随时间如何变化？**
 
 ```sql
 SELECT time_bucket('7 days', c.time) AS time_period,
@@ -598,7 +561,7 @@ GROUP BY time_period
 ORDER BY time_period
 ```
 
-**Which cryptocurrencies had the most transaction volume in the past 14 days?**
+**过去14天哪些加密货币的交易量最大？**
 
 ```sql
 SELECT 'BTC' AS currency_code,
@@ -619,7 +582,7 @@ GROUP BY c.currency_code
 ORDER BY total_volume_in_usd DESC
 ```
 
-**Which cryptocurrencies had the top daily return?**
+**哪些加密货币的日回报最高？**
 
 ```sql
 WITH
@@ -650,9 +613,9 @@ GROUP BY
    time
 ```
 
-[crypto-blog]: https://blog.timescale.com/blog/analyzing-bitcoin-ethereum-and-4100-other-cryptocurrencies-using-postgresql-and-timescaledb/
-[cryptocompare-apikey]: https://min-api.cryptocompare.com
-[cryptocompare]: https://www.cryptocompare.com
+[crypto-blog]: https://blog.timescale.com/blog/analyzing-bitcoin-ethereum-and-4100-other-cryptocurrencies-using-postgresql-and-timescaledb/ 
+[cryptocompare-apikey]: https://min-api.cryptocompare.com 
+[cryptocompare]: https://www.cryptocompare.com 
 [hypertable-blog]: https://blog.timescale.com/blog/when-boring-is-awesome-building-a-scalable-time-series-database-on-postgresql-2900ea453ee2/
 [hypertable-docs]: /use-timescale/:currentVersion:/hypertables
 [install-timescale]: /getting-started/latest/
