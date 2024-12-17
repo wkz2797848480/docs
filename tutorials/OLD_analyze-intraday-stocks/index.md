@@ -1,37 +1,35 @@
 ---
-title: Analyze historical intraday stock data
-excerpt: Collect, store, and analyze intraday stock data with TimescaleDB
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, psycopg2, pandas, plotly]
-tags: [candlestick]
+标题: 分析历史盘中股票数据
+摘要: 使用 TimescaleDB 收集、存储并分析盘中股票数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，psycopg2，Pandas，Plotly]
+标签: [K 线]
 ---
 
-# Analyze historical intraday stock data
+# 分析历史日内股票数据
 
-This tutorial is a step-by-step guide on how to collect, store, and analyze intraday stock data
-with TimescaleDB.
+本教程是一个逐步指南，介绍了如何使用TimescaleDB收集、存储和分析日内股票数据。
 
-This tutorial has a few main steps:
+本教程有几个主要步骤：
 
-1.  Design database schema.
-    You create a table that is capable of storing 1-min candlestick data.
-1.  Fetch and ingest stock data
-    You learn how to fetch data from the Alpha Vantage API and ingest it into the database in a fast manner.
-1.  Explore stock market data
-    After all the plumbing work is done, you can see several ways to explore stock price points, lows and highs, price changes over time, symbols with the most daily gains, candlestick charts, and more!
+1. 设计数据库模式。
+   您将创建一个能够存储1分钟K线数据的表。
+2. 获取并摄入股票数据
+   您将学习如何从Alpha Vantage API获取数据，并快速将其摄入到数据库中。
+3. 探索股票市场数据
+   完成所有管道工作后，您可以看到多种方式来探索股票价格点、低点和高点、随时间变化的价格变化、每日涨幅最大的符号、K线图等！
 
-## Prerequisites
+## 前提条件
 
 *   Python 3
-*   TimescaleDB (see [installation options][install-timescale])
-*   Alpha Vantage API key ([get one for free][alpha-vantage-apikey])
-*   Virtualenv (installation: `pip install virtualenv`)
-*   [Psql][psql-install] or any other PostgreSQL client (for example, DBeaver)
+*   TimescaleDB（参见[安装选项][install-timescale]）
+*   Alpha Vantage API密钥（[免费获取一个][alpha-vantage-apikey]）
+*   Virtualenv（安装：`pip install virtualenv`）
+*   [Psql][psql-install]或任何其他PostgreSQL客户端（例如，DBeaver）
 
-## Get started: create a virtual environment
+## 开始：创建虚拟环境
 
-It's recommended to create a new Python virtual environment to isolate the packages used
-throughout this tutorial.
+建议创建一个新的Python虚拟环境来隔离本教程中使用的包。
 
 ```bash
 mkdir intraday-stock-analysis
@@ -40,13 +38,13 @@ virtualenv env
 source env/bin/activate
 ```
 
-Install Pandas within the virtual environment:
+在虚拟环境中安装Pandas：
 
 ```bash
 pip install pandas
 ```
 
-[alpha-vantage-apikey]: https://www.alphavantage.co/support/#api-key
+[alpha-vantage-apikey]: https://www.alphavantage.co/support/#api-key 
 [design-schema]: /tutorials/:currentVersion:/
 [explore]: /tutorials/:currentVersion:/
 [fetch-ingest]: /tutorials/:currentVersion:/
