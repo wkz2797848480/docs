@@ -1,55 +1,32 @@
 ---
-title: Query the Bitcoin blockchain - set up compression
-excerpt: Compress the dataset so you can store the Bitcoin blockchain more efficiently
-products: [cloud]
-keywords: [beginner, crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Query the Bitcoin blockchain
+标题: 查询比特币区块链 —— 设置压缩
+摘要: 压缩数据集，以便更高效地存储比特币区块链。
+产品: [云服务]
+关键词: [初学者，加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 查询比特币区块链
 ---
 
-# Set up compression and compress the dataset
+# 设置压缩并压缩数据集
 
-You have now seen how to create a hypertable for your Bitcoin dataset
-and query it for blockchain data. When ingesting a dataset like this
-is seldom necessary to update old data and over time the amount of
-data in the tables grows. Over time you end up with a lot of data and
-since this is mostly immutable you can compress it to save space and
-avoid incurring additional cost.
+您现在已经知道如何为您的比特币数据集创建超表并查询区块链数据。在摄入类似这样的数据集时，很少需要更新旧数据，随着时间的推移，表中的数据量会增加。随着时间的推移，您最终会积累大量数据，由于这些数据大多是不可变的，您可以压缩它们以节省空间并避免产生额外成本。
 
-It is possible to use disk-oriented compression like the support
-offered by ZFS and Btrfs but since TimescaleDB is build for handling
-event-oriented data (such as time-series) it comes with support for
-compressing data in hypertables.
+虽然可以使用像ZFS和Btrfs这样的磁盘导向压缩，但由于TimescaleDB是为了处理事件导向数据（如时间序列）而构建的，因此它提供了超表中压缩数据的支持。
 
-TimescaleDB compression allows you to store the data in a vastly more
-efficient format allowing up to 20x compression ratio compared to a
-normal PostgreSQL table, but this is of course highly dependent on the
-data and configuration.
+TimescaleDB压缩允许您以一种效率更高的格式存储数据，与普通的PostgreSQL表相比，可以实现高达20倍的压缩比率，但这当然高度依赖于数据和配置。
 
-TimescaleDB compression is implemented natively in PostgreSQL and does
-not require special storage formats. Instead it relies on features of
-PostgreSQL to transform the data into columnar format before
-compression. The use of a columnar format allows better compression
-ratio since similar data is stored adjacently. For more details on how
-the compression format looks, you can look at the [compression
-design][compression-design] section.
+TimescaleDB压缩在PostgreSQL中本地实现，不需要特殊的存储格式。相反，它依赖于PostgreSQL的特性，在压缩之前将数据转换为列式格式。使用列式格式可以更好地压缩比率，因为相似的数据被存储在相邻位置。有关压缩格式的更多详细信息，请参阅[压缩设计][compression-design]部分。
 
-A beneficial side-effect of compressing data is that certain queries
-are significantly faster since less data has to be read into
-memory.
+压缩数据的一个有益副作用是，某些查询速度显著加快，因为需要读取到内存中的数据减少了。
 
 <Procedure>
 
-## Compression setup
+## 压缩设置
 
-In the previous section you learned how to different queries on data
-in the `transactions` table, so if you want to compress the data that
-table, you follow these step:
+在前面的部分中，您学习了如何在`transactions`表上执行不同的查询，因此如果您想要压缩该表的数据，请按照以下步骤操作：
 
-1.  Connect to the Timescale database that contains the Bitcoin
-    dataset using, for example `psql`.
-1.  Enable compression on the table and pick suitable segment-by and
-    order-by column using the `ALTER TABLE` command:
+1.  使用`psql`连接到包含比特币数据集的Timescale数据库。
+2.  使用`ALTER TABLE`命令启用表的压缩，并选择适当的`segment-by`和`order-by`列：
 
     ```sql
     ALTER TABLE transactions 
@@ -60,24 +37,17 @@ table, you follow these step:
     );
     ``` 
 
-    Depending on the choice if segment-by and order-by column you can
-    get very different performance and compression ratio. To learn
-    more about how to pick the correct columns, see
-    [here][segment-by-columns].
+    根据您选择的`segment-by`和`order-by`列，您可能会得到非常不同的性能和压缩比率。要了解更多关于如何选择正确的列，请参阅[此处][segment-by-columns]。
 
-1.  You can manually compress all the chunks of the hypertable using
-    `compress_chunk` in this manner:
+3.  您可以手动使用以下方式压缩超表的所有块：
 
     ```sql
     SELECT compress_chunk(c) from show_chunks('transactions') c;
     ```
 
-    You can also [automate compression][automatic-compression] by
-    adding a [compression policy][add_compression_policy] which will
-    be covered below.
+    您还可以[自动压缩][automatic-compression]，通过添加[压缩策略][add_compression_policy]，稍后将介绍。
 
-1.  Now that you have compressed the table you can compare the size of
-    the dataset before and after compression:
+4.  现在您已经压缩了表，可以比较压缩前后数据集的大小：
 
     ```sql
     SELECT 
@@ -86,7 +56,7 @@ table, you follow these step:
      FROM hypertable_compression_stats('transactions');
     ```
 
-	This shows a significant improvement in data usage:
+    这显示了数据使用量的显著改进：
 
     ```sql
      before  | after  
@@ -97,33 +67,23 @@ table, you follow these step:
 
 </Procedure>
 
-## Add a compression policy
+## 添加压缩策略
 
-To avoid running the compression step each time you have some data to
-compress you can set up a compression policy. The compression policy
-allows you to compress data that is older than a particular age, for
-example, to compress all chunks that are older than 8 days:
+为了避免每次都运行压缩步骤，您可以设置压缩策略。压缩策略允许您压缩超过特定年龄的数据，例如，压缩所有超过8天的数据块：
 
 ```sql
 SELECT add_compression_policy('transactions', INTERVAL '8 days');
 ```
 
-Compression policies run on a regular schedule, by default once every
-day, which means that you might have up to 9 days of uncompressed data
-with the setting above.
+压缩策略按定期计划运行，默认情况下每天一次，这意味着您可能有多达9天的未压缩数据。
 
-You can find more information on compression policies in the
-[add_compression_policy][add_compression_policy] section.
+您可以在[add_compression_policy][add_compression_policy]部分找到更多关于压缩策略的信息。
 
-## Taking advantage of query speedups
+## 利用查询速度提升
 
+之前，压缩被设置为按`block_id`列值分段。这意味着通过过滤或分组该列来获取数据将更加高效。排序也设置为按时间降序，因此如果您运行尝试以该排序顺序排列数据的查询，您应该能看到性能提升。
 
-Previously, compression was set up to be segmented by `block_id` column value.
-This means fetching data by filtering or grouping on that column will be 
-more efficient. Ordering is also set to time descending so if you run queries
-which try to order data with that ordering, you should see performance benefits. 
-
-For instance, if you run the query example from previous section:
+例如，如果您运行上一节的查询示例：
 ```sql
 WITH recent_blocks AS (
  SELECT block_id FROM transactions
@@ -141,27 +101,23 @@ WHERE is_coinbase IS NOT TRUE
 GROUP BY t.block_id;
 ```
 
-You should see a decent performance difference when the dataset is compressed and
-when is decompressed. Try it yourself by running the previous query, decompressing
-the dataset and running it again while timing the execution time. You can enable
-timing query times in psql by running:
+当数据集被压缩时，您应该能看到与未压缩时相比的显著性能差异。自己尝试一下，先运行之前的查询，然后解压数据集，再次运行它，并计时执行时间。您可以通过运行以下命令在psql中启用查询时间计时：
 
 ```sql
     \timing
 ```
 
-To decompress the whole dataset, run:
+要解压整个数据集，请运行：
 ```sql
     SELECT decompress_chunk(c) from show_chunks('transactions') c;
 ```
 
-On an example setup, speedup performance observed was two orders of magnitude,
-15 ms when compressed vs 1 second when decompressed.
+在一个示例设置中，观察到的性能提升是两个数量级，压缩时为15毫秒，未压缩时为1秒。
 
-Try it yourself and see what you get!
-
+自己尝试一下，看看您能得到什么结果！
 
 [segment-by-columns]: /use-timescale/:currentVersion:/compression/about-compression/#segment-by-columns
 [automatic-compression]: /tutorials/:currentVersion:/blockchain-query/blockchain-compress/#add-a-compression-policy
 [compression-design]: /use-timescale/:currentVersion:/compression/compression-design/
 [add_compression_policy]: /api/:currentVersion:/compression/add_compression_policy/
+
