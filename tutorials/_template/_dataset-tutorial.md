@@ -1,44 +1,37 @@
 ---
-title: Verb the widget tutorial - set up dataset
-excerpt: Set up a dataset so you can verb your widgets to achieve an outcome using the tool
-keywords: [noun, verb, tutorial]
-tags: [noun, noun]
+标题: 动词部件教程 —— 设置数据集
+摘要: 设置数据集，以便你能够运用该工具通过动词化部件来达成某个成果。
+关键词: [名词，动词，教程]
+标签: [名词，名词]
 ---
-
 <!-- markdown-link-check-disable -->
 
-# The dataset
+# 数据集
 
-Provide a very short explanation of the dataset. Explain if it being created
-from scratch, downloaded from a server and uploaded to the readers' own
-database, or being accessed directly from a third-party service.
+对数据集进行非常简短的解释。说明它是从头开始创建的，从服务器下载并上传到读者自己的数据库，还是直接从第三方服务访问的。
 
-## Set up the dataset
+## 设置数据集
 
-This is the introduction to the procedure about setting up the dataset. Use one
-or two sentences to explain the procedure. Note the simple verb form in the
-title; the procedure itself uses the gerund-verb form (an `-ing` word) instead.
+这是关于设置数据集的过程的介绍。用一两句话解释这个过程。注意标题中使用简单的动词形式；过程本身使用动名词形式（一个以`-ing`结尾的词）。
 
 <Procedure>
 
-### Setting up the dataset
+### 设置数据集
 
-1.  Start each step with a verb (create, use, install, etc) or a location (at
-    the `psql` prompt, on your local filesystem, on the server, etc) followed by
-    a verb.
-1.  Do the next step:
+1.  每一步都以动词（创建、使用、安装等）或位置（在`psql`提示符下、在本地文件系统上、在服务器上等）开始，后跟一个动词。
+2.  执行下一步：
 
    ```sql|bash|...
-   Add any commands in a block like this.
-   Make sure you specify the language.
-   Do not include any prompts, or sudo commands. If root is required \
-   state it in the step instead. Break long lines appropriately.
+   将任何命令添加到这样的块中。
+   确保指定语言。
+   不要包括任何提示符，或sudo命令。如果需要root权限，\
+   在步骤中说明。适当地折行长行。
    ```
 
-1.  Make sure that any action that is the result of the step stays with the step.
-   For example: clicking a button, and a dialog box appearing, are a single step.
-1.  Finish the procedure on the final step. Do not include a result statement.
+3.  确保任何作为步骤结果的行动都与该步骤保持一致。例如：点击一个按钮，然后出现一个对话框，是一个单一步骤。
+4.  在最后一步完成过程。不要包括结果陈述。
 
 </Procedure>
 
-Include any reference-style links at the bottom of the page.
+在页面底部包含任何参考风格的链接。
+
