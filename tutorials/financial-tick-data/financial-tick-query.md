@@ -1,54 +1,35 @@
 ---
-title: Analyze financial tick data - Query the data
-excerpt: Create candlestick views and query financial tick data to analyze price changes
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, finance, learn]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze financial tick data
+标题: 分析金融逐笔数据 —— 查询数据
+摘要: 创建蜡烛图视图并查询金融逐笔数据以分析价格变化。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，金融，学习]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 分析金融逐笔数据
 ---
 
 import GraphOhlcv from "versionContent/_partials/_graphing-ohlcv-data.mdx";
 
-# Query the data
+# 查询数据
 
-Turning raw, real-time tick data into aggregated candlestick views is a common
-task for users who work with financial data. TimescaleDB includes
-[hyperfunctions][hyperfunctions]
-that you can use to store and query your financial data more easily.
-Hyperfunctions are SQL functions within TimescaleDB that make it easier to
-manipulate and analyze time-series data in PostgreSQL with fewer lines of code.
+将原始的实时行情数据转换为聚合的K线视图是处理金融数据的用户的常见任务。TimescaleDB 包括了[超函数][hyperfunctions]，您可以使用它们更轻松地存储和查询您的金融数据。超函数是TimescaleDB中的SQL函数，它们可以让您用更少的代码行在PostgreSQL中操作和分析时间序列数据。
 
-There are three hyperfunctions that are essential for calculating candlestick
-values: [`time_bucket()`][time-bucket], [`FIRST()`][first], and [`LAST()`][last].
-The `time_bucket()` hyperfunction helps you aggregate records into buckets of
-arbitrary time intervals based on the timestamp value. `FIRST()` and `LAST()`
-help you calculate the opening and closing prices. To calculate highest and
-lowest prices, you can use the standard PostgreSQL aggregate functions `MIN` and
-`MAX`.
+有三个超函数对于计算K线值至关重要：[`time_bucket()`][time-bucket]、[`FIRST()`][first] 和 [`LAST()`][last]。`time_bucket()` 超函数帮助您根据时间戳值将记录聚合到任意时间间隔的桶中。`FIRST()` 和 `LAST()` 帮助您计算开盘价和收盘价。要计算最高价和最低价，您可以使用标准PostgreSQL聚合函数 `MIN` 和 `MAX`。
 
-In TimescaleDB, the most efficient way to create candlestick views is to use
-[continuous aggregates][caggs].
-In this tutorial, you create a continuous aggregate for a candlestick time
-bucket, and then query the aggregate with different refresh policies. Finally,
-you can use Grafana to visualize your data as a candlestick chart.
+在TimescaleDB中，创建K线视图的最高效方式是使用[连续聚合][caggs]。
+在本教程中，您将为K线时间桶创建一个连续聚合，然后使用不同的刷新策略查询该聚合。最后，您可以使用Grafana将您的数据可视化为K线图。
 
-## Create a continuous aggregate
+## 创建连续聚合
 
-To look at OHLCV values, the most effective way is to create a continuous
-aggregate. In this tutorial, you create a continuous aggregate to aggregate data
-for each day. You then set the aggregate to refresh every day, and to aggregate
-the last two days' worth of data.
+要查看OHLCV值，最有效的方式是创建一个连续聚合。在本教程中，您将创建一个连续聚合以聚合每天的数据。然后，您将设置聚合每天刷新，并聚合过去两天的数据。
 
 <Procedure>
 
-### Creating a continuous aggregate
+### 创建连续聚合
 
-1.  Connect to the Timescale database that contains the Twelve Data
-    cryptocurrency dataset.
+1. 连接到包含Twelve Data加密货币数据集的Timescale数据库。
 
-1.  At the psql prompt, create the continuous aggregate to aggregate data every
-    minute:
+2. 在psql提示符下，创建连续聚合以每分钟聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_day_candle
@@ -65,10 +46,9 @@ the last two days' worth of data.
         GROUP BY bucket, symbol;
     ```
 
-    When you create the continuous aggregate, it refreshes by default.
+    当您创建连续聚合时，它默认会刷新。
 
-1.  Set a refresh policy to update the continuous aggregate every day,
-    if there is new data available in the hypertable for the last two days:
+3. 设置一个刷新策略，如果有过去两天的超表中存在新数据，则每天更新连续聚合：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_day_candle',
@@ -79,20 +59,17 @@ the last two days' worth of data.
 
 </Procedure>
 
-## Query the continuous aggregate
+## 查询连续聚合
 
-When you have your continuous aggregate set up, you can query it to get the
-OHLCV values.
+当您设置好连续聚合后，您可以查询它以获取OHLCV值。
 
 <Procedure>
 
-### Querying the continuous aggregate
+### 查询连续聚合
 
-1.  Connect to the Timescale database that contains the Twelve Data
-    cryptocurrency dataset.
+1. 连接到包含Twelve Data加密货币数据集的Timescale数据库。
 
-1.  At the psql prompt, use this query to select all Bitcoin OHLCV data for the
-    past 14 days, by time bucket:
+2. 在psql提示符下，使用此查询选择过去14天的所有比特币OHLCV数据，按时间桶排序：
 
     ```sql
     SELECT * FROM one_day_candle
@@ -100,7 +77,7 @@ OHLCV values.
     ORDER BY bucket;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
              bucket         | symbol  |  open   |  high   |   low   |  close  | day_volume
@@ -121,3 +98,4 @@ OHLCV values.
 [last]: /api/:currentVersion:/hyperfunctions/last/
 [time-bucket]: /api/:currentVersion:/hyperfunctions/time_bucket/
 [lag]: https://www.postgresqltutorial.com/postgresql-lag-function/
+
