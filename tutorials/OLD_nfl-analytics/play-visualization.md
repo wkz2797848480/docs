@@ -1,68 +1,65 @@
 ---
-title: Visualize pre-snap positions and player movement
-excerpt: Create a visualization of a football play using matplotlib
-products: [cloud, mst, self_hosted]
-keywords: [continuous aggregates, hyperfunctions, analytics, pandas, matplotlib]
+标题: 可视化开球前位置和球员移动情况
+摘要: 使用 Matplotlib 创建足球比赛场景的可视化展示。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [连续聚合，超级函数，分析，Pandas，Matplotlib]
 ---
 
-# Visualize pre-snap positions and player movement
+# 可视化开球前的位置和球员移动
 
-Interestingly, the NFL data set includes data on player movement within each
-football play. Visualizing the changes in your time-series data can often provide
-even more insight. In this section, we use `pandas` and `matplotlib` to
-visually depict a play during the season.
+有趣的是，NFL数据集包括了每个橄榄球比赛中球员移动的数据。将时间序列数据的变化可视化往往能提供更多的洞见。在本节中，我们使用`pandas`和`matplotlib`来可视化赛季中的一场比赛。
 
-## Install pandas and matplotlib
+## 安装pandas和matplotlib
 
 ```bash
 pip install pandas matplotlib
 ```
 
-## Draw football field
+## 绘制足球场
 
 ```python
 def generate_field():
-    """Generates a realistic american football field with line numbers and hash marks.
+    ""“生成一个带有线条编号和散点标记的真实美式足球场。
 
-    Returns:
-        [tuple]: (figure, axis)
-    """
-    rect = patches.Rectangle((0, 0), 120, 53.3, linewidth=2,
-                             edgecolor='black', facecolor='green', zorder=0)
+    返回：
+        [元组]：(图形，轴)
+    “""
+    rect = patches.Rectangle((0, 0), 120, 53.3, 线宽=2,
+                             边缘颜色='黑色', 填充颜色='绿色', zorder=0)
 
-    fig, ax = plt.subplots(1, figsize=(12, 6.33))
+    fig, ax = plt.subplots(1, 图表大小=(12, 6.33))
     ax.add_patch(rect)
 
-    # line numbers
+    # 线条编号
     plt.plot([10, 10, 20, 20, 30, 30, 40, 40, 50, 50, 60, 60, 70, 70, 80,
               80, 90, 90, 100, 100, 110, 110, 120, 0, 0, 120, 120],
              [0, 53.3, 53.3, 0, 0, 53.3, 53.3, 0, 0, 53.3, 53.3, 0, 0, 53.3,
-              53.3, 0, 0, 53.3, 53.3, 0, 0, 53.3, 53.3, 53.3, 0, 0, 53.3],
-             color='white')
-    for x in range(20, 110, 10):
+              53.3, 0, 0, 53.3, 53.3, 0, 0, 53.3, 53.3, 53.3, 0, 0, 53.3], 
+            颜色='白色')
+    对于x在范围(20, 110, 10)中的每个值：
         numb = x
-        if x > 50:
+        如果x > 50：
             numb = 120-x
-        plt.text(x, 5, str(numb - 10), horizontalalignment='center', fontsize=20, color='white')
-        plt.text(x-0.95, 53.3-5, str(numb-10),
-                 horizontalalignment='center', fontsize=20, color='white',rotation=180)
+        plt.text(x, 5, str(numb - 10), 水平对齐='中心', 字体大小=20, 颜色='白色')
+        plt.text(x-0.95, 53.3-5, str(numb-10), 
+                 水平对齐='中心', 字体大小=20, 颜色='白色', 旋转=180)
 
-    # hash marks
-    for x in range(11, 110):
-        ax.plot([x, x], [0.4, 0.7], color='white')
-        ax.plot([x, x], [53.0, 52.5], color='white')
-        ax.plot([x, x], [22.91, 23.57], color='white')
-        ax.plot([x, x], [29.73, 30.39], color='white')
+    # 散点标记
+    对于x在范围(11, 110)中的每个值：
+        ax.plot([x, x], [0.4, 0.7], 颜色='白色')
+        ax.plot([x, x], [53.0, 52.5], 颜色='白色')
+        ax.plot([x, x], [22.91, 23.57], 颜色='白色')
+        ax.plot([x, x], [29.73, 30.39], 颜色='白色')
 
-    # set limits and hide axis
+    # 设置限制并隐藏轴
     plt.xlim(0, 120)
     plt.ylim(-5, 58.3)
     plt.axis('off')
 
-    return fig, ax
+    返回fig, ax
 ```
 
-## Draw players' movement based on `game_id` and `play_id`
+## 根据`game_id`和`play_id`绘制球员移动
 
 ```python
 conn = psycopg2.connect(database="db",
@@ -72,20 +69,19 @@ conn = psycopg2.connect(database="db",
                         port="111")
 
 def draw_play(game_id, play_id, home_label='position', away_label='position', movements=False):
-    """Generates a chart to visualize player pre-snap positions and
-      movements during the given play.
+    ""“生成图表以可视化给定比赛中球员的开球前位置和移动。
 
-    Args:
+    参数：
         game_id (int)
         play_id (int)
-        home_label (str, optional): Default is 'position' but can be 'displayname'
-          or other column name available in the table.
-        away_label (str, optional): Default is 'position' but can be 'displayname'
-          or other column name available in the table.
-        movements (bool, optional): If False, only draws the pre-snap positions.
-          If True, draws the movements as well.
-    """
-    # query all tracking data for the given play
+        home_label (str, 可选): 默认是'position'，但可以是'displayname'
+          或其他表中可用的列名。
+        away_label (str, 可选): 默认是'position'，但可以是'displayname'
+          或其他表中可用的列名。
+        movements (bool, 可选): 如果为False，仅绘制开球前的位置。
+          如果为True，也绘制移动。
+    “""
+    # 查询给定比赛的所有追踪数据
     sql = "SELECT * FROM tracking WHERE gameid={game} AND playid={play} AND team='home'"\
     .format(game=game_id, play=play_id)
     home_team = pd.read_sql(sql, conn)
@@ -94,51 +90,49 @@ def draw_play(game_id, play_id, home_label='position', away_label='position', mo
     .format(game=game_id, play=play_id)
     away_team = pd.read_sql(sql, conn)
 
-    # generate the football field
+    # 生成足球场
     fig, ax = generate_field()
 
-    # query pre_snap player positions
+    # 查询开球前球员位置
     home_pre_snap = home_team.query('event == "ball_snap"')
     away_pre_snap = away_team.query('event == "ball_snap"')
 
-    # visualize pre-snap positions with scatter plot
-    home_pre_snap.plot.scatter(x='x', y='y', ax=ax, color='yellow', s=35, zorder=3)
-    away_pre_snap.plot.scatter(x='x', y='y', ax=ax, color='blue', s=35, zorder=3)
+    # 使用散点图可视化开球前位置
+    home_pre_snap.plot.scatter(x='x', y='y', ax=ax, 颜色='黄色', s=35, zorder=3)
+    away_pre_snap.plot.scatter(x='x', y='y', ax=ax, 颜色='蓝色', s=35, zorder=3)
 
-    # annotate the figure with the players' position or name
-    # (depending on the *label* parameter's value)
+    # 使用*label*参数的值注释球员的位置或名称
     home_positions = home_pre_snap[home_label].tolist()
     away_positions = away_pre_snap[away_label].tolist()
-    for i, pos in enumerate(home_positions):
+    对于i, pos在enumerate(home_positions)中的每个值：
         ax.annotate(pos, (home_pre_snap['x'].tolist()[i], home_pre_snap['y'].tolist()[i]))
-    for i, pos in enumerate(away_positions):
+    对于i, pos在enumerate(away_positions)中的每个值：
         ax.annotate(pos, (away_pre_snap['x'].tolist()[i], away_pre_snap['y'].tolist()[i]))
 
-    if movements:
-        # visualize player movements for home team
+    如果movements：
+        # 可视化主队球员移动
         home_players = home_team['player_id'].unique().tolist()
-        for player_id in home_players:
+        对于player_id在home_players中的每个值：
             df = home_team.query('player_id == {id}'.format(id=player_id))
-            df.plot(x='x', y='y', ax=ax, linewidth=4, legend=False)
+            df.plot(x='x', y='y', ax=ax, 线宽=4, 图例=False)
 
-        # visualize player movements for away team
+        # 可视化客队球员移动
         away_players = away_team['player_id'].unique().tolist()
-        for player_id in away_players:
+        对于player_id在away_players中的每个值：
             df = away_team.query('player_id == {id}'.format(id=player_id))
-            df.plot(x='x', y='y', ax=ax, linewidth=4, legend=False)
+            df.plot(x='x', y='y', ax=ax, 线宽=4, 图例=False)
 
-    # query play description and possession team and add them in the title
+    # 查询比赛描述和控球队伍并在标题中添加它们
     sql = """SELECT gameid, playid, playdescription, possessionteam FROM play
              WHERE gameid = {game} AND playid = {play}""".format(game=game_id, play=play_id)
     play_info = pd.read_sql(sql, conn).to_dict('records')
-    plt.title('Possession team: {team}\nPlay: {play}'.format(team=play_info[0]['possessionteam'],
+    plt.title('控球队伍: {team}\n比赛: {play}'.format(team=play_info[0]['possessionteam'],
     play=play_info[0]['playdescription']))
-    # show chart
+    # 显示图表
     plt.show()
 ```
 
-Then, you can run the `draw_play` function like this to visualize pre-snap
-player positions:
+然后，您可以像这样运行`draw_play`函数来可视化开球前的球员位置：
 
 ```python
 draw_play(game_id=2018112900,
@@ -146,10 +140,9 @@ draw_play(game_id=2018112900,
           movements=False)
 ```
 
-![pre snap players figure](https://assets.timescale.com/docs/images/tutorials/nfl_tutorial/player_movement_pre_snap.png)
+![开球前球员图](https://assets.timescale.com/docs/images/tutorials/nfl_tutorial/player_movement_pre_snap.png) 
 
-You can also visualize player movement during the play if you set `movements`
-to `True`:
+您还可以通过将`movements`设置为`True`来可视化比赛中球员的移动：
 
 ```python
 draw_play(game_id=2018112900,
@@ -159,17 +152,9 @@ draw_play(game_id=2018112900,
           movements=True)
 ```
 
-![player movement figure](https://assets.timescale.com/docs/images/tutorials/nfl_tutorial/player_movement.png)
+![球员移动图](https://assets.timescale.com/docs/images/tutorials/nfl_tutorial/player_movement.png) 
 
-## Conclusion
+## 结论
 
-We hope that through this tutorial you have been able to see how data that does
-not appear to be time-series initially, is in fact time-series data after all.
-With TimescaleDB, analyzing time-series data can be easy (and fun!) when you use
-[hyperfunctions][api-hyperfunctions] and
-[continuous aggregates][api-caggs]. We encourage you to
-try these functions in your own database and try experimenting with different
-kinds of analysis.
+我们希望本教程能帮助您看到，最初看似非时间序列的数据实际上在经过处理后可以成为时间序列数据。使用TimescaleDB，当您使用[超函数][api-hyperfunctions]和[连续聚合][api-caggs]时，分析时间序列数据可以变得简单（且有趣！）。我们鼓励您在自己的数据库中尝试这些函数，并尝试不同类型的分析。
 
-[api-hyperfunctions]: /api/:currentVersion:/hyperfunctions/
-[api-caggs]: /api/:currentVersion:/continuous-aggregates/create_materialized_view/
