@@ -94,7 +94,7 @@ import GrafanaVizPrereqs from 'versionContent/_partials/_grafana-viz-prereqs.mdx
 
 1.  在psql提示符下，更新之前的查询，以找到桶内符号的最大`day_volume`值。然后，从上一个桶的最大值中减去每个最大值。差值给出了该桶的交易量：
 
-   ```sql
+    ```sql
       SELECT
           time_bucket('$bucket_interval', time) AS time,
           symbol,
