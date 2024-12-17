@@ -1,60 +1,53 @@
 ---
-title: Lambda continuous deployment with GitHub actions
-excerpt: Build a continuous deployment pipeline between GitHub and AWS Lambda
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, AWS Lambda, psycopg2, pandas, GitHub Actions, pipeline]
+标题: 使用 GitHub 操作实现 Lambda 持续部署
+摘要: 在 GitHub 与亚马逊网络服务（AWS）的 Lambda 之间构建持续部署管道。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，AWS Lambda，psycopg2，Pandas，GitHub 操作，管道]
 ---
 
-# Lambda continuous deployment with GitHub actions
+# 使用GitHub Actions进行Lambda持续部署
 
-This tutorial builds a continuous deployment (CD) pipeline between GitHub and
-AWS Lambda using GitHub actions.
+本教程构建了一个使用GitHub Actions在GitHub和AWS Lambda之间进行持续部署（CD）的管道。
 
-Packaging and deploying your function and its dependencies with AWS Lambda can
-sometimes be a tedious job. Especially if you also want to use a source code
-management platform like GitHub to develop your code before pushing  it to AWS
-Lambda.
+将您的函数及其依赖项与AWS Lambda打包和部署有时可能是一个繁琐的工作。特别是如果您还希望在使用像GitHub这样的源代码管理平台开发代码后再将其推送到AWS Lambda时。
 
-You can use GitHub actions to set up automatic deployment for AWS Lambda from a
-Github repository. You need to push a commit to the `main` or `master` branch of
-your repository, then let GitHub actions create the deployment  package, and
-deploy your code to AWS Lambda.
+您可以使用GitHub Actions从GitHub仓库自动部署到AWS Lambda。您需要向仓库的`main`或`master`分支推送一个提交，然后让GitHub Actions创建部署包，并将您的代码部署到AWS Lambda。
 
-## Prerequisites
+## 前提条件
 
-*   Git ([installation options here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git))
-*   GitHub CLI tool ([installation options here](https://github.com/cli/cli#installation))
-*   AWS account
+*   Git ([安装选项在这里](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)) 
+*   GitHub CLI工具 ([安装选项在这里](https://github.com/cli/cli#installation)) 
+*   AWS账户
 
 <Procedure>
 
-## Creating a new Lambda function in AWS console
+## 在AWS控制台中创建一个新的Lambda函数
 
-1.  Create a new Lambda function called `lambda-cd` by navigating to the AWS Lambda console and creating a new function:
-    ![create new function](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/create_new_function.png)
-1.  Add `lambda-cd` as your function name, choose your preferred runtime environment, and click `Create function`:
-    ![create lambda from scratch](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/from_scratch.png)
-    Take a note of the function name, you need it later to configure the deployment file.
+1.  通过导航到AWS Lambda控制台并创建一个新的函数来创建一个名为`lambda-cd`的新Lambda函数：
+    ![创建新函数](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/create_new_function.png) 
+1.  添加`lambda-cd`作为您的函数名称，选择您喜欢的运行时环境，然后点击`Create function`：
+    ![从头开始创建Lambda](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/from_scratch.png) 
+    记下函数名称，您稍后需要它来配置部署文件。
 
 </Procedure>
 
 <Procedure>
 
-## Creating a new GitHub repository
+## 创建一个新的GitHub仓库
 
-Now you can create a new GitHub repository which contains the function code.
+现在您可以创建一个新的GitHub仓库，其中包含函数代码。
 
-1.  Create a new GitHub [repository](https://github.com/new).
-1.  On your local system, create a new project folder called `lambda-cd`:
+1.  创建一个新的GitHub [仓库](https://github.com/new). 
+1.  在您的本地系统上，创建一个名为`lambda-cd`的新项目文件夹：
 
     ```bash
     mkdir lambda-cd
     cd lambda-cd
     ```
 
-1.  Create the Lambda function that you want to upload.
-    As an example, here's a Python Lambda function which returns data from a TimescaleDB table called `stocks_intraday`
-    read the tutorial to build a TimescaleDB API with Lambda here
+1.  创建您想要上传的Lambda函数。
+    作为一个示例，这里有一个Python Lambda函数，它返回来自名为`stocks_intraday`的TimescaleDB表的数据。
+    阅读教程在此处用Lambda构建TimescaleDB API
 
     ```bash
     touch function.py
@@ -84,14 +77,14 @@ Now you can create a new GitHub repository which contains the function code.
 
         return {
             'statusCode': 200,
-            'body': json.dumps(list_of_dicts, default=str),
+            'body': json.dumps(list(result), default=str),
             'headers': {
                 "Content-Type": "application/json"
             }
         }
     ```
 
-1.  Initialize a git repository and push the project to GitHub:
+1.  初始化一个git仓库并将项目推送到GitHub：
 
     ```bash
     git init
@@ -104,52 +97,48 @@ Now you can create a new GitHub repository which contains the function code.
 
 </Procedure>
 
-At this point, you have a GitHub repository with just the Lambda function in it. Now you can connect this repository
-to the AWS Lambda function.
+此时，您拥有一个包含Lambda函数的GitHub仓库。现在您可以将此仓库连接到AWS Lambda函数。
 
-## Connect GitHub and AWS Lambda
+## 连接GitHub和AWS Lambda
 
-Connect the Github repository to AWS Lambda using Github actions.
+使用GitHub Actions将GitHub仓库连接到AWS Lambda。
 
 <Procedure>
 
-### Adding your AWS credentials to the repository
+### 将AWS凭证添加到仓库
 
-You need to add your AWS credentials to the repository so it has permission to connect to Lambda.
-You can do this by adding [GitHub secrets][github-secrets] using the GitHub command-line.
+您需要将AWS凭证添加到仓库，以便它有权限连接到Lambda。
+您可以通过使用GitHub命令行添加[GitHub secrets][github-secrets]来实现。
 
-1.  Authenticate with GitHub:
+1.  使用GitHub进行身份验证：
 
     ```bash
     gh auth login
     ```
 
-    Choose which account you want to log in to. Authenticate with your GitHub
-    password or authentication token.
-1.  Add AWS credentials as GitHub secrets.
-    By using GitHub secrets, your credentials are encrypted and cannot be seen
-    publicly. Use the `gh secret set` command to upload your AWS credentials one by one
-    (you'll be prompted to paste the values for each one):
+    选择您想要登录的账户。使用您的GitHub密码或认证令牌进行身份验证。
+1.  将AWS凭证添加为GitHub secrets。
+    通过使用GitHub secrets，您的凭证将被加密，并且无法公开查看。使用`gh secret set`命令逐个上传您的AWS凭证（系统会提示您粘贴每个凭证的值）：
 
-    AWS_ACCESS_KEY_ID:
+    AWS_ACCESS_KEY_ID：
 
     ```bash
     gh secret set AWS_ACCESS_KEY_ID
     ```
 
-    AWS_SECRET_ACCESS_KEY:
+    AWS_SECRET_ACCESS_KEY：
 
     ```bash
     gh secret set AWS_SECRET_ACCESS_KEY
     ```
 
-    AWS_REGION:
+    AWS_REGION：
 
     ```bash
     gh secret set AWS_REGION
     ```
 
-1.  To make sure your credentials have been uploaded correctly, you can list the available GitHub secrets:
+1.  为了确保您的凭证已正确上传，您可以列出可用的GitHub secrets：
 
     ```bash
     gh secret list
@@ -160,22 +149,21 @@ You can do this by adding [GitHub secrets][github-secrets] using the GitHub comm
 
 </Procedure>
 
-Now you know that you have your AWS credentials available for the repository to use.
+现在您知道您的AWS凭证可用于仓库。
 
 <Procedure>
 
-### Setting up GitHub actions
+### 设置GitHub Actions
 
-You can now set up some automation based on the ["AWS Lambda Deploy" GitHub action](https://github.com/marketplace/actions/aws-lambda-deploy)
-to auto-deploy to AWS Lambda.
+您现在可以设置一些基于["AWS Lambda Deploy" GitHub action](https://github.com/marketplace/actions/aws-lambda-deploy)的自动化操作，以自动部署到AWS Lambda。
 
-1.  Create a new YAML file that contains the deployment configuration:
+1.  创建一个新的YAML文件，其中包含部署配置：
 
     ```bash
     touch .github/workflows/main.yml
     ```
 
-1.  Add this content to the file:
+1.  将此内容添加到文件中：
 
     ```yml
     name: deploy to lambda
@@ -203,22 +191,20 @@ to auto-deploy to AWS Lambda.
               source: function.py
     ```
 
-    This configuration deploys the code to Lambda when there's a new push to the main branch.
+    当主分支有新的推送时，此配置将代码部署到Lambda。
 
-    As you can also see in the YAML file, the AWS credentials are accessed using the `${{ secrets.AWS_ACCESS_KEY_ID }}`
-    syntax.
-    Make sure to use the name of the Lambda function (as displayed in the AWS console) for the `function_name`
-    property in this configuration file. ("lambda-cd" in this example).
+    如您在YAML文件中所见，AWS凭证是使用`${{ secrets.AWS_ACCESS_KEY_ID }}`语法访问的。
+    确保在此配置文件中使用AWS控制台中显示的Lambda函数名称（在此示例中为"lambda-cd"）作为`function_name`属性的值。
 
 </Procedure>
 
 <Procedure>
 
-### Testing the pipeline
+### 测试管道
 
-You can test if the hook works by pushing the changes to GitHub.
+您可以通过将更改推送到GitHub来测试钩子是否工作。
 
-1.  Push the changes to the repository:
+1.  将更改推送到仓库：
 
     ```bash
     git add .github/workflows/main.yml
@@ -228,12 +214,13 @@ You can test if the hook works by pushing the changes to GitHub.
     git push
     ```
 
-1.  Navigate to the GitHub actions page of your repository, to see the build run and succeed:
-    ![github action build](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/github_action_lambda.png)
+1.  导航到您的仓库的GitHub Actions页面，查看构建运行并成功：
+    ![github action build](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/github_action_lambda.png) 
 
 </Procedure>
 
-You now have a continuous deployment pipeline set up between GitHub and AWS Lambda.
+您现在已在GitHub和AWS Lambda之间设置了一个持续部署管道。
 
 [create-data-api]: /tutorials/:currentVersion:/aws-lambda/create-data-api/
 [github-secrets]: https://docs.github.com/en/actions/reference/encrypted-secrets
+
