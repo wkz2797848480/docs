@@ -1,48 +1,34 @@
 ---
-title: Create a data API for TimescaleDB
-excerpt: Create an API to fetch data from your TimescaleDB application, using AWS Lambda
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, AWS Lambda, psycopg2, pandas, GitHub Actions, pipeline]
+标题: 为 TimescaleDB 创建数据应用程序编程接口（API）
+摘要: 使用亚马逊网络服务（AWS）Lambda 创建一个应用程序编程接口（API），以便从你的 TimescaleDB 应用程序中获取数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，AWS Lambda，psycopg2，Pandas，GitHub 操作，管道]
 ---
 
-# Create a data API for TimescaleDB
+# 创建TimescaleDB的数据API
 
-This tutorial covers creating an API to fetch data from your TimescaleDB
-instance. It uses an API gateway to trigger a Lambda function, that then fetches
-the requested data from TimescaleDB and returns it in JSON format.
+本教程介绍如何创建一个API来从您的TimescaleDB实例中获取数据。它使用API网关触发一个Lambda函数，该函数随后从TimescaleDB获取请求的数据并以JSON格式返回。
 
-## Connect to TimescaleDB from Lambda
+## 从Lambda连接到TimescaleDB
 
-To connect to the TimescaleDB instance, you need to use a database connector
-library. This tutorial uses [`psycopg2`][psycopg2].
+要连接到TimescaleDB实例，您需要使用数据库连接器库。本教程使用[`psycopg2`][psycopg2]。
 
-The `psycopg2` database connector is not part of the standard Python library,
-and is not included in AWS Lambda, so you need to manually include the library
-in your deployment package to make it available to use. This tutorial uses
-[Lambda Layers][lambda-layers] to include `psycopg2`. A Lambda Layer is an
-archive containing additional code, such as libraries or dependencies. Layers
-help you use external libraries in your function code that would not be
-available otherwise.
+`psycopg2`数据库连接器不是标准Python库的一部分，也不包含在AWS Lambda中，因此您需要手动将该库包含在您的部署包中以使其可用。本教程使用[Lambda Layers][lambda-layers]来包含`psycopg2`。Lambda Layer是一个包含额外代码的存档，例如库或依赖项。Layers帮助您在函数代码中使用外部库，否则这些库将不可用。
 
-Additionally, `psycopg2` needs to be built and compiled with statically linked
-libraries, something that you can't do directly in a Lambda function or layer. A
-workaround to this issue is to download the
-[compiled version of the library][lambda-psycopg2] and use that as a Lambda Layer.
+此外，`psycopg2`需要与静态链接的库一起构建和编译，这是您无法直接在Lambda函数或层中完成的。解决这个问题的一个方法是下载[编译好的库版本][lambda-psycopg2]并将其用作Lambda Layer。
 
 <Procedure>
 
-### Adding the psycopg2 library as a Lambda layer
+### 将psycopg2库添加为Lambda层
 
-1.  Download and unzip the compiled `psycopg2` library:
+1. 下载并解压编译好的`psycopg2`库：
 
     ```bash
-    wget https://github.com/jkehler/awslambda-psycopg2/archive/refs/heads/master.zip
+    wget https://github.com/jkehler/awslambda-psycopg2/archive/refs/heads/master.zip 
     unzip master.zip
     ```
 
-1.  In the directory you downloaded the library to, copy the `psycopg2` files
-    into a new directory called `/python/psycopg2/`. Make sure you copy the directory that
-    matches your Python version:
+1.  在您下载库的目录中，将`psycopg2`文件复制到一个名为`/python/psycopg2/`的新目录中。确保您复制的目录与您的Python版本相匹配：
 
     ```bash
     cd awslambda-psycopg2-master/
@@ -50,7 +36,7 @@ workaround to this issue is to download the
     cp -r psycopg2-3.8/* python/psycopg2/
     ```
 
-1.  Zip the `python` directory and upload the zipped file as a Lambda layer:
+1.  压缩`python`目录并将压缩文件作为Lambda层上传：
 
   ```bash
   zip -r psycopg2_layer.zip python/
@@ -59,32 +45,27 @@ workaround to this issue is to download the
   --compatible-runtimes python3.8
   ```
 
-1.  At the AWS Lambda console, check to see if your `psycopg2` has been uploaded
-    as a Lambda layer:
-    ![aws layers](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/layers.png)
+1.  在AWS Lambda控制台中检查您的`psycopg2`是否已作为Lambda层上传：
+    ![aws layers](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/layers.png) 
 
 </Procedure>
 
-## Create a function to fetch and return data from the database
+## 创建函数以从数据库获取并返回数据
 
-When the layer is available to your Lambda function, you can create an API to
-return data from the database. This section shows you how to create the Python
-function that returns data from the database and uploads it to AWS Lambda.
+当层对您的Lambda函数可用时，您可以创建一个API来返回数据库中的数据。本节向您展示如何创建返回数据库数据的Python函数并将其上传到AWS Lambda。
 
 <Procedure>
 
-### Creating a function to fetch and return data from the database
+### 创建函数以从数据库获取并返回数据
 
-1.  Create a new directory called `timescaledb_api`, to store the function
-    code, and change into the new directory:
+1.  创建一个名为`timescaledb_api`的新目录，用于存储函数代码，并切换到新目录：
 
     ```bash
     mkdir timescaledb_api
     cd timescaledb_api
     ```
 
-1.  In the new directory, create a new function called `function.py`, with this
-    content:
+1.  在新目录中创建一个名为`function.py`的新函数，内容如下：
 
     ```python
     import json
@@ -125,22 +106,21 @@ function that returns data from the database and uploads it to AWS Lambda.
 
 </Procedure>
 
-## Upload the function in AWS Lambda
+## 将函数上传到AWS Lambda
 
-When you have created the function, you can zip the Python file and upload it to
-Lambda using the `create-function` AWS command.
+当您创建了函数后，您可以将Python文件压缩并使用`create-function` AWS命令将其上传到Lambda。
 
 <Procedure>
 
-## Uploading the function to AWS Lambda
+## 将函数上传到AWS Lambda
 
-1.  At the command prompt, zip the function directory:
+1.  在命令提示符下，压缩函数目录：
 
     ```bash
     zip function.zip function.py
     ```
 
-1.  Upload the function:
+1.  上传函数：
 
     ```bash
     aws lambda create-function --function-name simple_api_function \
@@ -149,11 +129,9 @@ Lambda using the `create-function` AWS command.
     --layers <LAYER_ARN>
     ```
 
-1.  You can check that the function has been uploaded correctly by using this
-    command in the AWS console:
-    ![aws lambda uploaded](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/lambda_function.png)
-1.  If you make changes to your function code, you need to zip the file again
-    and use the `update-function-code` command to upload the changes:
+1.  您可以通过在AWS控制台使用此命令检查函数是否已正确上传：
+    ![aws lambda uploaded](https://assets.timescale.com/docs/images/tutorials/aws-lambda-tutorial/lambda_function.png) 
+1.  如果您对函数代码进行了更改，您需要再次压缩文件并使用`update-function-code`命令上传更改：
 
     ```bash
     zip function.zip function.py
@@ -162,18 +140,15 @@ Lambda using the `create-function` AWS command.
 
 </Procedure>
 
-## Add database configuration to AWS Lambda
+## 将数据库配置添加到AWS Lambda
 
-Before you can use the functions, you need to ensure it can connect to the
-database. In the Python code above, you specified retrieving values from
-environment variables, and you also need to specify these within the Lambda
-environment.
+在您可以使用函数之前，您需要确保它可以连接到数据库。在上面的Python代码中，您指定了从环境变量中检索值，您还需要在Lambda环境中指定这些值。
 
 <Procedure>
 
-### Adding database configuration to AWS Lambda with environment variables
+### 使用环境变量将数据库配置添加到AWS Lambda
 
-1.  Create a JSON file that contains the variables required for the function:
+1.  创建一个包含函数所需变量的JSON文件：
 
     ```json
     {
@@ -185,16 +160,14 @@ environment.
     }
     ```
 
-1.  Upload your connection details. In this example, the JSON file that contains
-    the variables is saved at `file://env.json`:
+1.  上传您的连接详细信息。在这个示例中，包含变量的JSON文件保存在`file://env.json`：
 
     ``` bash
     aws lambda update-function-configuration \
     --function-name simple_api_function --environment file://env.json
     ```
 
-1.  When the configuration is uploaded to AWS Lambda, you can reach the
-    variables using the `os.environ` parameter in the function:
+1.  当配置上传到AWS Lambda后，您可以在函数中使用`os.environ`参数访问变量：
 
     ```python
     import os
@@ -207,24 +180,21 @@ environment.
 
 </Procedure>
 
-## Test the database connection
+## 测试数据库连接
 
-When your function code is uploaded along with the database connection details,
-you can check to see if it retrieves the data you expect it to.
+当您的函数代码与数据库连接详细信息一起上传后，您可以检查它是否检索到您期望的数据。
 
 <Procedure>
 
-### Testing the database connection
+### 测试数据库连接
 
-1.  Invoke the function. Make sure you include the name of the function, and
-    provide a name for an output file. In this example, the output file is
-    called `output.json`:
+1.  调用函数。确保包括函数的名称，并为输出文件提供一个名称。在这个示例中，输出文件称为`output.json`：
 
     ```bash
     aws lambda invoke --function-name simple_api_function output.json
     ```
 
-1.  If your function is working correctly, your output file looks like this:
+1.  如果您的函数工作正常，您的输出文件看起来像这样：
 
     ```json
     {
@@ -261,19 +231,15 @@ you can check to see if it retrieves the data you expect it to.
 
 </Procedure>
 
-## Create a new API gateway
+## 创建一个新的API网关
 
-Now that you have confirmed that the Lambda function works, you can create the
-API gateway. In AWS terms, you are setting up a
-[custom Lambda integration][custom-lambda-integration].
+现在您已经确认Lambda函数可以正常工作，您可以创建API网关。在AWS术语中，您正在设置一个[自定义Lambda集成][custom-lambda-integration]。
 
 <Procedure>
 
-### Creating a new API gateway
+### 创建一个新的API网关
 
-1.  Create the API. In this example, the new API is called `TestApiTimescale`.
-    Take note of the `id` field in the response, you need to use this to make
-    changes later on:
+1.  创建API。在这个例子中，新的API被称为`TestApiTimescale`。注意响应中的`id`字段，您稍后需要使用它来进行更改：
 
     ```bash
     aws apigateway create-rest-api --name 'TestApiTimescale' --region us-east-1
@@ -291,7 +257,7 @@ API gateway. In AWS terms, you are setting up a
     }
     ```
 
-1.  Retrieve the `id` of the root resource, to add a new GET endpoint:
+1.  检索根资源的`id`，以添加一个新的GET端点：
 
     ```bash
     aws apigateway get-resources --rest-api-id <API_ID> --region us-east-1
@@ -314,7 +280,7 @@ API gateway. In AWS terms, you are setting up a
     }
     ```
 
-1.  Create a new resource. In this example, the new resource is called `ticker`:
+1.  创建一个新的资源。在这个例子中，新资源被称为`ticker`：
 
     ```bash
     aws apigateway create-resource --rest-api-id <API_ID> \
@@ -327,7 +293,7 @@ API gateway. In AWS terms, you are setting up a
     }
     ```
 
-1.  Create a GET request for the root resource:
+1.  为根资源创建一个GET请求：
 
     ```bash
     aws apigateway put-method --rest-api-id <API_ID> \
@@ -336,8 +302,7 @@ API gateway. In AWS terms, you are setting up a
     --request-parameters method.request.querystring.symbol=false
     ```
 
-1.  Set up a `200 OK` response to the method request
-    of `GET /ticker?symbol={symbol}`:
+1.  为`GET /ticker?symbol={symbol}`的方法请求设置一个`200 OK`响应：
 
     ```bash
     aws apigateway put-method-response --region us-east-1 \
@@ -345,7 +310,7 @@ API gateway. In AWS terms, you are setting up a
     --http-method GET --status-code 200
     ```
 
-1.  Connect the API Gateway to the Lambda function:
+1.  将API网关连接到Lambda函数：
 
     ```bash
     aws apigateway put-integration --region us-east-1 \
@@ -355,7 +320,7 @@ API gateway. In AWS terms, you are setting up a
     --request-templates file://path/to/integration-request-template.json
     ```
 
-1.  Pass the Lambda function output to the client as a `200 OK` response:
+1.  将Lambda函数的输出作为`200 OK`响应传递给客户端：
 
     ```bash
     aws apigateway put-integration-response --region us-east-1 \
@@ -363,7 +328,7 @@ API gateway. In AWS terms, you are setting up a
     --http-method GET --status-code 200 --selection-pattern ""
     ```
 
-1.  Deploy the API:
+1.  部署API：
 
     ```bash
     aws apigateway create-deployment --rest-api-id <API_ID> --stage-name test
@@ -371,13 +336,12 @@ API gateway. In AWS terms, you are setting up a
 
 </Procedure>
 
-## Test the API
+## 测试API
 
-You can test the API is working correctly by making a GET request to the
-endpoint with `curl`:
+您可以通过向端点发送GET请求来测试API是否正常工作，使用`curl`：
 
 ```bash
-curl 'https://hlsu4rwrkl.execute-api.us-east-1.amazonaws.com/test/ticker?symbol=MSFT'
+curl 'https://hlsu4rwrkl.execute-api.us-east-1.amazonaws.com/test/ticker?symbol=MSFT' 
 [
    {
      "time": "2021-07-12 20:00:00",
@@ -391,25 +355,22 @@ curl 'https://hlsu4rwrkl.execute-api.us-east-1.amazonaws.com/test/ticker?symbol=
 ]
 ```
 
-If everything is working properly, you see the output of the Lambda function. In
-this example, it's the latest stock price of MSFT (Microsoft) in JSON format.
+如果一切正常，您将看到Lambda函数的输出。在这个例子中，它是MSFT（微软）的最新股票价格，以JSON格式显示。
 
-[psycopg2]: https://www.psycopg.org/docs/
-[lambda-layers]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html
-[lambda-psycopg2]: https://github.com/jkehler/awslambda-psycopg2
-[custom-lambda-integration]: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-custom-integrations.html
+[psycopg2]: https://www.psycopg.org/docs/ 
+[lambda-layers]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html 
+[lambda-psycopg2]: https://github.com/jkehler/awslambda-psycopg2 
+[custom-lambda-integration]: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-custom-integrations.html 
 
-## Create a Lambda function to insert data into the database
+## 创建一个Lambda函数以将数据插入数据库
 
-When you have created the `GET` API for your database, you can
-create a `POST` API. This allows you to insert data into the database
-with a JSON payload.
+当您为您的数据库创建了`GET` API后，您可以创建一个`POST` API。这允许您使用JSON有效载荷将数据插入数据库。
 
 <Procedure>
 
-### Creating a Lambda function to insert data into the database
+### 创建一个Lambda函数以将数据插入数据库
 
-1.  Create a new function called `insert_function.py`, with this content:
+1.  创建一个名为`insert_function.py`的新函数，内容如下：
 
     ```python
     import json
@@ -452,7 +413,7 @@ with a JSON payload.
 
       ```
 
-1.  Upload the function to AWS Lambda:
+1.  将函数上传到AWS Lambda：
 
     ```bash
     zip insert_function.zip insert_function.py
@@ -461,13 +422,13 @@ with a JSON payload.
     --role <ARN_LAMBDA_ROLE> --zip-file fileb://insert_function.zip
     ```
 
-1.  Create a new API Gateway, called `InsertApi`:
+1.  创建一个新的API网关，称为`InsertApi`：
 
     ```bash
     aws apigateway create-rest-api --name 'InsertApi' --region us-east-1
     ```
 
-1.  Retrieve the `id` of the root resource, and add a new POST endpoint:
+1.  检索根资源的`id`，并添加一个新的POST端点：
 
     ```bash
     aws apigateway get-resources --rest-api-id <API_ID> --region us-east-1
@@ -490,7 +451,7 @@ with a JSON payload.
     }
     ```
 
-1.  Create a new resource. In this example, the new resource is called `insert`:
+1.  创建一个新的资源。在这个例子中，新资源被称为`insert`：
 
     ```bash
     aws apigateway create-resource --rest-api-id <API_ID> --region us-east-1
@@ -503,14 +464,14 @@ with a JSON payload.
     }
     ```
 
-1.  Create a POST request for the `insert` resource:
+1.  为`insert`资源创建一个POST请求：
 
     ```bash
     aws apigateway put-method --rest-api-id <API_ID> --region us-east-1 \
     --resource-id <RESOURCE_ID> --http-method POST --authorization-type "NONE"
     ```
 
-1.  Set up a `200 OK` response to the method request of `POST /insert`:
+1.  为`POST /insert`的方法请求设置一个`200 OK`响应：
 
     ```bash
     aws apigateway put-method-response --region us-east-1 \
@@ -518,17 +479,18 @@ with a JSON payload.
     --http-method POST --status-code 200
     ```
 
-1.  Connect the API Gateway to the Lambda function:
+1.  将API网关连接到Lambda函数：
 
     ```bash
     aws apigateway put-integration --region us-east-1 \
     --rest-api-id <API_ID> --resource-id <RESOURCE_ID> \
     --http-method POST --type AWS --integration-http-method POST \
     --uri <ARN_LAMBDA_FUNCTION> \
-    --request-templates '{ "application/json": "{\"statusCode\": 200}" }'
+    --request
+-templates '{ "application/json": "{\"statusCode\": 200}" }'
     ```
 
-1.  Pass the Lambda function output to the client as a `200 OK` response:
+1.  将Lambda函数的输出作为`200 OK`响应传递给客户端：
 
     ```bash
     aws apigateway put-integration-response --region us-east-1 \
@@ -536,7 +498,7 @@ with a JSON payload.
     --http-method POST --status-code 200 --selection-pattern ""
     ```
 
-1.  Deploy the API:
+1.  部署API：
 
     ```bash
     aws apigateway create-deployment --rest-api-id <API_ID> --stage-name test_post_api
@@ -544,11 +506,11 @@ with a JSON payload.
 
 </Procedure>
 
-### Test the API with a JSON payload
+### 使用JSON有效载荷测试API
 
-You can test the API by making a `POST` request with a JSON payload.
+您可以通过发送带有JSON有效载荷的`POST`请求来测试API。
 
-Create a new payload file, called `post.json`:
+创建一个名为`post.json`的新有效载荷文件：
 
 ```json
 {
@@ -584,15 +546,14 @@ Create a new payload file, called `post.json`:
 }
 ```
 
-Use `curl` to make the request:
+使用`curl`发送请求：
 
 ```bash
 curl -X POST -H "Content-Type: application/json" -d @./post.json
-https://h45kwepq8g.execute-api.us-east-1.amazonaws.com/test_post_api/insert_function
+https://h45kwepq8g.execute-api.us-east-1.amazonaws.com/test_post_api/insert_function 
 ```
 
-If everything is working properly, the content of your JSON payload file gets
-inserted into the database.
+如果一切正常，您的JSON有效载荷文件的内容将被插入到数据库中。
 
 |time|symbol|price_open|price_high|price_low|price_close|trading_volume|
 |-|-|-|-|-|-|-|
@@ -600,7 +561,7 @@ inserted into the database.
 |2021-11-12 21:00:00|MSFT|337.15|337.15|337.15|337.15|562|
 |2021-11-12 21:00:00|FB|341.35|341.35|341.3|341.3|556|
 
-[custom-lambda-integration]: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-custom-integrations.html
-[lambda-layers]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-concepts.html#gettingstarted-concepts-layer
-[lambda-psycopg2]: https://github.com/jkehler/awslambda-psycopg2/
+[custom-lambda-integration]: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-custom-integrations.html 
+[lambda-layers]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-concepts.html#gettingstarted-concepts-layer 
+[lambda-psycopg2]: https://github.com/jkehler/awslambda-psycopg2/ 
 [psycopg2]: https://pypi.org/project/psycopg2/
