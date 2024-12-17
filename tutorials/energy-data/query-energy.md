@@ -189,12 +189,8 @@
 
 1. [](#)<Optional /> 选择一个配色方案，以便不同的消耗以不同的颜色显示。在选项面板中，`Standard options`下，将`Color scheme`更改为有用的`by value`范围。
 
-    <img
-    class="main-content__illustration"
-    src="https://assets.timescale.com/docs/images/grafana-energy.webp&#34; 
-    width={1375} height={944}
-    alt="在Grafana中可视化能耗"
-    />
+
+   <img src="https://assets.timescale.com/docs/images/grafana-energy.webp" width="1375" height="944" alt="在Grafana中可视化能耗" />
 
 </Procedure>
 
