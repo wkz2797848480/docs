@@ -1,79 +1,60 @@
 ---
-title: Create a Grafana dashboard and panel
-excerpt: Visualize your data in Grafana
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualizations, analytics]
+标题: 创建格拉法纳（Grafana）仪表盘和面板
+摘要: 在格拉法纳（Grafana）中对数据进行可视化展示。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
 ---
 
-# Creating a Grafana dashboard and panel
+# 创建Grafana仪表板和面板
 
-Grafana is organized into `Dashboards` and `Panels`. A dashboard represents a
-view into the performance of a system, and each dashboard consists of one or
-more panels, which represents information about a specific metric related to
-that system.
+Grafana通过“仪表板”和“面板”进行组织。仪表板代表了对系统性能的视图，每个仪表板由一个或多个面板组成，这些面板提供了与该系统相关的特定指标的信息。
 
-In this tutorial, you'll build a simple dashboard, connect it to TimescaleDB,
-and visualize data.
+在本教程中，您将构建一个简单的仪表板，将其连接到TimescaleDB，并可视化数据。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+在开始之前，请确保您已经：
 
-*   [Installed TimescaleDB][install-timescale].
-*   Set up Grafana.
+*   [安装TimescaleDB][install-timescale]。
+*   设置Grafana。
 
-When your installation of TimescaleDB and Grafana are complete, ingest the data
-found in the [NYC Taxi Cab][nyc-taxi] tutorial and configure Grafana to connect
-to that database.
+当您的TimescaleDB和Grafana安装完成后，摄取[纽约出租车][nyc-taxi]教程中的数据，并将Grafana配置为连接到该数据库。
 
-## Build a new dashboard
+## 构建新仪表板
 
-Start by creating a new dashboard. In the far left of the Grafana user
-interface, you'll see a `+` icon. If you hover over it, you'll see a `Create`
-menu, within which is a `Dashboard` option. Select that `Dashboard` option.
+首先创建一个新的仪表板。在Grafana用户界面的最左侧，您会看到一个`+`图标。当您悬停时，会看到一个`Create`菜单，其中有一个`Dashboard`选项。选择该`Dashboard`选项。
 
-After creating a new dashboard, you'll see a `New Panel` screen, with options
-for `Add Query` and `Choose Visualization`. In the future, if you already have a
-dashboard with panels, you can click the `+` icon at the top of the
-Grafana user interface, which enables you to add a panel to an existing
-dashboard.
+创建新仪表板后，您将看到一个`New Panel`屏幕，提供`Add Query`和`Choose Visualization`选项。将来，如果您已经有了带有面板的仪表板，您可以点击Grafana用户界面顶部的`+`图标，这将允许您向现有仪表板添加面板。
 
-To proceed with the tutorial, add a new visualization by clicking the `Choose
-Visualization` option.
+要继续本教程，请通过点击`Choose Visualization`选项添加新的可视化。
 
-At this point, you'll have several options for different Grafana visualizations.
-Choose the first option, the `Graph` visualization.
+此时，您有几个不同的Grafana可视化选项。选择第一个选项，`Graph`可视化。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_visualizations.png" alt="Grafana visualizations to choose from"/>
+![Grafana可视化选项](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_visualizations.png)
 
-There are multiple ways to configure the panel, but you can accept all the
-defaults and create a simple `Lines` graph.
+有多种方法可以配置面板，但您可以接受所有默认设置并创建一个简单的`Lines`图表。
 
-In the far left section of the Grafana user interface, select the 'Queries' tab.
+在Grafana用户界面的最左侧部分，选择`Queries`标签。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/create_grafana_query.png" alt="How to create a new Grafana query"/>
+![如何创建新的Grafana查询](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/create_grafana_query.png)
 
-Instead of using the Grafana query builder, edit the query directly. In the
-view, click the `Edit SQL` button at the bottom.
+而不是使用Grafana查询构建器，直接编辑查询。在视图中，点击底部的`Edit SQL`按钮。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/edit_sql_in_grafana.png" alt="Edit custom SQL queries in Grafana"/>
+![在Grafana中编辑自定义SQL查询](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/edit_sql_in_grafana.png)
 
-Before you can begin authoring your query, you also want to set the query database
-to the New York City taxi cab dataset you connected to earlier:
+在开始编写查询之前，您还需要将查询数据库设置为您之前连接的纽约市出租车数据集：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/set_data_source.png" alt="Switching data sources in Grafana"/>
+![在Grafana中切换数据源](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/set_data_source.png)
 
 <Highlight type="note">
-If you are visualizing time series data in Grafana, make sure you select
-`Time series` from the `Format As` drop down in the query builder.
+如果您在Grafana中可视化时间序列数据，请确保在查询构建器的`Format As`下拉菜单中选择`Time series`。
 </Highlight>
 
-### Visualize metrics stored in TimescaleDB
+### 在TimescaleDB中可视化存储的指标
 
-Start by creating a visualization that answers the question "How many
-rides took place on each day?" from the [NYC Taxi Cab][nyc-taxi] tutorial.
+首先，创建一个可视化，回答[纽约出租车][nyc-taxi]教程中的“每天发生了多少次行程？”这个问题。
 
-From the tutorial, you can see the standard SQL syntax for our query:
+从教程中，您可以看到我们的查询的标准SQL语法：
 
 ```sql
 SELECT date_trunc('day', pickup_datetime) AS day,
@@ -83,23 +64,15 @@ GROUP BY day
 ORDER BY day;
 ```
 
-You need to alter this query to support Grafana's unique query syntax.
+您需要修改这个查询以支持Grafana独特的查询语法。
 
-#### Modifying the SELECT statement
+#### 修改SELECT语句
 
-First, modify the `date_trunc` function to use the TimescaleDB `time_bucket`
-function. You can consult the TimescaleDB
-[API Reference on time_bucket][time-bucket-reference]
-for more information on how to use it properly.
+首先，修改`date_trunc`函数以使用TimescaleDB的`time_bucket`函数。您可以查阅TimescaleDB的[API参考time_bucket][time-bucket-reference]以获取如何正确使用它的更多信息。
 
-Take a look at the `SELECT` portion of this query. First, bucket the results
-into one day groupings using the `time_bucket` function. If you set the `Format`
-of a Grafana panel to be `Time series`, for use in the graph panel for example,
-then the query must return a column named `time` that returns either an SQL
-`datetime` or any numeric datatype representing a Unix epoch.
+查看这个查询的`SELECT`部分。首先，使用`time_bucket`函数将结果分组到一天的分组中。如果您将Grafana面板的`Format`设置为`Time series`，例如用于图表面板，那么查询必须返回一个名为`time`的列，该列返回SQL `datetime`或代表Unix纪元的任何数值数据类型。
 
-So, part 1 of this new query is modified so that the output of the `time_bucket`
-grouping is labeled `time` as Grafana requires, while part 2 is unchanged:
+因此，这部分新查询的第一部分被修改为将`time_bucket`分组的输出标记为`time`，因为Grafana需要，而第二部分保持不变：
 
 ```sql
 SELECT
@@ -110,15 +83,11 @@ SELECT
 FROM rides
 ```
 
-#### The Grafana timeFilter function
+#### Grafana timeFilter函数
 
-Grafana time-series panels include a tool that lets you filter on a given time
-range, called a time filter. Not surprisingly, Grafana has a way to link the
-user interface construct in a Grafana panel with the query itself; in this case,
-the `$__timefilter()` function.
+Grafana时间序列面板包括一个工具，允许您在给定的时间范围内进行过滤，称为时间过滤器。不足为奇的是，Grafana有一种方法可以将Grafana面板中的用户界面构造与查询本身链接起来；在这种情况下，是`$__timefilter()`函数。
 
-In this example of a modified query, use the `$__timefilter()` function to set
-the `pickup_datetime` column as the filtering range for your visualizations:
+在这个修改后的查询示例中，使用`$__timefilter()`函数将`pickup_datetime`列设置为您的可视化的过滤范围：
 
 ```sql
 SELECT
@@ -130,13 +99,11 @@ FROM rides
 WHERE $__timeFilter(pickup_datetime)
 ```
 
-#### Referencing elements in the query
+#### 引用查询中的元素
 
-Finally, you can group your visualizations by the time buckets you've selected,
-and order the results by the time buckets as well. So, the `GROUP BY` and
-`ORDER BY` statements reference `time`.
+最后，您可以根据您选择的时间桶对可视化结果进行分组，也可以根据时间桶对结果进行排序。因此，`GROUP BY`和`ORDER BY`语句引用`time`。
 
-With these changes, this is the final Grafana query:
+有了这些更改，这是最终的Grafana查询：
 
 ```sql
 SELECT
@@ -150,18 +117,15 @@ GROUP BY time
 ORDER BY time
 ```
 
-When you visualize this query in Grafana, you see this:
+当您在Grafana中可视化这个查询时，您将看到：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_query_results.png" alt="Visualizing time-series data in Grafana"/>
+![在Grafana中可视化时间序列数据](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_query_results.png)
 
 <Highlight type="note">
-Remember to set the time filter in the upper right corner of your Grafana
-dashboard. If you're using the pre-built sample dataset for this example, you
-can set your time filter around January 1, 2016.
+记住在Grafana仪表板的右上角设置时间过滤器。如果您使用的是本例的预构建样本数据集，您可以将时间过滤器设置在2016年1月1日左右。
 </Highlight>
 
-Currently, the data is bucketed into 1 day groupings. Adjust the `time_bucket`
-function to be bucketed into 5 minute groupings instead and compare the graphs:
+目前，数据被分组到1天的分组中。调整`time_bucket`函数，改为5分钟的分组，并比较图表：
 
 ```sql
 SELECT
@@ -175,14 +139,15 @@ GROUP BY time
 ORDER BY time
 ```
 
-When you visualize this query, it looks like this:
+当您可视化这个查询时，它看起来像这样：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_query_results_5m.png" alt="Visualizing time-series data in Grafana"/>
+![在Grafana中可视化时间序列数据](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_query_results_5m.png)
 
-### Summary
+### 总结
 
-Complete your Grafana knowledge by following all the TimescaleDB + Grafana tutorials.
+通过遵循所有TimescaleDB + Grafana教程，完成您的Grafana知识。
 
 [install-timescale]: /getting-started/latest/
 [nyc-taxi]: /tutorials/:currentVersion:/nyc-taxi-cab
 [time-bucket-reference]: /api/:currentVersion:/hyperfunctions/time_bucket
+
