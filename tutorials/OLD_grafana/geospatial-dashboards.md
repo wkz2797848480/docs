@@ -1,49 +1,35 @@
 ---
-title: Use Grafana to visualize geospatial data stored in TimescaleDB
-excerpt: Use the WorldMap visualization to see a geospatial data overload on a map of the world
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualizations, analytics, geospatial data]
+标题: 使用格拉法纳（Grafana）可视化存储于 TimescaleDB 的地理空间数据
+摘要: 利用世界地图可视化功能在世界地图上查看地理空间数据的分布情况。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析，地理空间数据]
 ---
 
-# Use Grafana to visualize geospatial data stored in TimescaleDB
+# 使用Grafana可视化TimescaleDB中存储的地理空间数据
 
-Grafana includes a WorldMap visualization that help you see geospatial data overlaid
-atop a map of the world. This can be helpful to understand how data changes based on
-its location.
+Grafana包含了一个WorldMap可视化工具，可以帮助您在世界地图上叠加地理空间数据。这对于理解基于位置变化的数据非常有用。
 
-### Prerequisites
+### 前提条件
 
-To complete this tutorial, you need a cursory knowledge of the Structured Query
-Language (SQL). The tutorial walks you through each SQL command, but it is
-helpful if you've seen SQL before.
+完成本教程，您需要对结构化查询语言（SQL）有初步了解。教程将指导您完成每个SQL命令，但如果您之前接触过SQL将会有所帮助。
 
-*   To start, [install TimescaleDB][install-timescale].
-*   Next setup Grafana.
+*   首先，[安装TimescaleDB][install-timescale]。
+*   接下来，设置Grafana。
 
-Once your installation of TimescaleDB and Grafana are complete, ingest the data found
-in the NYC Taxi Cab tutorial and configure Grafana to connect
-to that database. Be sure to follow the full tutorial if you're interested in background
-on how to use TimescaleDB.
+当您的TimescaleDB和Grafana安装完成后，摄取纽约出租车教程中的数据，并将Grafana配置为连接到该数据库。如果您对如何使用TimescaleDB感兴趣，请确保按照完整的教程操作。
 
 <Highlight type="tip">
- Be sure to pay close attention to the geospatial query portion
- of the tutorial and complete those steps.
+确保密切关注教程中的地理空间查询部分，并完成这些步骤。
 
 </Highlight>
 
-### Build a geospatial query
+### 构建地理空间查询
 
-The NYC Taxi Cab data also contains the location of each ride pickup. In the
-NYC Taxi Cab tutorial, we examined rides that originated
-near Times Square. Let's build on that query and
-**visualize rides whose distance traveled was greater than five miles in Manhattan**.
+纽约出租车数据还包含了每次行程的接客地点。在纽约出租车教程中，我们检查了从时代广场附近出发的行程。让我们在该查询的基础上**可视化在曼哈顿行程距离超过五英里的行程**。
 
-We can do this in Grafana using the 'Worldmap Panel'. Start by creating a
-new panel, selecting 'New Visualization', and selecting the 'Worldmap Panel'.
+我们可以使用Grafana的“Worldmap Panel”来实现这一点。首先创建一个新的面板，选择“New Visualization”，然后选择“Worldmap Panel”。
 
-Once again, you can edit the query directly. In the Query screen, be sure
-to select your NYC Taxicab Data as the data source. In the 'Format as' dropdown,
-select 'Table'. Click on 'Edit SQL' and enter the following query in the text window:
+再次，您可以直接编辑查询。在查询屏幕上，确保选择您的纽约出租车数据作为数据源。在“Format as”下拉菜单中，选择“Table”。点击“Edit SQL”并在文本窗口中输入以下查询：
 
 ```sql
 SELECT time_bucket('5m', rides.pickup_datetime) AS time,
@@ -63,57 +49,42 @@ ORDER BY time
 LIMIT 500;
 ```
 
-Let's dissect this query. First, we're looking to plot rides with visual markers that
-denote the trip distance. Trips with longer distances get different visual treatments
-on our map. Use the `trip_distance` as the value for our plot, and store
-this result in the `value` field.
+让我们解析这个查询。首先，我们希望用视觉标记来绘制行程，表示行程距离。较长距离的行程在地图上有不同的视觉处理。使用`trip_distance`作为我们图表的值，并将其存储在`value`字段中。
 
-In the second and third lines of the `SELECT` statement, we are using the `pickup_longitude`
-and `pickup_latitude` fields in the database and mapping them to variables `longitude`
-and `latitude`, respectively.
+在`SELECT`语句的第二行和第三行中，我们使用数据库中的`pickup_longitude`和`pickup_latitude`字段，并将它们映射到变量`longitude`和`latitude`。
 
-In the `WHERE` clause, we are applying a geospatial boundary to look for trips within
-2000m of Times Square.
+在`WHERE`子句中，我们应用地理空间边界，寻找在时代广场2000米范围内的行程。
 
-Finally, in the `GROUP BY` clause, we supply the `trip_distance` and location variables
-so that Grafana can plot data properly.
+最后，在`GROUP BY`子句中，我们提供`trip_distance`和位置变量，以便Grafana能够正确绘制数据。
 
 <Highlight type="warning">
- This query may take a while, depending on the speed of your Internet connection. This
- is why we're using the `LIMIT` statement for demonstration purposes.
+这个查询可能需要一些时间，取决于您的互联网连接速度。这就是为什么我们为了演示目的使用`LIMIT`语句。
 
 </Highlight>
 
-### Configure the worldmap Grafana panel
+### 配置Worldmap Grafana面板
 
-Now let's configure our Worldmap visualization. Select the 'Visualization' tab in the far
-left of the Grafana user interface. You'll see options for 'Map Visual Options', 'Map Data Options',
-and more.
+现在让我们配置我们的Worldmap可视化。在Grafana用户界面的最左侧选择“Visualization”标签。您将看到“Map Visual Options”、“Map Data Options”等选项。
 
-First, make sure the 'Map Data Options' are set to 'table' and 'current'.  Then in
-the 'Field Mappings' section. Set the 'Table Query Format' to be 'Table'.
-We can map the 'Latitude Field' to our `latitude` variable, the 'Longitude Field' to
-our `longitude` variable, and the 'Metric' field to our `value` variable.
+首先，确保“Map Data Options”设置为“table”和“current”。然后在“Field Mappings”部分，将“Table Query Format”设置为“Table”。我们可以将“Latitude Field”映射到我们的`latitude`变量，将“Longitude Field”映射到`longitude`变量，将“Metric”字段映射到`value`变量。
 
-In the 'Map Visual Options', set the 'Min Circle Size' to 1 and the 'Max Circle Size' to 5.
+在“Map Visual Options”中，将“Min Circle Size”设置为1，将“Max Circle Size”设置为5。
 
-In the 'Threshold Options' set the 'Thresholds' to '2,5,10'. This auto configures a set
-of colors. Any plot whose `value` is below 2 is a color, any `value` between 2 and 5 is another color, any `value` between 5 and 10 is a third color, and any `value` over 10
-is a fourth color.
+在“Threshold Options”中，将“Thresholds”设置为“2,5,10”。这自动配置了一组颜色。任何`value`低于2的图表是一种颜色，任何`value`在2到5之间的图表是另一种颜色，任何`value`在5到10之间的图表是第三种颜色，任何`value`超过10的图表是第四种颜色。
 
-Your configuration should look like this:
+您的配置应该如下所示：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana-fieldmapping.png" alt="Mapping Worldmap fields to query results in Grafana"/>
+![在Grafana中将Worldmap字段映射到查询结果](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana-fieldmapping.png)
 
-At this point, data should be flowing into our Worldmap visualization, like so:
+此时，数据应该流入我们的Worldmap可视化，如下所示：
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_worldmap_query_results.png" alt="Visualizing time series data in PostgreSQL using the Grafana Worldmap"/>
+![使用Grafana Worldmap可视化PostgreSQL中的时间序列数据](https://assets.iobeam.com/images/docs/screenshots-for-grafana-tutorial/grafana_worldmap_query_results.png)
 
-You should be able to edit the time filter at the top of your visualization to see trip pickup data
-for different timeframes.
+您应该能够编辑可视化顶部的时间过滤器，以查看不同时间段的行程接客数据。
 
-### Summary
+### 总结
 
-Complete your Grafana knowledge by following all the TimescaleDB + Grafana tutorials.
+通过遵循所有TimescaleDB + Grafana教程，完成您的Grafana知识。
 
 [install-timescale]: /getting-started/latest/
+
