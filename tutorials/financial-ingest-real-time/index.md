@@ -1,67 +1,52 @@
 ---
-title: Ingest real-time financial websocket data
-excerpt: Set up a data pipeline to get data from different financial APIs
-products: [cloud]
-keywords: [finance, analytics, websockets, data pipeline]
-tags: [tutorials, intermediate]
-layout_components: [next_prev_large]
-content_group: Ingest real-time financial websocket data
+标题: 摄取实时金融网络套接字数据
+摘要: 设置数据管道，以便从不同的金融应用程序编程接口获取数据。
+产品: [云服务]
+关键词: [金融，分析，网络套接字，数据管道]
+标签: [教程，中级]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 摄取实时金融网络套接字数据
 ---
 
 import CandlestickIntro from "versionContent/_partials/_candlestick_intro.mdx";
 
-# Ingest real-time financial websocket data
+# 接入实时金融WebSocket数据
 
-This tutorial shows you how to ingest real-time time-series data into
-TimescaleDB using a websocket connection. The tutorial sets up a data pipeline
-to ingest real-time data from our data partner, [Twelve Data][twelve-data].
-Twelve Data provides a number of different financial APIs, including stock,
-cryptocurrencies, foreign exchanges, and ETFs. It also supports websocket
-connections in case you want to update your database frequently. With
-websockets, you need to connect to the server, subscribe to symbols, and you can
-start receiving data in real-time during market hours.
+本教程向您展示如何使用WebSocket连接将实时时间序列数据接入TimescaleDB。本教程设置了一个数据管道，从我们的数据中心合作伙伴[Twelve Data][twelve-data]接入实时数据。Twelve Data提供多种不同的金融API，包括股票、加密货币、外汇和ETF。如果您希望频繁更新数据库，它还支持WebSocket连接。使用WebSockets，您需要连接到服务器、订阅符号，您就可以在交易时间内开始接收实时数据。
 
-When you complete this tutorial, you'll have a data pipeline set
-up that ingests real-time financial data into your Timescale.
+完成本教程后，您将设置好一个数据管道，将实时金融数据接入您的Timescale。
 
-This tutorial uses Python and the API
-[wrapper library][twelve-wrapper] provided by Twelve Data.
+本教程使用Python和Twelve Data提供的API[包装库][twelve-wrapper]。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+开始之前，请确保您已经：
 
-*   Signed up for a [free Timescale account][cloud-install].
-*   Installed Python 3
-*   Signed up for [Twelve Data][twelve-signup]. The free tier is perfect for
-    this tutorial.
-*   Made a note of your Twelve Data [API key](https://twelvedata.com/account/api-keys).
+*   注册了[免费的Timescale账户][cloud-install]。
+*   安装了Python 3。
+*   注册了[Twelve Data][twelve-signup]。免费层级非常适合本教程。
+*   记下您的Twelve Data[API密钥](https://twelvedata.com/account/api-keys)。
 
-## Steps in this tutorial
+## 本教程的步骤
 
-This tutorial covers:
+本教程包括：
 
-1.  [Setting up your dataset][financial-ingest-dataset]: Load data from
-    [Twelve Data][twelve-data] into your TimescaleDB database.
-1.  [Querying your dataset][financial-ingest-query]: Create candlestick views, query
-    the aggregated data, and visualize the data in Grafana.
+1.  [设置您的数据集][financial-ingest-dataset]：将数据从[Twelve Data][twelve-data]加载到您的TimescaleDB数据库中。
+1.  [查询您的数据集][financial-ingest-query]：创建K线视图，在Grafana中查询聚合数据并可视化数据。
 
-    This tutorial shows you how to ingest real-time time-series data into a Timescale
-    database using a websocket connection. To create candlestick views, query the
-    aggregated data, and visualize the data in Grafana.
+    本教程向您展示如何使用WebSocket连接将实时时间序列数据接入Timescale数据库。创建K线视图，查询聚合数据，并在Grafana中可视化数据。
 
-## About OHLCV data and candlestick charts
+## 关于OHLCV数据和K线图
 
 <CandlestickIntro />
 
 ![candlestick](https://assets.timescale.com/docs/images/tutorials/intraday-stock-analysis/candlestick_fig.png)
 
-TimescaleDB is well suited to storing and analyzing financial candlestick data,
-and many Timescale community members use it for exactly this purpose.
+TimescaleDB非常适合存储和分析金融K线数据，许多Timescale社区成员正是出于这个目的使用它。
 
 [cloud-install]: /getting-started/:currentVersion:/#create-your-timescale-account
 [financial-ingest-dataset]: /tutorials/:currentVersion:/financial-ingest-real-time/financial-ingest-dataset/
 [financial-ingest-query]: /tutorials/:currentVersion:/financial-ingest-real-time/financial-ingest-query/
-[twelve-data]: https://twelvedata.com/
-[twelve-signup]: https://twelvedata.com/login
+[twelve-data]: https://twelvedata.com/  
+[twelve-signup]: https://twelvedata.com/login  
 [twelve-wrapper]: https://github.com/twelvedata/twelvedata-python
