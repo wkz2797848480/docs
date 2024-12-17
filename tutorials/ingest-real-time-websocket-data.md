@@ -1,77 +1,60 @@
 ---
-title: Ingest real-time financial websocket data
-excerpt: Set up a data pipeline to get data from different financial APIs
-products: [cloud, mst, self_hosted]
-keywords: [finance, analytics, websockets, data pipeline]
+标题: 摄取实时金融网络套接字数据
+摘要: 搭建一个数据管道，以便从不同的金融应用程序编程接口（API）获取数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [金融，分析，网络套接字，数据管道]
 ---
 
 import CreateHypertableStocks from "versionContent/_partials/_create-hypertable-twelvedata-stocks.mdx";
 import GraphOhlcv from "versionContent/_partials/_graphing-ohlcv-data.mdx";
 
-# Ingest real-time financial websocket data
+# 实时金融WebSocket数据摄入
 
-This tutorial shows you how to ingest real-time time-series data into
-TimescaleDB using a websocket connection. The tutorial sets up a data pipeline
-to ingest real-time data from our data partner, [Twelve Data][twelve-data].
-Twelve Data provides a number of different financial APIs, including stock,
-cryptocurrencies, foreign exchanges, and ETFs. It also supports websocket
-connections in case you want to update your database frequently. With
-websockets, you need to connect to the server, subscribe to symbols, and you can
-start receiving data in real-time during market hours.
+本教程向您展示如何使用WebSocket连接将实时时间序列数据摄入到TimescaleDB中。本教程建立了一个数据管道，从我们的数据合作伙伴[Twelve Data][twelve-data]摄入实时数据。Twelve Data提供多种不同的金融API，包括股票、加密货币、外汇和ETF。它还支持WebSocket连接，以便您频繁更新数据库。使用WebSockets，您需要连接到服务器、订阅符号，您就可以在交易时间内开始实时接收数据。
 
-When you complete this tutorial, you'll have a data pipeline set
-up that ingests real-time financial data into your Timescale.
+完成本教程后，您将建立一个数据管道，将实时金融数据摄入到您的Timescale中。
 
-This tutorial uses Python and the API
-[wrapper library][twelve-wrapper] provided by Twelve Data.
+本教程使用Python和Twelve Data提供的API[包装库][twelve-wrapper]。
 
-## Prerequisites
+## 前提条件
 
-Before you begin, make sure you have:
+开始之前，请确保您已具备以下条件：
 
-*   Signed up for a [free Timescale account][cloud-install].
-*   Downloaded the file that contains your Timescale service credentials such as
-    `<HOST>`, `<PORT>`, and `<PASSWORD>`. Alternatively, you can find these
-    details in the `Connection Info` section for your service.
-*   Installed Python 3
-*   Signed up for [Twelve Data][twelve-signup]. The free tier is
-    perfect for this tutorial.
-*   Made a note of your Twelve Data [API key](https://twelvedata.com/account/api-keys).
+*   注册了[免费Timescale账户][cloud-install]。
+*   下载了包含您的Timescale服务凭据的文件，如`<HOST>`、`<PORT>`和`<PASSWORD>`。或者，您可以在服务的`连接信息`部分找到这些详细信息。
+*   安装了Python 3。
+*   注册了[Twelve Data][twelve-signup]。免费层级非常适合本教程。
+*   记下您的Twelve Data[API密钥](https://twelvedata.com/account/api-keys)。
 
-<Collapsible heading="Connect to the websocket server" defaultExpanded={false}>
+<Collapsible heading="连接到websocket服务器" defaultExpanded={false}>
 
-When you connect to the Twelve Data API through a websocket, you create a
-persistent connection between your computer and the websocket server. 
-You set up a Python environment, and pass two arguments to create a
-websocket object and establish the connection.
+当您通过websocket连接到Twelve Data API时，您在计算机和websocket服务器之间创建了一个持久连接。
+您设置了一个Python环境，并传递了两个参数以创建一个websocket对象并建立连接。
 
-## Set up a new Python environment
+## 设置一个新的Python环境
 
-Create a new Python virtual environment for this project and activate it. All
-the packages you need to complete for this tutorial are installed in this environment.
+为这个项目创建一个新的Python虚拟环境并激活它。完成本教程所需的所有软件包都安装在这个环境中。
 
 <Procedure>
 
-### Setting up a new Python environment
+### 设置一个新的Python环境
 
-1.  Create and activate a Python virtual environment:
+1.  创建并激活一个Python虚拟环境：
 
     ```bash
     virtualenv env
     source env/bin/activate
     ```
 
-1.  Install the Twelve Data Python
-    [wrapper library][twelve-wrapper]
-    with websocket support. This library allows you to make requests to the
-    API and maintain a stable websocket connection.
+1.  安装Twelve Data Python
+    [包装库][twelve-wrapper]
+    支持websocket。这个库允许您向API发送请求并维护一个稳定的websocket连接。
 
     ```bash
     pip install twelvedata websocket-client
     ```
 
-1.  Install [Psycopg2][psycopg2] so that you can connect the
-    TimescaleDB from your Python script:
+1.  安装[Psycopg2][psycopg2]，以便您可以从Python脚本连接TimescaleDB：
 
     ```bash
     pip install psycopg2-binary
@@ -79,42 +62,32 @@ the packages you need to complete for this tutorial are installed in this enviro
 
 </Procedure>
 
-## Create the websocket connection
+## 创建websocket连接
 
-A persistent connection between your computer and the websocket server is used
-to receive data for as long as the connection is maintained. You need to pass
-two arguments to create a websocket object and establish connection.
+计算机和websocket服务器之间的持久连接用于在连接保持期间接收数据。您需要传递两个参数以创建一个websocket对象并建立连接。
 
-### Websocket arguments
+### WebSocket参数
 
 *   `on_event`
 
-    This argument needs to be a function that is invoked whenever there's a
-    new data record is received from the websocket:
+    这个参数需要是一个函数，每当从websocket接收到新的数据记录时调用：
 
     ```python
     def on_event(event):
-        print(event) # prints out the data record (dictionary)
+        print(event) # 打印出数据记录（字典）
     ```
 
-    This is where you want to implement the ingestion logic so whenever
-    there's new data available you insert it into the database.
+    这就是您想要实现摄入逻辑的地方，因此每当有新数据可用时，您将其插入数据库。
 
 *   `symbols`
 
-    This argument needs to be a list of stock ticker symbols (for example,
-    `MSFT`) or crypto trading pairs (for example, `BTC/USD`). When using a
-    websocket connection you always need to subscribe to the events you want to
-    receive. You can do this by using the `symbols` argument or if your
-    connection is already created you can also use the `subscribe()` function to
-    get data for additional symbols.
+    这个参数需要是一个股票代码符号列表（例如`MSFT`）或加密货币交易对（例如`BTC/USD`）。当使用websocket连接时，您总是需要订阅您想要接收的事件。您可以使用`symbols`参数来做到这一点，或者如果您的连接已经创建，您也可以使用`subscribe()`函数来获取额外符号的数据。
 
 <Procedure>
 
-### Connecting to the websocket server
+### 连接到websocket服务器
 
-1.  Create a new Python file called `websocket_test.py` and connect to the
-    Twelve Data servers using the `<YOUR_API_KEY>`:
+1.  创建一个名为`websocket_test.py`的新Python文件，并使用`<YOUR_API_KEY>`连接到Twelve Data服务器：
 
     ```python
        import time
@@ -123,7 +96,7 @@ two arguments to create a websocket object and establish connection.
         messages_history = []
 
         def on_event(event):
-         print(event) # prints out the data record (dictionary)
+         print(event) # 打印出数据记录（字典）
          messages_history.append(event)
 
        td = TDClient(apikey="<YOUR_API_KEY>")
@@ -136,14 +109,13 @@ two arguments to create a websocket object and establish connection.
        time.sleep(10)
     ```
 
-1.  Run the Python script:
+1.  运行Python脚本：
 
     ```bash
     python websocket_test.py
     ```
 
-1.  When you run the script, you receive a response from the server about the
-    status of your connection:
+1.  当您运行脚本时，您将从服务器接收到关于您连接状态的响应：
 
     ```bash
     {'event': 'subscribe-status',
@@ -156,8 +128,7 @@ two arguments to create a websocket object and establish connection.
     }
     ```
 
-    When you have established a connection to the websocket server,
-    wait a few seconds, and you can see data records, like this:
+    当您与websocket服务器建立连接后，等待几秒钟，您可以看到类似这样的数据记录：
 
     ```bash
     {'event': 'price', 'symbol': 'BTC/USD', 'currency_base': 'Bitcoin', 'currency_quote': 'US Dollar', 'exchange': 'Coinbase Pro', 'type': 'Digital Currency', 'timestamp': 1652438893, 'price': 30361.2, 'bid': 30361.2, 'ask': 30361.2, 'day_volume': 49153}
@@ -167,66 +138,44 @@ two arguments to create a websocket object and establish connection.
     {'event': 'price', 'symbol': 'BTC/USD', 'currency_base': 'Bitcoin', 'currency_quote': 'US Dollar', 'exchange': 'Coinbase Pro', 'type': 'Digital Currency', 'timestamp': 1652438900, 'price': 30346.0, 'bid': 30346.0, 'ask': 30346.0, 'day_volume': 49167}
     ```
 
-    Each price event gives you multiple data points about the given trading pair
-    such as the name of the exchange, and the current price. You can also
-    occasionally see `heartbeat` events in the response; these events signal
-    the health of the connection over time.
-    At this point the websocket connection is working successfully to pass data.
+    每个价格事件为您提供了关于给定交易对的多个数据点，例如交易所的名称和当前价格。您还可以偶尔在响应中看到`heartbeat`事件；这些事件随着时间的推移信号连接的健康状况。
+    此时，websocket连接成功地传递数据。
 
 </Procedure>
 
 </Collapsible>
 
-<Collapsible heading="The real-time dataset" headingLevel={2} defaultExpanded={false}>
+<Collapsible heading="实时数据集" headingLevel={2} defaultExpanded={false}>
     
-To ingest the data into your Timescale service, you need to implement the
-`on_event` function.
+要将数据摄入到您的Timescale服务中，您需要实现`on_event`函数。
     
-After the websocket connection is set up, you can use the `on_event` function
-to ingest data into the database. This is a data pipeline that ingests real-time 
-financial data into your Timescale service.
+websocket连接设置完成后，您可以使用`on_event`函数将数据摄入到数据库中。这是一个数据管道，它将实时金融数据摄入到您的Timescale服务中。
 
-Stock trades are ingested in real-time Monday through Friday, typically during
-normal trading hours of the New York Stock Exchange (9:30&nbsp;AM to 
-4:00&nbsp;PM&nbsp;EST).
+股票交易在周一至周五实时摄入，通常在纽约证券交易所的正常交易时间（上午9:30至下午4:00东部时间）。
 
 <CreateHypertableStocks />
 
-When you ingest data into a transactional database like Timescale, it is more
-efficient to insert data in batches rather than inserting data row-by-row. Using
-one transaction to insert multiple rows can significantly increase the overall
-ingest capacity and speed of your Timescale database.
+当您将数据摄入到像Timescale这样的事务数据库中时，批量插入数据比逐行插入数据更有效。使用一个事务插入多行可以显著提高您的Timescale数据库的整体摄入能力和速度。
 
-## Batching in memory
+## 内存中批处理
 
-A common practice to implement batching is to store new records in memory
-first, then after the batch reaches a certain size, insert all the records
-from memory into the database in one transaction. The perfect batch size isn't
-universal, but you can experiment with different batch sizes
-(for example, 100, 1000, 10000, and so on) and see which one fits your use case better.
-Using batching is a fairly common pattern when ingesting data into TimescaleDB
-from Kafka, Kinesis, or websocket connections.
+实现批处理的一个常见做法是先将新记录存储在内存中，然后当批处理达到一定大小时，将所有记录从内存中一次性插入数据库。完美的批处理大小并不是通用的，但您可以尝试不同的批处理大小（例如100、1000、10000等），看看哪一个更适合您的用例。使用批处理是将数据从Kafka、Kinesis或websocket连接摄入TimescaleDB时的一个相当常见的模式。
 
-You can implement a batching solution in Python with Psycopg2.
-You can implement the ingestion logic within the `on_event` function that
-you can then pass over to the websocket object.
+您可以使用Psycopg2在Python中实现批处理解决方案。
+您可以在`on_event`函数中实现摄入逻辑，然后将其传递给websocket对象。
 
-This function needs to:
+这个函数需要：
 
-1.  Check if the item is a data item, and not websocket metadata.
-1.  Adjust the data so that it fits the database schema, including the data
-    types, and order of columns.
-1.  Add it to the in-memory batch, which is a list in Python.
-1.  If the batch reaches a certain size, insert the data, and reset or empty the list.
+1.  检查项目是否是数据项，而不是websocket元数据。
+1.  调整数据，使其适应数据库模式，包括数据类型和列的顺序。
+1.  将其添加到内存批处理中，这是Python中的一个列表。
+1.  如果批处理达到一定大小时，插入数据，并重置或清空列表。
 
-## Ingesting data in real-time
+## 实时摄入数据
 
 <Procedure>
 
-1.  Update the Python script that prints out the current batch size, so you can
-    follow when data gets ingested from memory into your database. Use
-    the `<HOST>`, `<PASSWORD>`, and `<PORT>` details for the Timescale service
-    where you want to ingest the data and your API key from Twelve Data:
+1.  更新打印当前批处理大小的Python脚本，以便您可以跟踪数据何时从内存中摄入到数据库中。使用您想要摄入数据的Timescale服务的`<HOST>`、`<PASSWORD>`和`<PORT>`详细信息，以及您从Twelve Data获得的API密钥：
 
     ```python
     import time
@@ -237,22 +186,22 @@ This function needs to:
     from datetime import datetime
 
     class WebsocketPipeline():
-        # name of the hypertable
+        # 超表的名称
         DB_TABLE = "stocks_real_time"
 
-        # columns in the hypertable in the correct order
+        # 超表中按正确顺序的列
         DB_COLUMNS=["time", "symbol", "price", "day_volume"]
 
-        # batch size used to insert data in batches
+        # 用于批量插入数据的批处理大小
         MAX_BATCH_SIZE=100
 
         def __init__(self, conn):
-            """Connect to the Twelve Data web socket server and stream
-            data into the database.
+            ""“连接到Twelve Data web socket服务器并将数据流式传输
+            到数据库。
 
-            Args:
-                conn: psycopg2 connection object
-            """
+            参数：
+                conn：psycopg2连接对象
+            ""“
             self.conn = conn
             self.current_batch = []
             self.insert_counter = 0
@@ -267,34 +216,33 @@ This function needs to:
                 self.conn.commit()
 
         def _on_event(self, event):
-            """This function gets called whenever there's a new data record coming
-            back from the server.
+            ""“每当有新的数据记录从服务器返回时调用此函数。
 
-            Args:
-                event (dict): data record
-            """
+            参数：
+                event （字典）：数据记录
+            ""“
             if event["event"] == "price":
-                # data record
+                # 数据记录
                 timestamp = datetime.utcfromtimestamp(event["timestamp"])
                 data = (timestamp, event["symbol"], event["price"], event.get("day_volume"))
 
-                # add new data record to batch
+                # 将新数据记录添加到批处理
                 self.current_batch.append(data)
                 print(f"Current batch size: {len(self.current_batch)}")
 
-                # ingest data if max batch size is reached then reset the batch
+                # 如果达到最大批处理大小，则摄入数据，然后重置批处理
                 if len(self.current_batch) == self.MAX_BATCH_SIZE:
                     self._insert_values(self.current_batch)
                     self.insert_counter += 1
                     print(f"Batch insert #{self.insert_counter}")
                     self.current_batch = []
             def start(self, symbols):
-                """Connect to the web socket server and start streaming real-time data 
-                into the database.
+                ""“连接到web socket服务器并开始流式传输实时数据 
+                到数据库。
 
-                Args:
-                    symbols (list of symbols): List of stock/crypto symbols
-                """
+                参数：
+                    symbols （符号列表）：股票/加密货币符号列表
+                ""“
                 td = TDClient(apikey="<YOUR_API_KEY")
                 ws = td.websocket(on_event=self._on_event)
                 ws.subscribe(symbols)
@@ -313,7 +261,7 @@ This function needs to:
         websocket.start(symbols=symbols)
         ```
 
-1.  Run the script:
+1.  运行脚本：
 
     ```bash
     python websocket_test.py
@@ -321,38 +269,31 @@ This function needs to:
 
 </Procedure>
 
-You can even create separate Python scripts to start multiple websocket
-connections for different types of symbols, for example, one for stock, and
-another one for cryptocurrency prices.
+您甚至可以创建单独的Python脚本来启动多个websocket连接，用于不同类型的符号，例如一个用于股票，另一个用于加密货币价格。
 
-### Troubleshooting
+### 故障排除
 
-If you see an error message similar to this:
+如果您看到类似这样的错误消息：
 
 ```bash
 2022-05-13 18:51:41,976 - ws-twelvedata - ERROR - TDWebSocket ERROR: Handshake status 200 OK
 ```
 
-Then check that you use a proper API key received from Twelve Data.
+那么请检查您是否使用了从Twelve Data获得的正确API密钥。
 
 </Collapsible>
 
-<Collapsible heading="Query the data" defaultExpanded={false}>
+<Collapsible heading="查询数据" defaultExpanded={false}>
 
-To look at OHLCV values, the most effective way is to create a continuous
-aggregate. You can create a continuous aggregate to aggregate data
-for each hour, then set the aggregate to refresh every hour, and aggregate
-the last two hours' worth of data.
+要查看OHLCV值，最有效的方法是创建一个连续聚合。您可以创建一个连续聚合来聚合每小时的数据，然后将聚合设置为每小时刷新一次，并聚合最后两小时的数据。
 
 <Procedure>
 
-### Creating a continuous aggregate
+### 创建连续聚合
 
-1.  Connect to the Timescale database `tsdb` that contains the Twelve Data
-    stocks dataset.
+1.  连接到包含Twelve Data股票数据集的Timescale数据库`tsdb`。
 
-1.  At the psql prompt, create the continuous aggregate to aggregate data every
-    minute:
+1.  在psql提示符下，创建连续聚合以每分钟聚合数据：
 
     ```sql
     CREATE MATERIALIZED VIEW one_hour_candle
@@ -369,10 +310,9 @@ the last two hours' worth of data.
         GROUP BY bucket, symbol;
     ```
 
-    When you create the continuous aggregate, it refreshes by default.
+    当您创建连续聚合时，它默认会刷新。
 
-1.  Set a refresh policy to update the continuous aggregate every hour,
-    if there is new data available in the hypertable for the last two hours:
+1.  设置一个刷新策略，以在每小时更新连续聚合，如果有新数据在超表中最后两小时可用：
 
     ```sql
     SELECT add_continuous_aggregate_policy('one_hour_candle',
@@ -383,20 +323,17 @@ the last two hours' worth of data.
 
 </Procedure>
 
-## Query the continuous aggregate
+## 查询连续聚合
 
-When you have your continuous aggregate set up, you can query it to get the
-OHLCV values.
+当您设置好连续聚合后，您可以查询它以获取OHLCV值。
 
 <Procedure>
 
-### Querying the continuous aggregate
+### 查询连续聚合
 
-1.  Connect to the Timescale database that contains the Twelve Data
-    stocks dataset.
+1.  连接到包含Twelve Data股票数据集的Timescale数据库。
 
-1.  At the psql prompt, use this query to select all `AAPL` OHLCV data for the
-    past 5 hours, by time bucket:
+1.  在psql提示符下，使用此查询选择所有`AAPL`过去5小时的OHLCV数据，按时间桶：
 
     ```sql
     SELECT * FROM one_hour_candle
@@ -404,19 +341,19 @@ OHLCV values.
     ORDER BY bucket;
     ```
 
-    The result of the query looks like this:
+    查询结果如下：
 
     ```sql
              bucket         | symbol  |  open   |  high   |   low   |  close  | day_volume
     ------------------------+---------+---------+---------+---------+---------+------------
-     2023-05-30 08:00:00+00 | AAPL   | 176.31 | 176.31 |    176 | 176.01 |           
-     2023-05-30 08:01:00+00 | AAPL   | 176.27 | 176.27 | 176.02 |  176.2 |           
-     2023-05-30 08:06:00+00 | AAPL   | 176.03 | 176.04 | 175.95 |    176 |           
-     2023-05-30 08:07:00+00 | AAPL   | 175.95 |    176 | 175.82 | 175.91 |           
-     2023-05-30 08:08:00+00 | AAPL   | 175.92 | 176.02 |  175.8 | 176.02 |           
-     2023-05-30 08:09:00+00 | AAPL   | 176.02 | 176.02 |  175.9 | 175.98 |           
-     2023-05-30 08:10:00+00 | AAPL   | 175.98 | 175.98 | 175.94 | 175.94 |           
-     2023-05-30 08:11:00+00 | AAPL   | 175.94 | 175.94 | 175.91 | 175.91 |           
+     2023-05-30 08:00:00+00 | AAPL   | 176.31 | 176.31 |    176 | 176.01 |
+     2023-05-30 08:01:00+00 | AAPL   | 176.27 | 176.27 | 176.02 |  176.2 |
+     2023-05-30 08:06:00+00 | AAPL   | 176.03 | 176.04 | 175.95 |    176 |
+     2023-05-30 08:07:00+00 | AAPL   | 175.95 |    176 | 175.82 | 175.91 |
+     2023-05-30 08:08:00+00 | AAPL   | 175.92 | 176.02 |  175.8 | 176.02 |
+     2023-05-30 08:09:00+00 | AAPL   | 176.02 | 176.02 |  175.9 | 175.98 |
+     2023-05-30 08:10:00+00 | AAPL   | 175.98 | 175.98 | 175.94 | 175.94 |
+     2023-05-30 08:11:00+00 | AAPL   | 175.94 | 175.94 | 175.91 | 175.91 |
      2023-05-30 08:12:00+00 | AAPL   |  175.9 | 175.94 |  175.9 | 175.94 |
     ```
 
@@ -424,9 +361,9 @@ OHLCV values.
 
 </Collapsible>
 
-<Collapsible heading="Visualize the OHLCV data in Grafana" defaultExpanded={false}>
+<Collapsible heading="在Grafana中可视化OHLCV数据" defaultExpanded={false}>
 
-You can visualize the OHLCV data that you created using the queries in Grafana.
+您可以使用Grafana可视化您使用查询创建的OHLCV数据。
 <GraphOhlcv />
 
 </Collapsible>
@@ -434,8 +371,8 @@ You can visualize the OHLCV data that you created using the queries in Grafana.
 [candlestick-tutorial]: /tutorials/:currentVersion:/financial-tick-data/
 [get-started]: /getting-started/:currentVersion:/
 [install-ts]: /getting-started/latest/
-[psycopg2]: https://www.psycopg.org/docs/
-[twelve-data]: https://twelvedata.com
-[twelve-signup]: https://twelvedata.com/pricing
-[twelve-wrapper]: https://github.com/twelvedata/twelvedata-python
+[psycopg2]: https://www.psycopg.org/docs/ 
+[twelve-data]: https://twelvedata.com 
+[twelve-signup]: https://twelvedata.com/pricing 
+[twelve-wrapper]: https://github.com/twelvedata/twelvedata-python 
 [cloud-install]: /getting-started/:currentVersion:/#create-your-timescale-account
