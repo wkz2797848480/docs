@@ -379,7 +379,7 @@ ORDER BY gameid ASC, team_score DESC
 
 下面的图像是你可以利用这个查询收集的数据创建的可视化示例。散点图按组显示，显示获胜球队的比赛次数和得分为金色，失利球队的比赛次数和得分为棕色。
 
-<img src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/wins_vs_plays.png&#34;  alt="Wins vs Plays"/>
+<img src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/wins_vs_plays.png" alt="Wins vs Plays">
 
 y轴，或一支球队在单场比赛中的进攻次数显示，更多的进攻次数并不总是意味着保证胜利。事实上，单场比赛进攻次数最多的前三支球队似乎都输了。你可以从这个查询中收集到许多有趣的事实，这个散点图只是其中一种可能性。
 
@@ -420,8 +420,8 @@ ORDER BY p.avg_yards_positions DESC, v.rank ASC
 
 这是你可以用这些数据创建的一种可能的可视化：
 
-<img src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png&#34;  alt="Top Three Players by Position"/>
-
+<img 
+src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/nfl_tutorial/top_3_players.png;" alt="Top Three Players by Position">
 注意，自由安全卫球员的平均码数总体上高于外接手（这是因为我们如上所述对数据进行了排序）。然而，个别外接手平均每场比赛跑的码数更多。同时，注意凯尔·朱斯奇克比其他全卫球员平均跑的码数多得多。
 
 ## 可视化开球前位置和球员移动
