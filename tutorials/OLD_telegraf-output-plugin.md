@@ -1,44 +1,29 @@
 ---
-title: Collecting metrics with the PostgreSQL and TimescaleDB output plugin for Telegraf
-excerpt: Collect metrics with Telegraf (deprecated)
-products: [cloud, mst, self_hosted]
-keywords: [metrics, monitor, Telegraf]
+标题: 使用用于 Telegraf 的 PostgreSQL 和 TimescaleDB 输出插件收集指标
+摘要: 使用 Telegraf（已弃用）收集指标。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [指标，监控，Telegraf]
 ---
 
-# Collecting metrics with the PostgreSQL and TimescaleDB output plugin for Telegraf
+# 使用Telegraf的PostgreSQL和TimescaleDB输出插件收集指标
 
 <Highlight type="deprecation">
-This section describes a feature that is deprecated on TimescaleDB. We strongly
-recommend that you do not use this feature in a production environment. For some
-suggestions of workarounds, see this
-[Timescale Forum post](https://www.timescale.com/forum/t/telegraf-plugin/118).
+这一节描述了TimescaleDB上一个已弃用的特性。我们强烈建议您不要在生产环境中使用此特性。有关一些替代方案的建议，请参阅此[Timescale论坛帖子](https://www.timescale.com/forum/t/telegraf-plugin/118)。
 </Highlight>
 
-Telegraf collects metrics from a wide array of inputs and writes them to a wide
-array of outputs. It is plugin-driven for both collection and output of data so
-it is extendable. It is written in Go, which means that it is a compiled
-and standalone binary that can be run on any system with no need for
-external dependencies, or package management tools required.
+Telegraf从多种输入源收集指标，并将它们写入多种输出源。它对于数据的收集和输出都是插件驱动的，因此它是可扩展的。它用Go语言编写，这意味着它是一个编译后的独立二进制文件，可以在任何系统上运行，无需外部依赖或包管理工具。
 
-Telegraf is an open source tool. It contains over 200 plugins for gathering and
-writing different types of data written by people who work with that data.
-Timescale have built downloadable binaries of Telegraf with the plugin included.
-This tutorial runs through a couple of examples on how to use the PostgreSQL and
-TimescaleDB output plugin for Telegraf.
+Telegraf是一个开源工具。它包含200多个插件，用于收集和写入不同类型数据，这些数据由处理这些数据的人员编写。Timescale提供了包含插件的Telegraf的可下载二进制文件。本教程通过几个示例介绍了如何使用Telegraf的PostgreSQL和TimescaleDB输出插件。
 
-## Installation
+## 安装
 
-Before you start, you need [TimescaleDB installed][getting-started] and a means to connect to it.
+开始之前，你需要[安装TimescaleDB][getting-started]以及连接到它的方法。
 
-### Setting up Telegraf
+### 设置Telegraf
 
-Telegraf is written in Go, and the current build process of the tool is
-configured to produce one standalone binary. Because of this all the code for
-the different plugins must be part of that binary. Timescale have an unofficial
-build of Telegraf version 1.13.0 with the plugin added, that you can download
-from:
+Telegraf是用Go语言编写的，该工具的当前构建过程配置为生成一个独立的二进制文件。因此，所有不同插件的代码必须是该二进制文件的一部分。Timescale提供了一个非官方的Telegraf版本1.13.0的构建版本，包含插件，你可以从以下地址下载：
 
-<!--- These links no longer work, deleted. LKB 2023-05-10
+<!--- 这些链接不再有效，已删除。LKB 2023-05-10
 
 *   Linux amd64: <Tag type="download">[deb]()</Tag> <Tag type="download">[rpm]()</Tag> <Tag type="download">[binary]()</Tag>
 *   Windows amd64: <Tag type="download">[binary/exe]()</Tag>
@@ -46,58 +31,50 @@ from:
 
 -->
 
-Timescale also provide you with builds for:
+Timescale还为你提供了以下构建版本：
 
 *   Windows i386
 *   Linux (i386, armhf, armel, arm64, static_amd64, s390x, mipsel)
 *   FreeBSD (amd64, i386)
 
-You can get in contact using the Timescale [community Slack][public-slack]
+你可以通过Timescale[社区Slack][public-slack]与我们联系
 
-Once you download the binary and extract it to a suitable location (or install
-the packages) you can test out the build. You might need to make the file
-executable by running `chmod +x telegraf`. Check the version of the
-installed Telegraf using this command:
+下载二进制文件并将其解压到合适的位置（或安装包）后，你可以测试构建版本。你可能需要通过运行`chmod +x telegraf`使文件可执行。使用此命令检查安装的Telegraf版本：
 
 ```bash
 telegraf --version
 ```
 
-If the installation is successful, it shows `Telegraf 1.13.0-with-pg`.
+如果安装成功，它将显示`Telegraf 1.13.0-with-pg`。
 
-## Telegraf configuration
+## Telegraf配置
 
-When Telegraf is started, you need to specify a configuration file. The
-configuration file sets up:
+启动Telegraf时，你需要指定一个配置文件。配置文件设置：
 
-*   Telegraf agent
-*   Collection interval
-*   Jitter
-*   Buffer and batch size and so on
-*   Global tags added to all collected metrics from all inputs
-*   Enabled outputs, processors, aggregators, inputs (and their respective configuration)
+*   Telegraf代理
+*   收集间隔
+*   抖动
+*   缓冲区和批量大小等
+*   添加到所有输入收集的指标的全局标签
+*   启用的输出、处理器、聚合器、输入（及其各自的配置）
 
-A sample config file with PostgreSQL included as a plugin can be generated with
-this command:
+使用此命令生成包含PostgreSQL作为插件的示例配置文件：
 
 ```bash
 telegraf --input-filter=cpu --output-filter=postgresql config > telegraf.conf
 ```
 
-This command generates a configuration file that enables a CPU input plugin that
-samples various metrics about CPU usage, and the PostgreSQL output plugin. The
-file also includes all available input, output, processor, and aggregator
-plugins, commented out, so you can enable them as required.
+此命令生成一个配置文件，启用CPU输入插件，该插件采样各种CPU使用情况的指标，以及PostgreSQL输出插件。该文件还包括所有可用的输入、输出、处理器和聚合器插件，已注释，以便你可以根据需要启用它们。
 
-### Testing out the configuration file
+### 测试配置文件
 
-To test your configuration, you can output a single collection to `STDOUT`, like this:
+要测试你的配置，你可以将单次收集输出到`STDOUT`，如下所示：
 
 ```bash
 telegraf --config telegraf.conf --test
 ```
 
-This command selects the generated configuration file that enables only the CPU input plugin. The output should look something like this:
+此命令选择生成的配置文件，仅启用CPU输入插件。输出应该像这样：
 
 ```bash
 > cpu,cpu=cpu0,host=local usage_guest=0,usage_idle=78.431372,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_steal=0,usage_system=11.764705,usage_user=9.803921 1558613882000000000
@@ -105,13 +82,12 @@ This command selects the generated configuration file that enables only the CPU 
 > cpu,cpu=cpu-total,host=local usage_guest=0,usage_idle=87.623762,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_steal=0,usage_system=6.435643,usage_user=5.940594 1558613882000000000
 ```
 
-A line is outputted for each core of the CPU and the total. Values are presented in `key=value` pairs with the timestamp last in the row.
-When writing to STDOUT you can distinguish between *tags*, which are indexed fields (`cpu`, `host`) and value *fields* (like `usage_quest` or `usage_user`) by a blank space (in this example the space after `host=local`).
-The distinction exists because different configuration options are available for the different fields.
+为CPU的每个核心和总计输出一行。值以`key=value`对的形式呈现，时间戳在行尾。
+当写入STDOUT时，你可以通过一个空格区分*标签*（索引字段（`cpu`，`host`））和值*字段*（如`usage_quest`或`usage_user`）。这种区别存在是因为不同的字段有不同的配置选项。
 
-### Configuring the PostgreSQL output plugin
+### 配置PostgreSQL输出插件
 
-The `telegraf.conf` file you generated has a section (around line 80) headed with
+你生成的`telegraf.conf`文件有一个部分（大约在第80行）以
 
 ```txt
 ################################################
@@ -119,90 +95,76 @@ The `telegraf.conf` file you generated has a section (around line 80) headed wit
 ################################################
 ```
 
-Below this header, the default configuration for the PostgreSQL output plugin is
-shown. It looks like this:
+在此标题下，显示了PostgreSQL输出插件的默认配置。它看起来像这样：
 
 ```txt
 [[outputs.postgresql]]
-  ## specify address via a url matching:
+  ## 通过url指定地址，匹配：
   ##   postgres://[pqgotest[:password]]@localhost[/dbname]\
   ##       ?sslmode=[disable|verify-ca|verify-full]
-  ## or a simple string:
+  ## 或一个简单的字符串：
   ##   host=localhost user=pqotest password=... sslmode=... dbname=app_production
   ##
-  ## All connection parameters are optional. Also supported are PG environment vars
-  ## e.g. PGPASSWORD, PGHOST, PGUSER, PGDATABASE
-  ## all supported vars here: https://www.postgresql.org/docs/current/libpq-envars.html
+  ## 所有连接参数都是可选的。还支持PG环境变量
+  ##  例如。PGPASSWORD, PGHOST, PGUSER, PGDATABASE
+  ## 所有支持的变量在这里：https://www.postgresql.org/docs/current/libpq-envars.html 
   ##
-  ## Without the dbname parameter, the driver will default to a database
-  ## with the same name as the user. This dbname is just for instantiating a
-  ## connection with the server and doesn't restrict the databases we are trying
-  ## to grab metrics for.
+  ## 没有dbname参数，驱动程序默认使用与用户同名的数据库。这个dbname只是用于与服务器建立连接，并不限制我们尝试获取指标的数据库。
   ##
   connection = "host=localhost user=postgres sslmode=verify-full"
 
-  ## Store tags as foreign keys in the metrics table. Default is false.
+  ## 将标签存储为指标表中的外键。默认为false。
   # tags_as_foreignkeys = false
 
-  ## Template to use for generating tables
-  ## Available Variables:
-  ##   {TABLE} - tablename as identifier
-  ##   {TABLELITERAL} - tablename as string literal
-  ##   {COLUMNS} - column definitions
-  ##   {KEY_COLUMNS} - comma-separated list of key columns (time + tags)
-  ## Default template
+  ## 生成表使用的模板
+  ## 可用变量：
+  ##   {TABLE} - 表名作为标识符
+  ##   {TABLELITERAL} - 表名作为字符串字面量
+  ##   {COLUMNS} - 列定义
+  ##   {KEY_COLUMNS} - 键列（时间+标签）的逗号分隔列表
+  ## 默认模板
   # table_template = "CREATE TABLE IF NOT EXISTS {TABLE}({COLUMNS})"
-  ## Example for timescaledb
+  ## 例如用于timescaledb
   # table_template = "CREATE TABLE {TABLE}({COLUMNS}); SELECT create_hypertable({TABLELITERAL},'time');"
 
-  ## Schema to create the tables into
+  ## 创建表的模式
   # schema = "public"
 
-  ## Use jsonb datatype for tags
+  ## 使用jsonb数据类型存储标签
   # tags_as_jsonb = false
-  ## Use jsonb datatype for fields
+  ## 使用jsonb数据类型存储字段
   # fields_as_jsonb = false
 ```
 
-From the configuration, you can see a few important things:
+从配置中，你可以看到一些重要事项：
 
-*   The top line enables the plugin, the plugin specific configuration is
-    indented after this line.
-*   There is currently only one parameter configured, `connection`. The others
-    are commented out.
-*   Possible parameters are commented out with a single `#`.
-    (`tags_as_foreignkeys`, `table_template`, `schema`, `tags_as_jsonb`,
-    `fields_as_jsonb`).
-*   Explanations of the parameters are commented out with `##`.
+*   第一行启用了插件，插件特定配置在这一行后面缩进。
+*   目前只配置了一个参数，`connection`。其他都被注释掉了。
+*   可能的参数被注释掉了，用单个`#`。
+    （`tags_as_foreignkeys`，`table_template`，`schema`，`tags_as_jsonb`，
+    `fields_as_jsonb`）。
+*   参数的解释被注释掉了，用`##`。
 
-The commented out parameters also show their default values.
+被注释掉的参数还显示了它们的默认值。
 
-In the first example you'll set the connection parameter to a proper connection string to establish a connection to an instance of TimescaleDB or PostgreSQL.
-All the other parameters have their default values.
+在第一个示例中，你将设置连接参数为一个适当的连接字符串，以建立与TimescaleDB或PostgreSQL实例的连接。
+所有其他参数都使用它们的默认值。
 
-### Creating hypertables
+### 创建超表
 
-The plugin allows you to configure several parameters. The `table_template`
-parameter defines the SQL to be run when a new measurement is recorded by
-Telegraf and the required table doesn't exist in the output database. By
-default, the `table_template` used is `CREATE TABLE IF NOT EXISTS
-{TABLE}({COLUMNS})` where `{TABLE}` and `{COLUMNS}` are placeholders for the
-name of the table and the column definitions.
+插件允许你配置几个参数。`table_template`参数定义了当Telegraf记录新测量值时需要运行的SQL，并且输出数据库中不存在所需表。默认情况下，使用的`table_template`是`CREATE TABLE IF NOT EXISTS {TABLE}({COLUMNS})`，其中`{TABLE}`和`{COLUMNS}`是表名和列定义的占位符。
 
-You can update `table_template` in the configuration for TimescaleDB with this
-command:
+你可以使用此命令为TimescaleDB更新`table_template`配置：
 
 ```sql
   table_template=`CREATE TABLE IF NOT EXISTS {TABLE}({COLUMNS}); SELECT create_hypertable({TABLELITERAL},'time',chunk_time_interval := INTERVAL '1 week',if_not_exists := true);`
 ```
 
-This way when a new table is created it is converted into a hypertable, with
-each chunk holding 1 week intervals. Nothing else is needed to use the plugin
-with TimescaleDB.
+这样，当创建一个新表时，它被转换为超表，每个块保存1周的间隔。使用该插件与TimescaleDB不需要其他任何操作。
 
-## Running Telegraf
+## 运行Telegraf
 
-When you run Telegraf you only need to specify the configuration file to use. In this example, the output uses loaded inputs (`cpu`) and outputs (`postgresql`) along with global tags, and the intervals with which the agent collects the data from the inputs, and flush to the outputs. You can stop Telegraf running after ~10-15 seconds:
+运行Telegraf时，你只需要指定要使用的配置文件。在这个例子中，输出使用已加载的输入（`cpu`）和输出（`postgresql`）以及全局标签，以及代理从输入收集数据和刷新到输出的间隔。你可以在大约10-15秒后停止运行Telegraf：
 
 ```bash
 telegraf --config telegraf.conf
@@ -213,18 +175,13 @@ telegraf --config telegraf.conf
 2019-05-23T13:48:09Z I! [agent] Config: Interval:10s, Quiet:false, Hostname:"local", Flush Interval:10s
 ```
 
-Now you can connect to the PostgreSQL instance and inspect the data:
+现在你可以连接到PostgreSQL实例并检查数据：
 
 ```bash
 psql -U postgres -h localhost
 ```
 
-The CPU input plugin has one measurement, called `cpu`, and it's stored in a
-table of the same name (by default in the public schema). So with the SQL query
-`SELECT * FROM cpu`, depending on how long you left Telegraf running, you see
-the table populated with some values. You can find the average usage per CPU
-core with `SELECT cpu, avg(usage_user) FROM cpu GROUP BY cpu`. The output should
-look like this:
+CPU输入插件有一个测量值，称为`cpu`，它存储在同名的表中（默认在公共模式下）。因此，使用SQL查询`SELECT * FROM cpu`，根据你让Telegraf运行的时间，你将看到表中填充了一些值。你可以使用`SELECT cpu, avg(usage_user) FROM cpu GROUP BY cpu`找到每个CPU核心的平均使用率。输出应该像这样：
 
 ```sql
     cpu    |       avg
@@ -236,30 +193,22 @@ look like this:
  cpu3      | 4.26716970050303
 ```
 
-### Adding new tags or fields
+### 添加新标签或字段
 
-Your Telegraf configuration can change at any moment. An input plugin can be
-reconfigured to produce different data, or you might decide to index your data
-with different tags. The SQL plugin can dynamically update the created tables
-with new columns as they appear. The previous configuration used had no global
-tags specified other than the `host` tag. Now you can add a new global tag in
-the configuration by opening the file in any text editor and updating the
-`[global_tags]` section (around line 18) with:
+你的Telegraf配置可以随时更改。输入插件可以重新配置以产生不同的数据，或者你可能决定使用不同的标签索引你的数据。SQL插件可以动态更新创建的表，随着新列的出现。之前的配置没有指定全局标签，除了`host`标签。现在你可以通过打开任何文本编辑器并更新`[global_tags]`部分（大约在第18行）来添加一个新的全局标签：
 
 ```txt
 [global_tags]
   location="New York"
 ```
 
-This way all metrics collected with the instance of Telegraf running with this
-config is tagged with `location="New York"`. If you run Telegraf again,
-collecting the metrics in TimescaleDB, using this command:
+这样，所有使用此配置运行的Telegraf实例收集的指标都被标记为`location="New York"`。如果你再次运行Telegraf，收集TimescaleDB中的指标，使用此命令：
 
 ```bash
 telegraf --config telegraf.conf
 ```
 
-After a while you can check on the `cpu` table in the database, like this:
+过一会儿，你可以检查数据库中的`cpu`表，像这样：
 
 ```sql
 psql> \dS cpu
@@ -281,39 +230,30 @@ Table "public.cpu"
  location         | text
  ```
 
- You can see the `location` column is added and it contains `New York` for all
- rows.
+你可以看到`location`列被添加了，并且它包含所有行的`New York`。
 
-### Creating a separate metadata table for tags
+### 创建单独的元数据表以存储标签
 
-The plugin allows you to select the tag sets inserted in a separate table and
-then referenced using foreign keys in the measurement table. Having the tags in
-a separate table saves space for high cardinality tag sets, and allows certain
-queries to be written more efficiently. To enable this change, you need to
-uncomment the `tags_as_foreignkeys` parameter in the plugin config (around line
-103 in `telegraf.conf`) and set it to true:
+插件允许你选择插入单独表中的标签集，然后使用外键在测量表中引用。在单独的表中存储标签可以节省高基数标签集的空间，并允许某些查询更有效地编写。要启用此更改，你需要取消注释插件配置中的`tags_as_foreignkeys`参数（大约在`telegraf.conf`的第103行）并将其设置为true：
 
 ```txt
-## Store tags as foreign keys in the metrics table. Default is false.
+## 将标签存储为指标表中的外键。默认为false。
 tags_as_foreignkeys = true
 ```
 
-To better visualize the result you can drop the existing `cpu` table from the
-database:
+为了更好地可视化结果，你可以从数据库中删除现有的`cpu`表：
 
 ```sql
 psql> DROP TABLE cpu;
 ```
 
-Now you can start Telegraf again, this time with the configuration changed to
-write the tags in a separate table:
+现在你可以再次启动Telegraf，这次配置更改为将标签写入单独的表：
 
 ```bash
 telegraf --config telegraf.conf
 ```
 
-You can turn it off after 20-30 seconds, and check on the `cpu` table in the
-database:
+你可以在20-30秒后将其关闭，并检查数据库中的`cpu`表：
 
 ```sql
 psql> \dS cpu
@@ -333,7 +273,7 @@ Table "public.cpu"
  usage_steal      | double precision
 ```
 
-Now the `cpu`, `host` and `location` columns are not there, instead there's a `tag_id` column. The tag sets are stored in a separate table called `cpu_tag`:
+现在`cpu`、`host`和`location`列不在了，相反有一个`tag_id`列。标签集存储在名为`cpu_tag`的单独表中：
 
 ```sql
  psql> SELECT * FROM cpu_tag;
@@ -344,24 +284,24 @@ Now the `cpu`, `host` and `location` columns are not there, instead there's a `t
       3 | local | cpu1      | New York
 ```
 
-### JSONB column for Tags and Fields
+### JSONB列用于标签和字段
 
-The tags and fields can be stored as JSONB columns in the database. You need to uncomment the `tags_as_jsonb` or `fields_as_jsonb` parameters in `telegraf.conf` (around line 120) and set them to `true`. In this example, the fields are stored as separate columns, but the tags are stored as JSON:
+标签和字段可以作为JSONB列存储在数据库中。你需要取消注释`telegraf.conf`中的`tags_as_jsonb`或`fields_as_jsonb`参数（大约在第120行）并将它们设置为`true`。在这个例子中，字段被存储为单独的列，但标签被存储为JSON：
 
 ```txt
-## Use jsonb datatype for tags
+## 使用jsonb数据类型存储标签
 tags_as_jsonb = true
-## Use jsonb datatype for fields
+## 使用jsonb数据类型存储字段
 fields_as_jsonb = false
 ```
 
-To better visualize the result, drop the existing `cpu_tag` table from the database:
+为了更好地可视化结果，从数据库中删除现有的`cpu_tag`表：
 
 ```sql
 psql> DROP TABLE cpu_tag;
 ```
 
-Start Telegraf again, and turn it off after 20-30 seconds. Then check the `cpu_tag` table:
+再次启动Telegraf，然后20-30秒后关闭。然后检查数据库中的`cpu_tag`表：
 
 ```bash
 telegraf --config telegraf.conf
@@ -376,16 +316,16 @@ telegraf --config telegraf.conf
       3 | {"cpu": "cpu1", "host": "local", "location": "New York"}
 ```
 
-Instead of having three text columns, now you have one JSONB column.
+现在你不是有三个文本列，而是有一个JSONB列。
 
-## Next steps
+## 后续步骤
 
-When you have started inserting data in TimescaleDB, you can begin to familiarize yourself with the [API reference][api].
+当你开始在TimescaleDB中插入数据后，你可以开始熟悉[API参考][api]。
 
-Additionally, there are several other [tutorials][] available for you to explore
-as you become accustomed to working with TimescaleDB.
+此外，还有几个其他的[tutorials][]供你探索，当你习惯使用TimescaleDB时。
 
 [api]: /api/:currentVersion:/
 [getting-started]: /getting-started/latest/
-[public-slack]: https://slack.timescale.com/
+[public-slack]: https://slack.timescale.com/ 
 [tutorials]: /tutorials/:currentVersion:/
+
