@@ -1,30 +1,43 @@
 ---
-title: Verb the widget tutorial - query the data
-excerpt: Query data to verb your widgets to achieve an outcome using the tool
-keywords: [noun, verb, tutorial]
-tags: [noun, noun]
+标题: 动词部件教程 —— 查询数据
+摘要: 查询数据，以便通过对部件进行动词化，利用该工具达成某个成果。
+关键词: [名词，动词，教程]
+标签: [名词，名词]
 ---
 
 <!-- markdown-link-check-disable -->
 
-# Query the data
+# 查询数据
 
-Use this section to talk about the queries that readers can do on the dataset.
-Make sure you reference which questions are being answered by the queries.
+使用这一部分讨论读者可以在数据集上执行的查询。确保参考哪些问题是由查询回答的。
 
-## The first query
+## 第一个查询
 
-This should be the simplest query. Start by explaining which question the query
-answers. Then explain how the query is constructed, then provide the query in a
-code block.
+这应该是最简单的查询。首先解释查询回答的问题。然后解释查询是如何构建的，然后提供代码块中的查询。
 
-Provide example results of the query, using either a code block or, if more
-appropriate, an image.
+提供查询的示例结果，使用代码块或，如果更合适，使用图像。
 
-## The second query
+```sql
+SELECT column_name FROM table_name LIMIT 10;
+```
 
-Continue to build on the first query you presented, providing more information,
-explaining the query, and continuing to explain which questions are being
-answered. Repeat as required.
+```
++----------------+
+| column_name    |
++----------------+
+| value1         |
+| value2         |
+| value3         |
+| ...           |
++----------------+
+```
 
-Include any reference-style links at the bottom of the page.
+或者，如果需要图像来展示结果：
+
+![查询结果示例](https://example.com/image.png)
+
+## 第二个查询
+
+继续构建您提出的第一查询，提供更多信息，解释查询，并继续解释正在回答的问题。根据需要重复。
+
+页面底部包含任何参考风格的链接。
