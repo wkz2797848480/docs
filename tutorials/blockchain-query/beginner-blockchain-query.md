@@ -1,49 +1,39 @@
 ---
-title: Query the Bitcoin blockchain - query data
-excerpt: Query the Bitcoin blockchain dataset
-products: [cloud]
-keywords: [beginner, crypto, blockchain, Bitcoin, finance, analytics]
-layout_components: [next_prev_large]
-content_group: Query the Bitcoin blockchain
+标题: 查询比特币区块链-查询数据
+摘要: 查询比特币区块链数据集。
+产品: [云服务]
+关键词: [初学者，加密货币，区块链，比特币，金融，分析]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容分组: 查询比特币区块链
 ---
 
-# Query the data
+# 查询数据
 
-When you have your dataset loaded, you can start constructing some queries to
-discover what your data tells you. In this section, you learn how to write
-queries that answer these questions:
+当您加载了数据集后，可以开始构建一些查询来发现数据所揭示的信息。在本节中，您将学习如何编写回答以下问题：
 
-*   [What are the five most recent coinbase transactions?](#what-are-the-five-most-recent-coinbase-transactions)
-*   [What are the five most recent transactions?](#what-are-the-five-most-recent-transactions)
-*   [What are the five most recent blocks?](#what-are-the-five-most-recent-blocks?)
+*   [最近五笔coinbase交易是什么？](#最近五笔coinbase交易是什么)
+*   [最近五笔交易是什么？](#最近五笔交易是什么)
+*   [最近五个区块是什么？](#最近五个区块是什么)
 
-## What are the five most recent coinbase transactions?
+## 最近五笔coinbase交易是什么？
 
-In the last procedure, you excluded coinbase transactions from the results.
-[Coinbase][coinbase-def] transactions are the first transaction in a block, and
-they include the reward a coin miner receives for mining the coin. To find out
-the most recent coinbase transactions, you can use a similar `SELECT` statement,
-but search for transactions that are coinbase instead. If you include the
-transaction value in US Dollars again, you'll notice that the value is $0 for
-each. This is because the coin has not transferred ownership in coinbase
-transactions.
+在上一个步骤中，您从结果中排除了coinbase交易。[Coinbase][coinbase-def]交易是区块中的第一笔交易，它们包含了矿工因挖掘货币而获得的奖励。要找出最近的coinbase交易，您可以使用类似的`SELECT`语句，但搜索coinbase类型的交易。如果您再次包含交易的美元价值，您会注意到每笔交易的价值都是0美元。这是因为在coinbase交易中，货币尚未转移所有权。
 
 <Procedure>
 
-### Finding the five most recent coinbase transactions
+### 查找最近五笔coinbase交易
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to select the five most recent
-    coinbase transactions:
+1.  连接到包含比特币数据集的Timescale数据库。
+2.  在psql提示符下，使用此查询选择最近的五笔coinbase交易：
 
     ```sql
-    SELECT time, hash, block_id, fee_usd  FROM transactions
+    SELECT time, hash, block_id, fee_usd FROM transactions
     WHERE is_coinbase IS TRUE
     ORDER BY time DESC
     LIMIT 5;
     ```
 
-1.  The data you get back looks a bit like this:
+3.  您得到的数据看起来像这样：
 
     ```sql
                  time          |                               hash                               | block_id | fee_usd
@@ -58,30 +48,25 @@ transactions.
 
 </Procedure>
 
-## What are the five most recent transactions?
+## 最近五笔交易是什么？
 
-This dataset contains Bitcoin transactions for the last five days. To find out
-the most recent transactions in the dataset, you can use a `SELECT` statement.
-In this case, you want to find transactions that are not coinbase transactions,
-sort them by time in descending order, and take the top five results. You also
-want to see the block ID, and the value of the transaction in US Dollars.
+这个数据集包含了最近五天的比特币交易。要找出数据集中最近的交易，您可以使用`SELECT`语句。在这种情况下，您想要找到非coinbase交易，按时间降序排序，并获取前五个结果。您还希望看到区块ID以及交易的美元价值。
 
 <Procedure>
 
-### Finding the five most recent transactions
+### 查找最近五笔交易
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to select the five most recent
-    non-coinbase transactions:
+1.  连接到包含比特币数据集的Timescale数据库。
+2.  在psql提示符下，使用此查询选择最近的五笔非coinbase交易：
 
     ```sql
-    SELECT time, hash, block_id, fee_usd  FROM transactions
+    SELECT time, hash, block_id, fee_usd FROM transactions
     WHERE is_coinbase IS NOT TRUE
     ORDER BY time DESC
     LIMIT 5;
     ```
 
-1.  The data you get back looks a bit like this:
+3.  您得到的数据看起来像这样：
 
     ```sql
                   time          |                               hash                               | block_id | fee_usd
@@ -96,20 +81,16 @@ want to see the block ID, and the value of the transaction in US Dollars.
 
 </Procedure>
 
-## What are the five most recent blocks?
+## 最近五个区块是什么？
 
-In this procedure, you use a more complicated query to return the five most
-recent blocks, and show some additional information about each, including the
-block weight, number of transactions in each block, and the total block value in
-US Dollars.
+在这个步骤中，您使用一个更复杂的查询来返回最近的五个区块，并展示每个区块的一些额外信息，包括区块重量、每个区块中的交易数量以及区块总价值（以美元计）。
 
 <Procedure>
 
-### Finding the five most recent blocks
+### 查找最近五个区块
 
-1.  Connect to the Timescale database that contains the Bitcoin dataset.
-1.  At the psql prompt, use this query to select the five most recent
-    coinbase transactions:
+1.  连接到包含比特币数据集的Timescale数据库。
+2.  在psql提示符下，使用此查询选择最近的五个区块：
 
     ```sql
     WITH recent_blocks AS (
@@ -128,7 +109,7 @@ US Dollars.
     GROUP BY t.block_id;
     ```
 
-1.  The data you get back looks a bit like this:
+3.  您得到的数据看起来像这样：
 
     ```sql
      block_id | transaction_count | block_weight |  block_value_usd
