@@ -1,38 +1,33 @@
 ---
-title: Query time-series data tutorial - query the data
-excerpt: Query time-series data
-products: [cloud, mst, self_hosted]
-keywords: [tutorials, query]
-tags: [tutorials, beginner]
-layout_components: [next_prev_large]
-content_group: Analyze NYC taxi cab data
+标题: 查询时间序列数据教程 —— 查询数据
+摘要: 查询时间序列数据。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [教程，查询]
+标签: [教程，初学者]
+布局组件: [大尺寸的上一页 / 下一页按钮]
+内容_分区: 分析纽约市出租车数据
 ---
 
-# Query the data
+# 查询数据
 
-When you have your dataset loaded, you can start constructing some queries to
-discover what your data tells you. In this section, you learn how to write
-queries that answer these questions:
+当您的数据集加载完成后，您可以开始构建一些查询来发现数据背后的含义。在本节中，您将学习如何编写回答以下问题查询：
 
-*   [How many rides take place each day?](#how-many-rides-take-place-every-day)
-*   [What is the average fare amount?](#what-is-the-average-fare-amount)
-*   [How many rides of each rate type were taken?](#how-many-rides-of-each-rate-type-were-taken)
-*   [What kind of trips are going to and from airports?](#what-kind-of-trips-are-going-to-and-from-airports)
-*   [How many rides took place on New Year's Day 2016](#how-many-rides-took-place-on-new-years-day-2016)?
+*   [每天有多少行程发生？](#每天发生多少次行程)
+*   [平均车费金额是多少？](#平均车费金额是多少)
+*   [每种费率类型的行程各有多少？](#每种费率类型的行程各有多少)
+*   [前往和离开机场的行程是哪种类型？](#前往和离开机场的行程是哪种类型)
+*   [2016年元旦发生了多少行程？](#2016年元旦发生了多少行程)
 
-## How many rides take place every day?
+## 每天发生多少次行程？
 
-This dataset contains ride data for January 2016. To find out how many rides
-took place each day, you can use a `SELECT` statement. In this case, you want to
-count the total number of rides each day, and show them in a list by date.
+此数据集包含2016年1月的行程数据。要找出每天发生了多少行程，您可以使用`SELECT`语句。在这种情况下，您想要计算每天的总行程数，并按日期以列表形式显示它们。
 
 <Procedure>
 
-### Finding how many rides take place every day
+### 找出每天发生多少次行程
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, use this query to select all rides taken in the first
-    week of January 2016, and return a count of rides for each day:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月第一周的所有行程，并返回每天的行程计数：
 
     ```sql
     SELECT date_trunc('day', pickup_datetime) as day,
@@ -42,7 +37,7 @@ count the total number of rides each day, and show them in a list by date.
     ORDER BY day;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
              day         | count
@@ -58,18 +53,16 @@ count the total number of rides each day, and show them in a list by date.
 
 </Procedure>
 
-## What is the average fare amount?
+## 平均车费金额是多少？
 
-You can include a function in your `SELECT` query to determine the average fare
-paid by each passenger.
+您可以在`SELECT`查询中包含一个函数，以确定每位乘客支付的平均车费。
 
 <Procedure>
 
-### Finding the average fare amount
+### 找出平均车费金额
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-2.  At the psql prompt, use this query to select all rides taken in the first
-    week of January 2016, and return the average fare paid on each day:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月第一周的所有行程，并返回每天的平均车费：
 
     ```sql
     SELECT date_trunc('day', pickup_datetime)
@@ -80,11 +73,11 @@ paid by each passenger.
     ORDER BY day;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
              day         |         avg
-    ---------------------+---------------------
+    ---------------------+-------------------
      2016-01-01 00:00:00 | 12.8569325028909943
      2016-01-02 00:00:00 | 12.4344713599355563
      2016-01-03 00:00:00 | 13.0615900461571986
@@ -96,22 +89,16 @@ paid by each passenger.
 
 </Procedure>
 
-## How many rides of each rate type were taken?
+## 每种费率类型的行程各有多少？
 
-Taxis in New York City use a range of different rate types for different kinds
-of trips. For example, trips to the airport are charged at a flat rate from any
-location within the city. This section shows you how to construct a query that
-shows you the nuber of trips taken for each different fare type. It also uses a
-`JOIN` statement to present the data in a more informative way.
+纽约市的出租车对不同类型的行程使用了一系列不同的费率类型。例如，前往机场的行程从市内任何地点都按统一费率收费。本节展示了如何构建一个查询，显示每种不同费率类型的行程数量。它还使用了`JOIN`语句以更富有信息的方式呈现数据。
 
 <Procedure>
 
-### Finding the number of rides for each fare type
+### 找出每种费率类型的行程数量
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-2.  At the psql prompt, use this query to select all rides taken in the first
-    week of January 2016, and return the total number of trips taken for each
-    rate code:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月第一周的所有行程，并返回每种费率代码的总行程数：
 
     ```sql
     SELECT rate_code, COUNT(vendor_id) AS num_trips
@@ -121,7 +108,7 @@ shows you the nuber of trips taken for each different fare type. It also uses a
     ORDER BY rate_code;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
      rate_code | num_trips
@@ -137,21 +124,14 @@ shows you the nuber of trips taken for each different fare type. It also uses a
 
 </Procedure>
 
-This output is correct, but it's not very easy to read, because you probably
-don't know what the different rate codes mean. However, the `rates` table in the
-dataset contains a human-readable description of each code. You can use a `JOIN`
-statement in your query to connect the `rides` and `rates` tables, and present
-information from both in your results.
+输出是正确的，但不太容易阅读，因为您可能不知道不同的费率代码代表什么。然而，数据集中的`rates`表包含了每个代码的人类可读描述。您可以在查询中使用`JOIN`语句连接`rides`和`rates`表，并在结果中呈现两个表的信息。
 
 <Procedure>
 
-### Displaying the number of rides for each fare type
+### 显示每种费率类型的行程数量
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-2.  At the psql prompt, copy this query to select all rides taken in the first
-    week of January 2016, join the `rides` and `rates` tables, and return the
-    total number of trips taken for each rate code, with a description of the
-    rate code:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，复制此查询以选择2016年1月第一周的所有行程，连接`rides`和`rates`表，并返回每种费率代码的总行程数，以及费率代码的描述：
 
     ```sql
     SELECT rates.description, COUNT(vendor_id) AS num_trips
@@ -162,7 +142,7 @@ information from both in your results.
     ORDER BY LOWER(rates.description);
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
           description      | num_trips
@@ -177,28 +157,20 @@ information from both in your results.
 
 </Procedure>
 
-## What kind of trips are going to and from airports
+## 前往和离开机场的行程是哪种类型？
 
-There are two primary airports in the dataset: John F. Kennedy airport, or JFK,
-is represented by rate code 2; Newark airport, or EWR, is represented by rate
-code 3.
+数据集中有两个主要机场：约翰·F·肯尼迪机场（JFK）由费率代码2代表；纽瓦克机场（EWR）由费率代码3代表。
 
-Information about the trips that are going to and from the two airports is
-useful for city planning, as well as for organizations like the NYC Tourism
-Bureau.
+关于前往和离开这两个机场的行程信息，对于城市规划以及像纽约旅游局这样的组织来说非常有用。
 
-This section shows you how to construct a query that returns trip information for
-trips going only to the new main airports.
+本节展示了如何构建一个查询，返回只前往新的主要机场的行程信息。
 
 <Procedure>
 
-### Finding what kind of trips are going to and from airports
+### 找出前往和离开机场的行程类型
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, use this query to select all rides taken to and from JFK
-    and Newark airports, in the first week of January 2016, and return the number
-    of trips to that airport, the average trip duration, average trip cost, and
-    average number of passengers:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月第一周所有前往和离开JFK和纽瓦克机场的行程，并返回该机场的行程数量、平均行程持续时间、平均行程费用和平均乘客数量：
 
     ```sql
     SELECT rates.description,
@@ -213,41 +185,31 @@ trips going only to the new main airports.
     ORDER BY rates.description;
     ```
 
-    The result of the query looks like this:
+    查询结果如下所示：
 
     ```sql
      description | num_trips | avg_trip_duration |      avg_total      |   avg_passengers
-    -------------+-----------+-------------------+---------------------+--------------------
+    -------------+-----------+-------------------+--------------------+-------------------
      JFK         |     54832 | 00:46:44.614222   | 63.7791311642836300 | 1.8062080536912752
      Newark      |      4126 | 00:34:45.575618   | 84.3841783809985458 | 1.8979641299079011
     ```
 
 </Procedure>
 
-## How many rides took place on New Year's Day 2016?
+## 2016年元旦发生了多少行程？
 
-New York City is famous for the Ball Drop New Year's Eve celebration in Times
-Square. Thousands of people gather to bring in the New Year and then head out
-into the city: to their favorite bar, to gather with friends for a meal, or back
-home. This section shows you how to construct a query that returns the number of
-taxi trips taken on 1 January, 2016, in 30 minute intervals.
+纽约市以时代广场的新年落球庆祝活动而闻名。成千上万的人聚集在此迎接新年，然后分散到城市各处：去他们最喜欢的酒吧，与朋友共进餐，或回家。本节展示了如何构建一个查询，返回2016年1月1日的出租车行程数量，以30分钟为间隔。
 
-In PostgreSQL, it's not particularly easy to segment the data by 30 minute time
-intervals. To do this, you would need to use a `TRUNC` function to calculate the
-quotient of the minute that a ride began in divided by 30, then truncate the
-result to take the floor of that quotient. When you had that result, you could
-multiply the truncated quotient by 30.
+在PostgreSQL中，按30分钟时间间隔分割数据并不特别容易。为此，您需要使用`TRUNC`函数计算行程开始的分钟数除以30的商，然后截断结果以取该商的底数。当您得到这个结果后，您可以将截断的商乘以30。
 
-In your Timescale database, you can use the `time_bucket` function to segment
-the data into time intervals instead.
+在您的Timescale数据库中，您可以使用`time_bucket`函数将数据分割成时间间隔。
 
 <Procedure>
 
-### Finding how many rides took place on New Year's Day 2016
+### 找出2016年元旦发生了多少行程
 
-1.  Connect to the Timescale database that contains the NYC taxi dataset.
-1.  At the psql prompt, use this query to select all rides taken on the first
-    day of January 2016, and return a count of rides for each 30 minute interval:
+1. 连接到包含纽约出租车数据集的Timescale数据库。
+2. 在psql提示符下，使用此查询选择2016年1月1日的所有行程，并返回每30分钟的行程计数：
 
     ```sql
     SELECT time_bucket('30 minute', pickup_datetime) AS thirty_min, count(*)
@@ -257,7 +219,7 @@ the data into time intervals instead.
     ORDER BY thirty_min;
     ```
 
-    The result of the query starts like this:
+    查询结果开始如下所示：
 
     ```sql
          thirty_min      | count
@@ -272,3 +234,5 @@ the data into time intervals instead.
     ```
 
 </Procedure>
+
+
