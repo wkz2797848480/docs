@@ -1,50 +1,42 @@
 ---
-title: Ingest data and run your first query
-excerpt: Ingest some data from CSV files into your database
-products: [cloud, mst, self_hosted]
-keywords: [continuous aggregates, hyperfunctions, analytics]
+标题: 摄取数据并运行首个查询
+摘要: 将一些来自 CSV 文件的数据摄取到你的数据库中。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [连续聚合，超级函数，分析]
 ---
 
-# Ingest data and run your first query
+# 导入数据并运行您的第一个查询
 
-The main dataset is provided by [Kaggle as multiple CSV files][kaggle-download].
-Additionally, we have gathered
-[other information about stadiums and the outcome of each game][extra-download]
-to provide you with additional data to analyze.
+主要数据集由[Kaggle提供，包含多个CSV文件][kaggle-download]。此外，我们还收集了[有关体育场和每场比赛结果的其他信息][extra-download]，为您提供了额外的数据分析。
 
-The data is provided in multiple CSV files, each corresponding to a table in the database
-that contains the following information:
+数据以多个CSV文件提供，每个文件对应数据库中的一个表，包含以下信息：
 
 *   **game**
-    *   Information about each game (home team, visitor team, week of play, and more)
-    *   `game_id` is a primary key
+    *   每场比赛的信息（主队、客队、比赛周等）
+    *   `game_id`是主键
 
 *   **player**
-    *   Player information (display_name, college, position, and more)
-    *   `player_id` is a primary key.
+    *   球员信息（display_name, college, position等）
+    *   `player_id`是主键。
 
 *   **play**
-    *   Play information (game, play, quarter, down, pass result). Lots of good
-  overall play information to analyze.
-    *   To query a specific play, you need to use `gameid` and `playid` together, as some
-  `playid`'s are reused from game-to-game.
+    *   比赛信息（比赛、进攻、季度、进攻次数、传球结果等）。有很多好的整体比赛信息可以分析。
+    *   要查询特定的进攻，您需要一起使用`gameid`和`playid`，因为有些`playid`在不同比赛中会被重复使用。
 
 *   **tracking**
-    *   Player tracking information from each play sampled multiple times a second.
-    *   Fields include acceleration, X/Y coordinates on the field, and others.
-    *   `x` and `y` indicate the physical positions of the players on the field using
-  the coordinates outlined in the data description on the Kaggle website.
-    *   This is the largest table (18M+ row) in the database.
+    *   每秒多次采样的每次进攻的球员追踪信息。
+    *   字段包括加速度、场上的X/Y坐标等。
+    *   `x`和`y`使用Kaggle网站上数据描述中概述的坐标表示球员在场上的物理位置。
+    *   这是数据库中最大的表（超过1800万行）。
 
 *   **scores**
-    *   Final result of each game.
-    *   This table can be joined with the tracking table using the `home_team_abb` and
-  `visitor_team_abb` fields.
+    *   每场比赛的最终结果。
+    *   这个表可以使用`home_team_abb`和`visitor_team_abb`字段与追踪表连接。
 
 *   **stadium_info**
-    *   Home stadium of each team and additional information like `surface`, `roof_type`, `location`.
+    *   每个主队的体育场和额外信息，如`surface`、`roof_type`、`location`。
 
-Create the tables with this SQL:
+使用以下SQL创建表：
 
 ```sql
 CREATE TABLE game (
@@ -139,10 +131,9 @@ CREATE TABLE stadium_info (
     team_abbreviation TEXT,
     time_zone TEXT
 );
-
 ```
 
-Add indexes to the `tracking` table to improve query performance:
+为`tracking`表添加索引以提高查询性能：
 
 ```sql
 CREATE INDEX idx_gameid ON tracking (gameid);
@@ -150,35 +141,34 @@ CREATE INDEX idx_playerid ON tracking (player_id);
 CREATE INDEX idx_playid ON tracking (playid);
 ```
 
-**Create hypertable from `tracking` table**
+**从`tracking`表创建超表**
 
 ```sql
 /*
-tracking: name of the table
-time: name of the timestamp column
+tracking: 表名
+time: 时间戳列名
 */
 SELECT create_hypertable('tracking', 'time');
 ```
 
-## Ingest data from CSV files
+## 从CSV文件导入数据
 
-There are three separate CSV files for game, player, and play tables. For the tracking table, you need to
-import data from 17 CSV files (one file for each week of the season).
+game、player和play表有三个单独的CSV文件。对于tracking表，您需要从17个CSV文件中导入数据（每个赛季的一周一个文件）。
 
-You can use a Python script that uses psycopg2's `copy_expert` function to ingest the data:
+您可以使用Python脚本，该脚本使用psycopg2的`copy_expert`函数来导入数据：
 
 ```python
 import config
 import psycopg2
 
-# connect to the database
+# 连接到数据库
 conn = psycopg2.connect(database=config.DB_NAME,
                         host=config.HOST,
                         user=config.USER,
                         password=config.PASS,
                         port=config.PORT)
 
-# insert CSV file into given table
+# 将CSV文件插入到指定表
 def insert(csv_file, table_name):
     cur = conn.cursor()
     copy_sql = """
@@ -205,7 +195,7 @@ insert("data/stadium_info.csv", "stadium_info")
 print("Inserting scores.csv")
 insert("data/scores.csv", "scores")
 
-# iterate over each week's CSV file and insert them
+# 遍历每周的CSV文件并插入它们
 for i in range(1, 18):
     print(f'Inserting week{i}'.format(i = str(i)))
     insert(f'data/week{i}.csv'.format(i=i), "tracking")
@@ -213,22 +203,17 @@ for i in range(1, 18):
 conn.close()
 ```
 
-## Run your first query
+## 运行您的第一个查询
 
-Now that you have all the data ingested, you can run the first aggregation query
-and examine the results. For most of the example queries in this tutorial,
-you'll need to aggregate data from the `tracking` table, which
-contains multiple rows per player for each play (because the data is sampled
-multiple times per second during each play)
+现在您已经导入了所有数据，可以运行第一个聚合查询并检查结果。在本教程的大多数示例查询中，您需要从`tracking`表中聚合数据，该表每个进攻包含每个球员的多行数据（因为数据在每次进攻中每秒多次采样）。
 
 <Highlight type="important">
-These queries are examples of hyperfunctions. To access hyperfunctions, you need to have installed the  [Timescale toolkit](https://docs.timescale.com/use-timescale/latest/install-timescaledb-toolkit/) before you begin.
+这些查询是超函数的示例。要访问超函数，您需要在开始之前安装[Timescale工具包](https://docs.timescale.com/use-timescale/latest/install-timescaledb-toolkit/)。
 </Highlight>
 
-### Number of yards run in game for passing plays, by player and game
+### 传球比赛中，按球员和比赛计算比赛中跑动的码数
 
-This query sums all yards for each player in every game. You can then
-join that on the `player` table to get player details:
+此查询为每场比赛中的每个球员汇总所有码数。然后，您可以将其与`player`表连接以获取球员详细信息：
 
 ```sql
 SELECT t.player_id, p.displayname, SUM(dis) AS yards, t.gameid
@@ -238,7 +223,7 @@ GROUP BY t.player_id, p.displayname, t.gameid
 ORDER BY t.gameid ASC, yards DESC;
 ```
 
-Your data should look like this:
+您的数据应该如下所示：
 
 |player_id |        displayname         |       yards        |   gameid   |
 |-----------|-----------------------------|--------------------|------------|
@@ -249,21 +234,13 @@ Your data should look like this:
 |   2539653 | Robert Alford               |  881.7599999999983 | 2018090600|
 |   2555383 | Jalen Mills                 |  856.1199999999916 | 2018090600|
 
-You might have noticed, however, that this data takes a long time to query because
-we have to aggregate every row in the `tracking` table to get the total
-yards of each player, in each game. That's a lot of work for PostgreSQL to do
-when it needs to scan 20 million rows. On our small test machine this query
-often takes 25-30 seconds to run.
+您可能已经注意到，由于我们需要聚合`tracking`表中的所有行以获取每个球员在每场比赛中的总码数，这个查询需要很长时间才能完成，PostgreSQL需要扫描2000万行数据。在我们的小型测试机上，这个查询通常需要25-30秒才能运行。
 
-## Faster queries with continuous aggregates
+## 使用连续聚合进行更快的查询
 
-Most of the data we were interested in are based on this aggregation of the
-`tracking` data. We wanted to know how far a player traveled on each play
-or throughout each game. Rather than asking TimescaleDB to query and aggregate
-that raw data every time, we created a [continuous aggregate][cagg] out of this base query
-to significantly improve the speed of queries and analysis.
+我们感兴趣的大部分数据都是基于`tracking`数据的这种聚合。我们想知道每个球员在每次进攻或整个比赛中跑了多少距离。与其每次都让TimescaleDB查询和聚合原始数据，我们创建了一个[连续聚合][cagg]来显著提高查询和分析的速度。
 
-### Create continuous aggregate of player yards per game
+### 创建每场比赛球员码数的连续聚合
 
 ```sql
 CREATE MATERIALIZED VIEW player_yards_by_game
@@ -276,9 +253,7 @@ FROM tracking t
 GROUP BY t.player_id, t.gameid, t.position, t.team, bucket;
 ```
 
-When you have created the continuous aggregate, modify the query to use the
-materialized data and notice the response time is now significantly faster, under
-one second on our test machine.
+创建连续聚合后，修改查询以使用物化数据，您会注意到响应时间现在显著加快，在我们的测试机上不到一秒。
 
 ```sql
 SELECT pyg.player_id, p.displayname, SUM(yards) AS yards, pyg.gameid
@@ -288,10 +263,9 @@ GROUP BY pyg.player_id, p.displayname, pyg.gameid
 ORDER BY pyg.gameid ASC, yards DESC;
 ```
 
-We'll use this continuous aggregate in most of the queries in the
-next section. Feel free to play with other variations of this materialized data
-as you try to answer even more questions with TimescaleDB.
+在下一部分的大多数查询中，我们将使用这个连续聚合。您也可以尝试其他变体的物化数据，以回答TimescaleDB的更多问题。
 
 [cagg]: /use-timescale/:currentVersion:/continuous-aggregates/
-[extra-download]: https://assets.timescale.com/docs/downloads/nfl_2018.zip
+[extra-download]: https://assets.timescale.com/docs/downloads/nfl_2018.zip 
 [kaggle-download]: https://www.kaggle.com/c/nfl-big-data-bowl-2021/data
+
