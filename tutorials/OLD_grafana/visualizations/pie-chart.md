@@ -1,51 +1,43 @@
 ---
-title: Build a pie chart in Grafana
-excerpt: Plot a pie chart in Grafana to compare values between categories
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualization, analytics]
-tags: [pie chart]
+标题: 在格拉法纳（Grafana）中构建饼图
+摘要: 在格拉法纳（Grafana）中绘制饼图，以对比不同类别间的值。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析]
+标签: [饼图]
 ---
 
 import GrafanaVizPrereqs from 'versionContent/_partials/_grafana-viz-prereqs.mdx';
 
-# Build a pie chart in Grafana
+# 在Grafana中构建饼图
 
-Pie charts are used to plot categorized data. The chart presents each
-category as a slice of a pie, so you can see its contribution to the total.
-It is good to note that, with more slices, the chart becomes harder to analyze, and
-with very similar, small slices, it becomes harder to compare slice sizes. Use
-pie charts for a small number of categories, and consider another chart type when
-you have large amounts of data.
+饼图用于绘制分类数据。图表将每个类别呈现为饼图的一块，以便您可以看到它对总数的贡献。需要注意的是，随着切片数量的增加，图表变得更加难以分析，且如果有很多相似的小切片，比较切片大小也变得更加困难。对于少量类别使用饼图，并在有大量数据时考虑使用其他图表类型。
 
-Pie charts can answer questions like:
+饼图可以回答以下问题：
 
-*   Which was the least traded stock volume last month?
-*   Which stock has the highest traded stock today?
-*   Who had the highest percentage of accrued votes in the last election?
+*   上个月交易量最少的股票是哪一只？
+*   今天交易量最高的股票是哪一只？
+*   上一次选举中累积票数百分比最高的是谁？
 
-This tutorial shows you how to:
+本教程向您展示如何：
 
-*   Create a pie chart with pre-aggregated data using
-    `time_bucket()`.
-*   Create a donut chart to show volume of stock transactions.
+*   使用`time_bucket()`创建预聚合数据的饼图。
+*   创建一个甜甜圈图以显示股票交易量的分布。
 
-A pie chart can be in the traditional pie style or in donut style. Both display the
-same information. This tutorial shows you how to create both.
+饼图可以是传统的饼图样式，也可以是甜甜圈样式。两者显示相同的信息。本教程向您展示如何创建这两种图表。
 
-## Prerequisites
+## 前提条件
 
 <GrafanaVizPrereqs />
 
-## Create a pie chart with pre-aggregated data
+## 使用预聚合数据创建饼图
 
-Create a pie chart visualization using the data in the table `stocks_real_time`.
+使用表`stocks_real_time`中的数据创建饼图可视化。
 
 <Procedure>
 
-### Creating a pie chat with pre-aggregated data
+### 使用预聚合数据创建饼图
 
-1.  In the query editor, use this SQL to query a pie chart dataset. Use the
-    variable `$bucket interval` for the time period covered by the pie chart:
+1.  在查询编辑器中，使用以下SQL查询饼图数据集。使用变量`$bucket_interval`表示饼图覆盖的时间周期：
 
     ```sql
     SELECT
@@ -59,72 +51,48 @@ Create a pie chart visualization using the data in the table `stocks_real_time`.
     ORDER BY time_bucket('$bucket_interval', time), symbol;
     ```
 
-1.  Fetch all company symbols from the dataset in the
-   [Getting Started Tutorial][gsg-data] with this query:
+2.  使用以下查询从[入门教程][gsg-data]的数据集中获取所有公司符号：
 
    ```sql
     SELECT
         DISTINCT symbol FROM company ORDER BY symbol ASC;
     ```
 
-1.  In the Grafana dashboard, navigate to the settings page for your panel. In
-   the `Variables` section:
+3.  在Grafana仪表板中，导航到您的面板的设置页面。在`Variables`部分：
 
-    *   In the `Name` field, give your symbol a name.
-    *   In the `Type` field, select `Query`.
-    *   In the `Selection options` field, enable `multi-value`.
+    *   在`Name`字段中，为您的符号命名。
+    *   在`Type`字段中，选择`Query`。
+    *   在`Selection options`字段中，启用`multi-value`。
 
-1.  In the Grafana dashboard, in the `Dashboard variable` field, select the stocks
-    to graph. Adjust the time range of the dashboard if needed. Make sure the
-    returned data has a column named `time` that contains timestamps. The
-    timestamps should be in ascending order. Otherwise, you get an error. The
-    returned data looks like this:
+4.  在Grafana仪表板中，在`Dashboard variable`字段中，选择要绘制的股票。根据需要调整仪表板的时间范围。确保返回的数据有一个名为`time`的列，包含时间戳。时间戳应按升序排列。否则，您将获得一个错误。返回的数据如下所示：
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttabledata2.png" alt="Screenshot of the table view of valid time-series data for stocks."/>
+    ![有效的时间序列数据表视图截图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttabledata2.png)
 
-1.  In the `Visualizations` field, select `Pie chart`. Grafana turns the query
-    into a pie chart. This example shows a pie chart price distribution of
-    JPM, IBM, AAPL, AMD, and CVS stocks which has 20%, 23%, 25%,
-    15%, and 17%, respectively, within a specific period. The returned data
-    has lots of information, but only the first values for each stock are
-    displayed, because of the options selected in the calculation field.
+5.  在`Visualizations`字段中，选择`Pie chart`。Grafana将查询转换为饼图。此示例显示了JPM、IBM、AAPL、AMD和CVS股票的价格分布饼图，分别为20%、23%、25%、15%和17%，在特定时期内。返回的数据包含大量信息，但由于计算字段中选择的选项，仅显示了每只股票的首值。
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttable2view.png" alt="Screenshot of the pie chart produced by Grafana. The pie chart represents the price of five different stocks in 3 months, and the percentage of each makes up of the total sum."/>
+    ![Grafana生成的饼图截图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttable2view.png)
 
-1.  You can change how your data is displayed by changing the value options for `Show`.
-    The `Calculate` option, used in the previous step, reduces each time series to a single
-    value. The `All values` option shows every value from every series. Select `All values`
-    to see the difference.
+6.  您可以通过更改`Show`的值选项来更改数据的显示方式。上一步中使用的`Calculate`选项将每个时间序列简化为单个值。`All values`选项显示每个系列的每个值。选择`All values`以查看差异。
 
-    <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/datadisplaytype.png" alt="Screenshot of the all values shown in pie chart produced by Grafana. The pie chart represents the price of selected stocks in the past 3 months."/>
+    ![Grafana生成的饼图中显示的所有值的截图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/datadisplaytype.png)
 
-1.  The new chart looks like this. Note that each stock has multiple slices to
-    represent it, corresponding to each row in your table. The number of slices
-    is limited to 40:
+7.  新图表如下所示。请注意，每只股票都有多个切片来表示它，对应于表中的每行。切片的数量限制为40：
 
-   <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piechart2.png" alt="Screenshot of the all values shown in pie chart produced by Grafana. The pie chart represents the price of selected stocks in the past 3 months."/>
+   ![Grafana生成的饼图截图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piechart2.png)
 
 </Procedure>
 
-## Create a donut chart with volume transactions
+## 创建带有交易量的甜甜圈图
 
-A donut chart is a pie chart with the middle cut out. Compared to a pie chart,
-it can be easier to compare segments on a donut chart because the human eye
-is better at comparing the lengths of arcs. Otherwise, they're exactly the same.
+甜甜圈图是中间挖空的饼图。与饼图相比，甜甜圈图上的段更容易比较，因为人眼更擅长比较弧线的长度。否则，它们是完全相同的。
 
-Follow this section to create a donut chart displaying the average transaction
-volume of each stock within a bucket interval. The transaction volume per
-bucket is calculated from the daily cumulative traded volume, which is available
-in the `stocks_real_time` hypertable.
+按照本节创建一个甜甜圈图，显示每个股票在时间桶内的平均交易量。每个桶的交易量是根据`stocks_real_time`超表中提供的每日累积交易量计算得出的。
 
 <Procedure>
 
-### Creating donut chart with volume transactions
+### 创建带有交易量的甜甜圈图
 
-1.  At the psql prompt, update the earlier query to find the maximum `day_volume`
-   value for a symbol within a bucket. Then, subtract each maximum from the
-   previous bucket's maximum. The difference gives the traded volume for that
-   bucket:
+1.  在psql提示符下，更新之前的查询，以找到桶内符号的最大`day_volume`值。然后，从上一个桶的最大值中减去每个最大值。差值给出了该桶的交易量：
 
    ```sql
       SELECT
@@ -141,29 +109,21 @@ in the `stocks_real_time` hypertable.
       ORDER BY time_bucket('$bucket_interval', time), symbol;
       ```
 
-1.  In the Grafana dashboard, convert your pie chart to a donut
-   chart. In the symbol drop-down menu, select all the stocks you want to
-   compare. On the right side of the panel, click the pie chart drop-down. In
-   the `piechart type` field, select `donut`:
+2.  在Grafana仪表板中，将您的饼图转换为甜甜圈图。在符号下拉菜单中，选择您想要比较的所有股票。在面板的右侧，点击饼图下拉菜单。在`piechart type`字段中，选择`donut`：
 
-  <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttype.png" alt="Screenshot of Grafana dashboard, showing pie chart."/>
+  ![Grafana仪表板截图，显示饼图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/piecharttype.png)
 
-1.  Refresh the panel. The donut chart view shows the percentage of trading volume
-    for a 10-minute bucket, averaged over the entire day:
+3.  刷新面板。甜甜圈图视图显示了整个一天内10分钟桶的交易量百分比：
 
-   <img class="main-content__illustration" src="https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/donutchart.png" alt="Screenshot of Grafana dashboard, showing a donut chart."/>
-
+   ![Grafana仪表板截图，显示甜甜圈图](https://s3.amazonaws.com/assets.timescale.com/docs/images/tutorials/visualizations/piechart/donutchart.png)
 
 <Highlight type="note">
-If you go beyond a single trading day, you might get results that don't look
-very good, or you might get no data returned. To fix this, focus your
-calculation on a single trading day instead.
+如果您查看超过一个交易日的数据，您可能会得到看起来不太好的结果，或者您可能没有数据返回。要解决这个问题，请将计算集中在单个交易日上。
 </Highlight>
 
 </Procedure>
 
-Pie charts are a great tool for comparing categorized data. They're especially good
-for visualizing percentages. But they don't work as well if you have too many categories
-with similar percentages or large amount of data.
+饼图是用于比较分类数据的一个很好的工具。它们特别适合于可视化百分比。但如果您有太多类别的百分比相似或大量数据，它们的效果就不太好。
 
 [gsg-data]: https://docs.timescale.com/getting-started/latest/time-series-data/
+
