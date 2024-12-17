@@ -1,101 +1,87 @@
 ---
-title: How to set up a Prometheus endpoint for Managed Service for TimescaleDB
-excerpt: Use Prometheus to monitor your Managed Service for TimescaleDB
-products: [mst]
-keywords: [Prometheus, monitor, integration]
+标题: 如何为 TimescaleDB 托管服务设置普罗米修斯（Prometheus）端点
+摘要: 使用普罗米修斯来监控你的 TimescaleDB 托管服务。
+产品: [管理服务技术（MST）]
+关键词: [普罗米修斯，监控，集成]
 ---
 
-# How to set up a Prometheus endpoint for a Managed TimescaleDB database
+# 如何为托管的TimescaleDB数据库设置Prometheus端点
 
-You can get more insights into the performance of your managed TimescaleDB
-database by monitoring it using [Prometheus][get-prometheus], a popular
-open-source metrics-based systems monitoring solution. This tutorial
-takes you through setting up a Prometheus endpoint for a database running
-in a [managed service for TimescaleDB][timescale-mst].
+你可以通过使用[Prometheus][get-prometheus]来监控托管的TimescaleDB数据库，以获得更多关于其性能的洞察，Prometheus是一个流行的开源基于指标的系统监控解决方案。本教程将指导你为在[TimescaleDB托管服务][timescale-mst]上运行的数据库设置Prometheus端点。
 
-This exposes metrics from the [node_exporter][node-exporter-metrics] as well
-as [pg_stats][pg-stats-metrics] metrics.
+这将公开来自[node_exporter][node-exporter-metrics]以及[pg_stats][pg-stats-metrics]的指标。
 
-### Prerequisites
+### 前提条件
 
-In order to proceed with this tutorial, you need a managed service for TimescaleDB database.
-To create one, see these instructions for how to
-[get started with managed service for TimescaleDB][timescale-mst-get-started]
+为了进行本教程，你需要一个TimescaleDB数据库的托管服务。
+要创建一个，请参考这些说明，了解如何[开始使用TimescaleDB的托管服务][timescale-mst-get-started]。
 
-### Step 1: Enable Prometheus service integration
+### 第1步：启用Prometheus服务集成
 
-In the navigation bar, select 'Service Integrations'. Navigate to the service
-integrations, pictured below.
+在导航栏中，选择“服务集成”。导航到服务集成，如下图所示。
 
-<img class="main-content__illustration" src="https://s3.amazonaws.com/docs.iobeam.com/images/Prometheus_service_integration_0.png" alt="Service Integrations Menu Option"/>
+<img class="main-content__illustration" src="https://s3.amazonaws.com/docs.iobeam.com/images/Prometheus_service_integration_0.png" alt="服务集成菜单选项"/>
 
-This presents you with the option to add a Prometheus integration point.
-Select the plus icon to add a new endpoint and give it a name of your choice.
-We've named ours `endpoint_dev`.
+这为你提供了添加Prometheus集成点的选项。
+选择加号图标添加一个新的端点，并给它一个你选择的名称。
+我们将我们的命名为`endpoint_dev`。
 
-<img class="main-content__illustration" src="https://s3.amazonaws.com/docs.iobeam.com/images/Prometheus_service_integration_1.png" alt="Create a Prometheus endpoint on Timescale"/>
+<img class="main-content__illustration" src="https://s3.amazonaws.com/docs.iobeam.com/images/Prometheus_service_integration_1.png" alt="在Timescale上创建Prometheus端点"/>
 
-Furthermore, notice that you are given basic authentication information and a port number
-in order to access the service. This is used when setting up your Prometheus
-installation, in the `prometheus.yml` configuration file. This enables you to make
-this managed TimescaleDB endpoint a target for Prometheus to scrape.
+此外，请注意，为了访问服务，你将获得基本的认证信息和端口号。
+这在设置你的Prometheus安装时使用，在`prometheus.yml`配置文件中。
+这使你能够使这个托管的TimescaleDB端点成为Prometheus抓取的目标。
 
-Here's a sample configuration file you can use when you setup your Prometheus
-installation, substituting the target port, IP address, username, and password
-for those of your managed TimescaleDB instance:
+这是一个你可以在设置Prometheus安装时使用的示例配置文件，将目标端口、IP地址、用户名和密码替换为你的托管TimescaleDB实例的信息：
 
 ```yaml
-# prometheus.yml for monitoring a Timescale instance
+# prometheus.yml用于监控Timescale实例
 global:
- scrape_interval:     10s
- evaluation_interval: 10s
+  scrape_interval: 10s
+  evaluation_interval: 10s
 scrape_configs:
- - job_name: prometheus
-   scheme: https
-   static_configs:
-     - targets: ['{TARGET_IP}:{TARGET_PORT}']
-   tls_config:
-     insecure_skip_verify: true
-   basic_auth:
-     username: {ENDPOINT_USERNAME}
-     password: {ENDPOINT_PASSWORD}
+  - job_name: prometheus
+    scheme: https
+    static_configs:
+      - targets: ['{TARGET_IP}:{TARGET_PORT}']
+    tls_config:
+      insecure_skip_verify: true
+    basic_auth:
+      username: {ENDPOINT_USERNAME}
+      password: {ENDPOINT_PASSWORD}
 remote_write:
- - url: "http://{ADAPTER_IP}:9201/write"
+  - url: "http://{ADAPTER_IP}:9201/write"
 remote_read:
- - url: "http://{ADAPTER_IP}:9201/read"
+  - url: "http://{ADAPTER_IP}:9201/read"
 ```
 
-### Step 2: Associate Prometheus Endpoint with Managed Service
+### 第2步：将Prometheus端点与托管服务关联
 
-Next, we want to associate our Prometheus endpoint with our Timescale
-managed service. Using the navigation menu, select the service we want to
-monitor and click the 'Overview' tab.
+接下来，我们希望将我们的Prometheus端点与我们的Timescale托管服务关联起来。
+使用导航菜单，选择你想要监控的服务并点击“概览”标签。
 
-Navigate down to the 'Service Integrations' section and click the 'Manage Integrations' button.
+导航到“服务集成”部分并点击“管理集成”按钮。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integrations_4.png" alt="Manage Service integrations on your managed service"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integrations_4.png" alt="在托管服务上管理服务集成"/>
 
-Find the Prometheus integration option and select 'Use Prometheus'.
+找到Prometheus集成选项并选择“使用Prometheus”。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_2.png" alt="Select Prometheus integration to integrate with"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_2.png" alt="选择要集成的Prometheus集成"/>
 
-Next, select the endpoint name you created in Step 1 as the endpoint you'd like to use
-with this service and then click the 'Enable' button. It's possible to use the same
-endpoint for multiple services or a separate one for services you'd like to keep apart.
+接下来，选择第1步中创建的端点名称作为你想要与此服务一起使用的端点，然后点击“启用”按钮。
+你可以使用相同的端点用于多个服务，或者为你想保持分开的服务使用不同的端点。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_3.png" alt="Select name of Prometheus endpoint to integrate with"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_3.png" alt="选择要集成的Prometheus端点名称"/>
 
-To check if this was successful, navigate back to the Service Integrations section of your
-managed service, and check if that "Active" flag appears, along with the name of the endpoint
-you associated the service with.
+要检查这是否成功，请返回到托管服务的服务集成部分，并检查是否出现了“活跃”标志，以及你将服务与之关联的端点名称。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_5.png" alt="Success! Active prometheus endpoint with name"/>
+<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-prometheus-endpoint-tutorial/Prometheus_service_integration_5.png" alt="成功！活跃的Prometheus端点名称"/>
 
-Congratulations, you have successfully set up a Prometheus endpoint on your managed
-service on managed service for TimescaleDB!
+恭喜你，你已成功在TimescaleDB的托管服务上设置了Prometheus端点！
 
-[get-prometheus]: https://prometheus.io
-[node-exporter-metrics]: https://github.com/prometheus/node_exporter
-[pg-stats-metrics]: https://www.postgresql.org/docs/current/monitoring-stats.html
-[timescale-mst]: https://www.timescale.com/products
+[get-prometheus]: https://prometheus.io 
+[node-exporter-metrics]: https://github.com/prometheus/node_exporter 
+[pg-stats-metrics]: https://www.postgresql.org/docs/current/monitoring-stats.html 
+[timescale-mst]: https://www.timescale.com/products 
 [timescale-mst-get-started]: /mst/:currentVersion:/about-mst
+
