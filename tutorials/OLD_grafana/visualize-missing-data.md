@@ -1,55 +1,38 @@
 ---
-title: How to visualize and aggregate missing time-series data in Grafana
-excerpt: Handle missing data points when plotting data in Grafana
-products: [cloud, mst, self_hosted]
-keywords: [Grafana, visualizations, analytics, gapfilling]
-tags: [time-series]
+标题: 如何在格拉法纳（Grafana）中可视化并聚合缺失的时间序列数据
+摘要: 在格拉法纳（Grafana）绘制数据时处理缺失的数据点。
+产品: [云服务，管理服务技术（MST），自托管]
+关键词: [格拉法纳（Grafana），可视化，分析，间隙填充]
+标签: [时间序列]
 ---
 
-# Tutorial: How to visualize and aggregate missing time-series data in Grafana
+# 教程：如何在Grafana中可视化和聚合缺失的时间序列数据
 
-### Introduction
+### 引言
 
-Sometimes there are gaps in our time-series data: because systems
-are offline, or devices lose power, etc. This causes problems when you
-want to aggregate data across a large time window, for example,
-computing the average temperature over the past 6 hours by 30 minute
-time intervals or analyzing today's CPU utilization by 15 minute
-intervals. Gaps in data can also have other negative consequences,
-for example, breaking applications downstream.
+有时我们的时间序列数据中存在间隙：因为系统离线或设备失去电源等。这在您想要聚合大时间窗口中的数据时会导致问题，例如，计算过去6小时的平均温度，每30分钟间隔一次，或分析今天的CPU利用率，每15分钟间隔一次。数据中的间隙还可能产生其他负面影响，例如破坏下游应用程序。
 
-In this tutorial, you'll see how to use [Grafana][grafana-external]
-(an open-source visualization tool) and TimescaleDB for
-handling missing time-series data (using the TimescaleDB/PostgreSQL data
-source natively available in Grafana).
+在本教程中，您将了解如何使用[Grafana][grafana-external]（一个开源可视化工具）和TimescaleDB来处理缺失的时间序列数据（使用Grafana中原生可用的TimescaleDB/PostgreSQL数据源）。
 
-### Prerequisites
+### 前提条件
 
-To complete this tutorial, you need a cursory knowledge of the Structured Query
-Language (SQL). The tutorial walks you through each SQL command, but it is
-helpful if you've seen SQL before.
+要完成本教程，您需要对结构化查询语言（SQL）有初步了解。教程将指导您完成每个SQL命令，但如果您之前接触过SQL将会有所帮助。
 
-You also need:
+您还需要：
 
-*   Time-series dataset with missing data (Note: in case you don't have one
-    handy, we include an optional step for creating one below.)
+*   带有缺失数据的时间序列数据集（注意：如果您手头没有，我们在下面提供了创建一个的可选步骤。）
 
-*   A working [installation of TimescaleDB][install-timescale]. Once your
-    installation is complete, we can proceed to ingesting or creating sample
-    data and finishing the tutorial.
+*   一个正在运行的[TimescaleDB安装][install-timescale]。安装完成后，我们可以继续摄取或创建样本数据并完成教程。
 
-*   Grafana dashboard connected to your TimescaleDB instance.
+*   连接到您的TimescaleDB实例的Grafana仪表板。
 
-### Step 0 - Load your time-series data into TimescaleDB and simulate missing data (optional)
+### 第0步 - 将您的时间序列数据加载到TimescaleDB并模拟缺失数据（可选）
 
-*(Please skip this step if you already have TimescaleDB loaded with your
-time-series data.)*
+*（如果您已经有TimescaleDB加载了您的时间序列数据，请跳过此步骤。）*
 
-For this tutorial, we are going to load our TimescaleDB instance with
-simulated IoT sensor data (available in our How to explore TimescaleDB
-using simulated IoT sensor data tutorial).
+对于本教程，我们将加载我们的TimescaleDB实例与模拟的IoT传感器数据（可在我们如何使用模拟的IoT传感器数据探索TimescaleDB教程中找到）。
 
-This dataset simulates four sensors that each collect temperature and CPU data, in a [hypertable][docs-hypertable] structured like this:
+此数据集模拟了四个传感器，每个传感器收集温度和CPU数据，组织在如下的[超表][docs-hypertable]中：
 
 ```sql
 CREATE TABLE sensor_data (
@@ -61,21 +44,17 @@ CREATE TABLE sensor_data (
 );
 ```
 
-To simulate missing data, let's delete all data our sensors collected between 1 hour and 2 hours ago:
+为了模拟缺失数据，让我们删除我们的传感器在1小时前和2小时前收集的所有数据：
 
 ```
 DELETE FROM sensor_data WHERE sensor_id = 1 and time > now() - INTERVAL '2 hour' and time < now() - INTERVAL '1 hour';
 ```
 
-### Step 1 - Plot the dataset and confirm missing data
+### 第1步 - 绘制数据集并确认缺失数据
 
-*(For this and the following steps, we'll use the IoT dataset from Step
-0, but the steps are the same if you use your own - real or simulated -
-dataset).*
+*（对于这一步和后续步骤，我们将使用第0步中的IoT数据集，但如果您使用自己的-真实或模拟的-数据集，步骤相同）*
 
-To confirm we're missing data values, let's create a simple graph that
-calculates the average temperature readings from `sensor_1` over the past
-6 hours (using [`time_bucket`][docs-timebucket]).
+为了确认我们缺少数据值，让我们创建一个简单的图表，计算过去6小时`sensor_1`的平均温度读数（使用[`time_bucket`][docs-timebucket]）。
 
 ```sql
 SELECT
@@ -89,19 +68,13 @@ GROUP BY time_bucket('5 minutes', time)
 ORDER BY 1
 ```
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/missing-data.png" alt="Grafana Screenshot: Missing Data"/>
+![Grafana截图：缺失数据](https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/missing-data.png)
 
-There is missing data from 17:05 to 18:10, as we can see by the lack of
-data points (flat line) during that time period.
+我们可以看到，在17:05到18:10之间缺少数据，因为那段时间内缺少数据点（平直线）。
 
-### Step 2 - Interpolate (fill in) the missing data
+### 第2步 - 插值（填充）缺失数据
 
-For interpolating the missing data, we use
-[`time_bucket_gapfill`][docs-timebucket-gapfill],
-combined with [`LOCF`][docs-LOCF] ("Last Observation Carried Forward").
-This takes the last reading before the missing data began and plots it
-(the last recorded value) at regular time intervals until new data is
-received:
+为了插值缺失数据，我们使用[`time_bucket_gapfill`][docs-timebucket-gapfill]，结合[`LOCF`][docs-LOCF]（“Last Observation Carried Forward”）。这会取缺失数据开始前的最后一个读数，并在规律的时间间隔中绘制它（最后一个记录的值），直到接收到新数据：
 
 ```sql
 SELECT
@@ -115,19 +88,17 @@ GROUP BY time_bucket_gapfill('5 minutes', "time")
 ORDER BY 1
 ```
 
-LOCF is a handy interpolation technique when you have missing data, but
-no additional context to determine what the missing data values might
-have been.
+LOCF是处理缺失数据时的便捷插值技术，但您没有额外的上下文来确定缺失数据值可能是什么。
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/locf.png" alt="Grafana Screenshot: Interpolating using LOCF"/>
+![Grafana截图：使用LOCF插值](https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/locf.png)
 
-As you can see, the graph now plots data points at regular intervals for the times where we have missing data.
+如您所见，图表现在在规律的时间间隔中绘制数据点，填补了我们缺失数据的时间。
 
-### Step 3 - Aggregate across a larger time window
+### 第3步 - 在更大的时间窗口中聚合
 
-Now, we return to our original problem: wanting to aggregate data across a large time window with missing data.
+现在，我们回到最初的问题：希望在存在缺失数据的大时间窗口中聚合数据。
 
-Here we use our interpolated data and compute the average temperature by 30 minute windows over the past 6 hours.
+这里我们使用插值数据，并计算过去6小时每30分钟窗口的平均温度。
 
 ```sql
 SELECT
@@ -141,10 +112,9 @@ GROUP BY time_bucket_gapfill('30 minutes', "time")
 ORDER BY 1
 ```
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/aggregate.png" alt="Grafana Screenshot: Aggregating across our interpolated data"/>
+![Grafana截图：跨插值数据聚合](https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/aggregate.png)
 
-Let's compare this to what the aggregate would have looked like had we
-not interpolated the missing data, by adding a new series to the graph:
+让我们通过在图表中添加一个新的系列来比较，如果我们没有插值缺失数据，聚合会是什么样子：
 
 ```sql
 SELECT
@@ -158,30 +128,21 @@ GROUP BY time_bucket('30 minutes', time)
 ORDER BY 1
 ```
 
-<img class="main-content__illustration" src="https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/aggregate_2.png" alt="Grafana Screenshot: Aggregating across our interpolated data vs. missing data"/>
+![Grafana截图：跨插值数据与缺失数据聚合对比](https://assets.iobeam.com/images/docs/screenshots-for-tutorial-missing-data-grafana/aggregate_2.png)
 
-(Note that the interpolated average is now in ORANGE, while the average
-with missing data is GREEN.)
+（请注意，插值平均值现在是橙色，而带有缺失数据的平均值是绿色。）
 
-As you can see above, the GREEN plot is missing a data point at 17:30,
-giving us little understanding of what happened during that time period,
-and risking breaking applications downstream. In contrast, the ORANGE
-plot uses our interpolated data to create a datapoint for that time
-period.
+如您所见，绿色图表在17:30缺少一个数据点，这让我们对那段时间内发生的事情知之甚少，可能会破坏下游应用程序。相比之下，橙色图表使用我们的插值数据为那个时间段创建了一个数据点。
 
-### Next steps
+### 后续步骤
 
-This is just one way to use TimescaleDB with Grafana to solve data
-problems and ensure that your applications, systems, and operations
-don't  suffer any negative consequences (for example, downtime, misbehaving
-applications, or a degraded customer experience). For more ways on
-how to use TimescaleDB, check out our other [tutorials][tutorials]
-(which range from beginner to advanced).
+这只是使用TimescaleDB与Grafana解决数据问题，确保您的应用程序、系统和操作不会遭受任何负面影响（例如，停机时间、行为异常的应用程序或降低的顾客体验）的一种方式。要了解更多使用TimescaleDB的方法，请查看我们的其他[教程][tutorials]（从初级到高级）。
 
 [docs-LOCF]: /api/:currentVersion:/hyperfunctions/gapfilling/time_bucket_gapfill#locf
 [docs-hypertable]: /use-timescale/:currentVersion:/hypertables/
 [docs-timebucket-gapfill]: /api/:currentVersion:/hyperfunctions/gapfilling/time_bucket_gapfill/
 [docs-timebucket]: /api/:currentVersion:/hyperfunctions/time_bucket
-[grafana-external]: https://grafana.com/
+[grafana-external]: https://grafana.com/ 
 [install-timescale]: /getting-started/latest/
 [tutorials]: /tutorials/:currentVersion:/
+
